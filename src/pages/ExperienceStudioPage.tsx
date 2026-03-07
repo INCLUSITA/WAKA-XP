@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { WorkspaceContextBar } from "@/components/WorkspaceContextBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye } from "lucide-react";
+import {
+  Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye, ArrowLeft,
+  Hammer, Smartphone, Rocket, History, ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 
 interface Experience {
   id: string;
@@ -42,7 +42,189 @@ const statusColors: Record<string, string> = {
   archived: "bg-destructive/15 text-destructive",
 };
 
+// ── Experience Detail View ──
+
+function ExperienceDetail({
+  experience,
+  onBack,
+  onRefresh,
+}: {
+  experience: Experience;
+  onBack: () => void;
+  onRefresh: () => void;
+}) {
+  const { tenantId } = useWorkspace();
+  const navigate = useNavigate();
+  const [flowCount, setFlowCount] = useState(0);
+  const [showVersions, setShowVersions] = useState(false);
+
+  useEffect(() => {
+    // Count associated flows (placeholder — later link via experience_id)
+    supabase
+      .from("flows")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .then(({ count }) => setFlowCount(count || 0));
+  }, [tenantId]);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Detail header */}
+      <div className="flex items-center gap-3 border-b border-border/50 bg-card/40 backdrop-blur-md px-5 py-3.5">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </Button>
+        <div className="flex-1">
+          <h2 className="text-base font-bold text-foreground">{experience.name}</h2>
+          <div className="flex items-center gap-2 mt-0.5">
+            <Badge variant="secondary" className={`text-[10px] ${statusColors[experience.status] || ""}`}>
+              {experience.status}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">{experience.environment}</Badge>
+            <span className="text-[10px] text-muted-foreground">
+              Updated {format(new Date(experience.updated_at), "dd MMM yyyy, HH:mm")}
+            </span>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setShowVersions((v) => !v)} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
+          <History className="mr-1 h-3.5 w-3.5" /> Versions
+        </Button>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main content */}
+        <div className="flex-1 overflow-auto p-6">
+          <Tabs defaultValue="overview">
+            <TabsList className="bg-secondary/50 border border-border/50 mb-6">
+              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+              <TabsTrigger value="demos" className="text-xs">Demos</TabsTrigger>
+              <TabsTrigger value="flows" className="text-xs">Flows</TabsTrigger>
+              <TabsTrigger value="versions" className="text-xs">Versions</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                <Card className="glass border-gradient rounded-xl">
+                  <CardContent className="p-4 text-center">
+                    <Smartphone className="h-6 w-6 mx-auto text-accent mb-2" />
+                    <p className="text-2xl font-bold text-foreground">0</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demos</p>
+                  </CardContent>
+                </Card>
+                <Card className="glass border-gradient rounded-xl">
+                  <CardContent className="p-4 text-center">
+                    <Hammer className="h-6 w-6 mx-auto text-primary mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{flowCount}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Flows</p>
+                  </CardContent>
+                </Card>
+                <Card className="glass border-gradient rounded-xl">
+                  <CardContent className="p-4 text-center">
+                    <Rocket className="h-6 w-6 mx-auto text-chart-4 mb-2" />
+                    <p className="text-2xl font-bold text-foreground">0</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Candidates</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {experience.description && (
+                <Card className="glass border-gradient rounded-xl mb-4">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</p>
+                    <p className="text-sm text-foreground">{experience.description}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {experience.tags.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {experience.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="demos">
+              <Card className="glass border-gradient rounded-xl p-8 text-center">
+                <Smartphone className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                <p className="text-sm text-muted-foreground/60">No demos linked to this experience yet.</p>
+                <p className="text-[10px] text-muted-foreground/40 mt-1">Demo linking coming in next iteration</p>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="flows">
+              <Card className="glass border-gradient rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Related Flows</p>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/editor")} className="text-xs gap-1">
+                    <Hammer className="h-3 w-3" /> Open Builder
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground/60">
+                  {flowCount > 0
+                    ? `${flowCount} flow${flowCount > 1 ? "s" : ""} in your workspace. Direct linking coming soon.`
+                    : "No flows yet. Create one in the Builder."}
+                </p>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="versions">
+              <Card className="glass border-gradient rounded-xl overflow-hidden">
+                <div className="h-[500px]">
+                  <VersionHistoryPanel
+                    assetType="experience"
+                    assetId={experience.id}
+                    getSnapshotData={() => ({
+                      name: experience.name,
+                      description: experience.description,
+                      status: experience.status,
+                      environment: experience.environment,
+                      tags: experience.tags,
+                    })}
+                    onRestore={() => {
+                      toast.success("Experience version restored");
+                      onRefresh();
+                    }}
+                  />
+                </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Side version panel */}
+        {showVersions && (
+          <div className="w-80 border-l border-border bg-card shadow-xl">
+            <VersionHistoryPanel
+              assetType="experience"
+              assetId={experience.id}
+              getSnapshotData={() => ({
+                name: experience.name,
+                description: experience.description,
+                status: experience.status,
+                environment: experience.environment,
+                tags: experience.tags,
+              })}
+              onRestore={() => {
+                toast.success("Experience version restored");
+                onRefresh();
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Studio Page ──
+
 export default function ExperienceStudioPage() {
+  const { tenantId } = useWorkspace();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("id");
+
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -50,12 +232,12 @@ export default function ExperienceStudioPage() {
   const [newDesc, setNewDesc] = useState("");
   const navigate = useNavigate();
 
-  const fetchExperiences = async () => {
+  const fetchExperiences = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("experiences")
       .select("*")
-      .eq("tenant_id", DEMO_TENANT_ID)
+      .eq("tenant_id", tenantId)
       .order("updated_at", { ascending: false });
 
     if (error) {
@@ -65,22 +247,35 @@ export default function ExperienceStudioPage() {
       setExperiences((data as Experience[]) || []);
     }
     setLoading(false);
-  };
+  }, [tenantId]);
 
   useEffect(() => {
     fetchExperiences();
-  }, []);
+  }, [fetchExperiences]);
+
+  const selectedExp = experiences.find((e) => e.id === selectedId);
+
+  // If detail view
+  if (selectedId && selectedExp) {
+    return (
+      <ExperienceDetail
+        experience={selectedExp}
+        onBack={() => setSearchParams({})}
+        onRefresh={fetchExperiences}
+      />
+    );
+  }
 
   const createExperience = async () => {
     if (!newName.trim()) {
       toast.error("Name is required");
       return;
     }
-    const { error } = await supabase.from("experiences").insert({
+    const { data, error } = await supabase.from("experiences").insert({
       name: newName.trim(),
       description: newDesc.trim() || null,
-      tenant_id: DEMO_TENANT_ID,
-    });
+      tenant_id: tenantId,
+    }).select("id").single();
 
     if (error) {
       toast.error("Error creating experience");
@@ -91,13 +286,14 @@ export default function ExperienceStudioPage() {
     setNewName("");
     setNewDesc("");
     fetchExperiences();
+    if (data) setSearchParams({ id: data.id });
   };
 
   const duplicateExperience = async (exp: Experience) => {
     const { error } = await supabase.from("experiences").insert({
       name: `${exp.name} (copy)`,
       description: exp.description,
-      tenant_id: DEMO_TENANT_ID,
+      tenant_id: tenantId,
       tags: exp.tags,
     });
     if (error) {
@@ -129,7 +325,8 @@ export default function ExperienceStudioPage() {
           <h1 className="text-lg font-bold text-foreground tracking-wide">Experience Studio</h1>
           <p className="text-[11px] text-muted-foreground">Design, compose and manage experiences across channels</p>
         </div>
-        <Button size="sm" className="glow-primary font-medium" onClick={() => setShowCreate(true)}>
+        <WorkspaceContextBar compact />
+        <Button size="sm" className="glow-primary font-medium ml-2" onClick={() => setShowCreate(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" /> New Experience
         </Button>
       </div>
@@ -159,7 +356,11 @@ export default function ExperienceStudioPage() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {activeExps.map((exp) => (
-                    <Card key={exp.id} className="group glass border-gradient rounded-xl transition-all hover:scale-[1.01]">
+                    <Card
+                      key={exp.id}
+                      className="group glass border-gradient rounded-xl transition-all hover:scale-[1.01] cursor-pointer"
+                      onClick={() => setSearchParams({ id: exp.id })}
+                    >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-sm line-clamp-1">{exp.name}</CardTitle>
@@ -167,9 +368,7 @@ export default function ExperienceStudioPage() {
                             <Badge variant="secondary" className={`text-[10px] ${statusColors[exp.status] || ""}`}>
                               {exp.status}
                             </Badge>
-                            <Badge variant="outline" className="text-[10px]">
-                              {exp.environment}
-                            </Badge>
+                            <Badge variant="outline" className="text-[10px]">{exp.environment}</Badge>
                           </div>
                         </div>
                       </CardHeader>
@@ -180,19 +379,18 @@ export default function ExperienceStudioPage() {
                         <p className="text-[10px] text-muted-foreground/60">
                           Updated {format(new Date(exp.updated_at), "dd MMM yyyy, HH:mm")}
                         </p>
-                        {exp.tags.length > 0 && (
-                          <div className="flex gap-1 mt-2 flex-wrap">
-                            {exp.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-[9px]">{tag}</Badge>
-                            ))}
-                          </div>
-                        )}
+                        {/* Related assets summary placeholder */}
+                        <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground/50">
+                          <span className="flex items-center gap-1"><Smartphone className="h-3 w-3" /> 0 demos</span>
+                          <span className="flex items-center gap-1"><Hammer className="h-3 w-3" /> 0 flows</span>
+                          <span className="flex items-center gap-1"><Rocket className="h-3 w-3" /> 0 candidates</span>
+                        </div>
                       </CardContent>
-                      <CardFooter className="gap-1 pt-0">
-                        <Button variant="ghost" size="sm" title="View">
+                      <CardFooter className="gap-1 pt-0" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" title="View" onClick={() => setSearchParams({ id: exp.id })}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" title="Edit">
+                        <Button variant="ghost" size="sm" title="Edit" onClick={() => setSearchParams({ id: exp.id })}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => duplicateExperience(exp)} title="Duplicate">

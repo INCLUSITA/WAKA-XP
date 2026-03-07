@@ -1,9 +1,11 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
-  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins
+  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -128,8 +130,13 @@ export function FlowToolbar({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <Badge variant="outline" className="text-[8px] border-primary/30 text-primary ml-2">Classic Builder</Badge>
+
       {/* Right side — editor-only actions */}
       <div className="ml-auto flex gap-1">
+        <Button variant="outline" size="sm" onClick={() => window.location.href = "/studio"} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
+          <Sparkles className="mr-1 h-3.5 w-3.5" /> XP Studio
+        </Button>
         {onSimulate && (
           <Button variant="outline" size="sm" onClick={onSimulate} className="border-node-send/40 text-node-send hover:bg-node-send/10">
             <Play className="mr-1 h-3.5 w-3.5" /> Simulate
