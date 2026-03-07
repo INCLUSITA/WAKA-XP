@@ -14,7 +14,7 @@ interface FlowStart {
 
 export default function StartsPage() {
   const navigate = useNavigate();
-  const [flows, setFlows] = useState<{ id: string; name: string; created_at: string; nodes: any[] }[]>([]);
+  const [flows, setFlows] = useState<{ id: string; name: string; created_at: string; nodes: unknown }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
