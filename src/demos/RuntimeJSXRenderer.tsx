@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, memo, forwardRef, Fragment } from "react";
 import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
@@ -42,9 +42,16 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
         return typeof ${componentName} === 'function' ? ${componentName} : null;
       `;
 
-      // Execute with React in scope
-      const factory = new Function("React", "useState", "useEffect", "useRef", "useCallback", "useMemo", moduleCode);
-      const Comp = factory(React, useState, useEffect, useRef, useCallback, useMemo);
+      // Execute with React in scope - provide all common hooks and utilities
+      const factory = new Function(
+        "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
+        "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
+        moduleCode
+      );
+      const Comp = factory(
+        React, useState, useEffect, useRef, useCallback, useMemo,
+        useReducer, useContext, createContext, memo, forwardRef, Fragment
+      );
 
       if (Comp) {
         setComponent(() => Comp);
