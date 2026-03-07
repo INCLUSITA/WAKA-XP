@@ -24,6 +24,14 @@ import { SendMsgNode } from "./SendMsgNode";
 import { WaitResponseNode } from "./WaitResponseNode";
 import { SplitNode } from "./SplitNode";
 import { WebhookNode } from "./WebhookNode";
+import { SaveResultNode } from "./SaveResultNode";
+import { UpdateContactNode } from "./UpdateContactNode";
+import { SendEmailNode } from "./SendEmailNode";
+import { CallAINode } from "./CallAINode";
+import { EnterFlowNode } from "./EnterFlowNode";
+import { OpenTicketNode } from "./OpenTicketNode";
+import { CallZapierNode } from "./CallZapierNode";
+import { SendAirtimeNode } from "./SendAirtimeNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar } from "./FlowToolbar";
 import { EdgeInfoPanel } from "./EdgeInfoPanel";
@@ -38,6 +46,19 @@ const nodeTypes = {
   waitResponse: WaitResponseNode,
   splitExpression: SplitNode,
   webhook: WebhookNode,
+  saveResult: SaveResultNode,
+  updateContact: UpdateContactNode,
+  sendEmail: SendEmailNode,
+  callAI: CallAINode,
+  enterFlow: EnterFlowNode,
+  openTicket: OpenTicketNode,
+  callZapier: CallZapierNode,
+  sendAirtime: SendAirtimeNode,
+  // Split variants reuse the SplitNode component
+  splitContactField: SplitNode,
+  splitResult: SplitNode,
+  splitRandom: SplitNode,
+  splitGroup: SplitNode,
 };
 
 const defaultEdgeOptions = {
