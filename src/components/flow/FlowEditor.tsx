@@ -65,9 +65,23 @@ export function FlowEditor() {
     setSelectedNode(node);
   }, []);
 
-  const onPaneClick = useCallback(() => {
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
     setSelectedNode(null);
   }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  }, []);
+
+  const deleteEdge = useCallback(
+    (id: string) => {
+      setEdges((eds) => eds.filter((e) => e.id !== id));
+      setSelectedEdge(null);
+    },
+    [setEdges]
+  );
 
   const addNode = useCallback(
     (type: string) => {
