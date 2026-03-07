@@ -357,12 +357,6 @@ export function FlowEditor() {
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
-        onPhoneSimulator={() => {
-          sessionStorage.setItem("simulator-flow", JSON.stringify({ nodes, edges }));
-          navigate("/simulator");
-        }}
-        onDemos={() => navigate("/demos")}
-        onWebhooks={() => navigate("/webhooks")}
       />
 
       <input
