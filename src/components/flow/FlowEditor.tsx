@@ -387,6 +387,7 @@ export function FlowEditor() {
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
+        onVersions={() => setShowVersions((v) => !v)}
         saveStatus={saveStatus}
       />
 
