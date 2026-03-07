@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_ORG_ID } from "@/lib/constants";
+import { DEMO_TENANT_ID } from "@/lib/constants";
 import { Tables } from "@/integrations/supabase/types";
 import { BUILTIN_DEMOS, getUploadedDemos } from "@/demos/registry";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ export default function HomePage() {
       const { data } = await supabase
         .from("flows")
         .select("*")
-        .eq("org_id", DEMO_ORG_ID)
+        .eq("tenant_id", DEMO_TENANT_ID)
         .neq("status", "archived")
         .order("updated_at", { ascending: false })
         .limit(10);

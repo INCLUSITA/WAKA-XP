@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_ORG_ID } from "@/lib/constants";
+import { DEMO_TENANT_ID } from "@/lib/constants";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ export default function FlowDashboard() {
     const { data, error } = await supabase
       .from("flows")
       .select("*")
-      .eq("org_id", DEMO_ORG_ID)
+      .eq("tenant_id", DEMO_TENANT_ID)
       .neq("status", "archived")
       .order("updated_at", { ascending: false });
 
@@ -51,7 +51,7 @@ export default function FlowDashboard() {
   const createFlow = async () => {
     const { data, error } = await supabase
       .from("flows")
-      .insert({ name: "Nuevo Flujo", org_id: DEMO_ORG_ID, nodes: [] as unknown as Json, edges: [] as unknown as Json })
+      .insert({ name: "Nuevo Flujo", tenant_id: DEMO_TENANT_ID, nodes: [] as unknown as Json, edges: [] as unknown as Json })
       .select("id")
       .single();
 
@@ -67,7 +67,7 @@ export default function FlowDashboard() {
       .from("flows")
       .insert({
         name: `${flow.name} (copia)`,
-        org_id: DEMO_ORG_ID,
+        tenant_id: DEMO_TENANT_ID,
         nodes: flow.nodes,
         edges: flow.edges,
         language: flow.language,

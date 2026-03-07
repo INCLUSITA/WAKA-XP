@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_ORG_ID } from "@/lib/constants";
+import { DEMO_TENANT_ID } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
 
 interface FlowStart {
@@ -22,7 +22,7 @@ export default function StartsPage() {
       const { data } = await supabase
         .from("flows")
         .select("id, name, created_at, nodes")
-        .eq("org_id", DEMO_ORG_ID)
+        .eq("tenant_id", DEMO_TENANT_ID)
         .neq("status", "archived")
         .order("created_at", { ascending: false });
       setFlows(data || []);
