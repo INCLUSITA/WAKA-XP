@@ -1,19 +1,21 @@
 import { useState, useCallback } from "react";
-import { Node } from "@xyflow/react";
-import { X, Languages, ArrowRight, Loader2 } from "lucide-react";
+import { Node, Edge } from "@xyflow/react";
+import { X, Languages, ArrowRight, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { SUPPORTED_LANGUAGES, translateFlowNodes, TranslationProgress } from "@/lib/flowTranslator";
+import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 
 interface TranslatorPanelProps {
   nodes: Node[];
-  onTranslated: (nodes: Node[]) => void;
+  edges: Edge[];
+  flowName: string;
   onClose: () => void;
 }
 
-export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPanelProps) {
+export function TranslatorPanel({ nodes, edges, flowName, onClose }: TranslatorPanelProps) {
   const [fromLang, setFromLang] = useState("es");
   const [toLang, setToLang] = useState("en");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -44,18 +46,25 @@ export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPane
     setProgress(null);
 
     try {
-      const translated = await translateFlowNodes(nodes, fromLang, toLang, setProgress);
-      onTranslated(translated);
+      const translatedNodes = await translateFlowNodes(nodes, fromLang, toLang, setProgress);
+      const targetLang = SUPPORTED_LANGUAGES.find((l) => l.code === toLang);
+      const translatedFlowName = `${flowName} (${targetLang?.label || toLang})`;
+
+      // Export as JSON copy — does NOT modify the current flow
+      const result = exportToTextIt(translatedNodes, edges, translatedFlowName);
+      downloadJson(result, `${flowName.replace(/\s+/g, "_")}_${toLang}.json`);
+
       toast.success(
-        `Flujo traducido de ${SUPPORTED_LANGUAGES.find((l) => l.code === fromLang)?.label} a ${SUPPORTED_LANGUAGES.find((l) => l.code === toLang)?.label}`
+        `Flujo traducido y descargado: ${translatedFlowName}`
       );
+      onClose();
     } catch {
       toast.error("Error al traducir el flujo");
     } finally {
       setIsTranslating(false);
       setProgress(null);
     }
-  }, [nodes, fromLang, toLang, onTranslated]);
+  }, [nodes, edges, flowName, fromLang, toLang, onClose]);
 
   const textCount = countTranslatableTexts();
   const progressPercent = progress ? (progress.current / progress.total) * 100 : 0;
@@ -65,7 +74,7 @@ export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPane
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4 text-node-wait" />
-          <h3 className="text-sm font-semibold text-foreground">Traducir Flujo</h3>
+          <h3 className="text-sm font-semibold text-foreground">Traducir y Descargar</h3>
         </div>
         <button onClick={onClose} className="rounded-md p-1 hover:bg-muted" disabled={isTranslating}>
           <X className="h-4 w-4 text-muted-foreground" />
@@ -74,7 +83,7 @@ export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPane
 
       <div className="space-y-4 p-4">
         <p className="text-xs text-muted-foreground">
-          Traduce todos los mensajes, respuestas rápidas y categorías sin modificar la estructura, webhooks ni expresiones.
+          Crea una <strong>copia traducida</strong> del flujo y descárgala como JSON listo para TextIt. El flujo original no se modifica.
         </p>
 
         <div className="flex items-center gap-2">
@@ -122,6 +131,10 @@ export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPane
             <span>Se preservará:</span>
             <span className="text-foreground">Webhooks, variables, estructura</span>
           </div>
+          <div className="mt-1 flex justify-between">
+            <span>Archivo de salida:</span>
+            <span className="font-mono text-foreground">{flowName.replace(/\s+/g, "_")}_{toLang}.json</span>
+          </div>
         </div>
 
         {isTranslating && progress && (
@@ -144,7 +157,7 @@ export function TranslatorPanel({ nodes, onTranslated, onClose }: TranslatorPane
             </>
           ) : (
             <>
-              <Languages className="mr-2 h-4 w-4" /> Traducir {textCount} textos
+              <Download className="mr-2 h-4 w-4" /> Traducir y Descargar JSON
             </>
           )}
         </Button>
