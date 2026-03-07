@@ -375,7 +375,7 @@ export function useFlowSimulation(
         }
       }
     },
-    [nodes, getNextNodeId, onHighlightNode, endFlow, executeWebhooks, options]
+    [nodes, getNextNodeId, onHighlightNode, endFlow, executeWebhooks]
   );
 
   const start = useCallback(() => {
