@@ -41,9 +41,9 @@ const nodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  type: "smoothstep",
+  type: "step",
   animated: false,
-  style: { strokeWidth: 2, stroke: "hsl(160, 84%, 39%)", strokeDasharray: "6 3" },
+  style: { strokeWidth: 2, stroke: "hsl(200, 30%, 65%)" },
 };
 
 export function FlowEditor() {
@@ -345,7 +345,7 @@ export function FlowEditor() {
               }
             }}
           />
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(220, 10%, 80%)" />
+          <Background variant={BackgroundVariant.Dots} gap={16} size={0.8} color="hsl(220, 10%, 85%)" />
 
           {nodes.length === 0 && (
             <Panel position="top-center" className="mt-20">
