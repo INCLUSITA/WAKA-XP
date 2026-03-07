@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useMemo } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -11,6 +11,8 @@ import {
   Connection,
   Node,
   Panel,
+  useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
@@ -23,6 +25,8 @@ import { WebhookNode } from "./WebhookNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar } from "./FlowToolbar";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
+import { validateFlow, ValidationError } from "@/lib/flowValidation";
+import { ValidationPanel } from "./ValidationPanel";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -114,7 +118,30 @@ export function FlowEditor() {
     [setNodes, setEdges]
   );
 
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
+
+  const handleValidate = useCallback(() => {
+    const errors = validateFlow(nodes, edges);
+    setValidationErrors(errors);
+    setShowValidation(true);
+    return errors;
+  }, [nodes, edges]);
+
   const handleExport = useCallback(() => {
+    const errors = validateFlow(nodes, edges);
+    const hasErrors = errors.some((e) => e.type === "error");
+    if (hasErrors) {
+      setValidationErrors(errors);
+      setShowValidation(true);
+      toast.error("Corrige los errores antes de exportar");
+      return;
+    }
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidation(true);
+      toast.warning("Hay advertencias — se exportó de todos modos");
+    }
     const result = exportToTextIt(nodes, edges, flowName);
     downloadJson(result, `${flowName.replace(/\s+/g, "_")}.json`);
     toast.success("Flujo exportado correctamente");
@@ -248,6 +275,7 @@ export function FlowEditor() {
         onImport={handleImport}
         onClear={handleClear}
         onLoadSample={handleLoadSample}
+        onValidate={handleValidate}
       />
 
       <input
@@ -305,6 +333,19 @@ export function FlowEditor() {
             onUpdate={updateNodeData}
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
+          />
+        )}
+
+        {showValidation && (
+          <ValidationPanel
+            errors={validationErrors}
+            onClose={() => setShowValidation(false)}
+            onFocusNode={(nodeId) => {
+              const node = nodes.find((n) => n.id === nodeId);
+              if (node) {
+                setSelectedNode(node);
+              }
+            }}
           />
         )}
       </div>
