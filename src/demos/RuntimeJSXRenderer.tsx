@@ -12,7 +12,14 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
   useEffect(() => {
     try {
       // Transpile JSX → JS
-      const result = transform(jsxSource, {
+      // Strip import/export before transpiling to avoid module issues
+      let preProcessed = jsxSource;
+      preProcessed = preProcessed.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
+      preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
+      preProcessed = preProcessed.replace(/^export\s+default\s+/gm, "");
+      preProcessed = preProcessed.replace(/^export\s+/gm, "");
+
+      const result = transform(preProcessed, {
         transforms: ["jsx", "typescript"],
         jsxRuntime: "classic",
         jsxPragma: "React.createElement",
@@ -21,22 +28,10 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
 
       let code = result.code;
 
-      // Remove import statements (we provide React globally)
-      code = code.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
-      code = code.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
-
-      // Replace `export default function X` with `function X` and capture name
+      // Capture component name from function declarations
       let componentName = "App";
-      code = code.replace(
-        /export\s+default\s+function\s+(\w+)/,
-        (_, name) => {
-          componentName = name;
-          return `function ${name}`;
-        }
-      );
-
-      // Remove other export statements
-      code = code.replace(/^export\s+/gm, "");
+      const fnMatch = code.match(/function\s+([A-Z]\w*)\s*\(/);
+      if (fnMatch) componentName = fnMatch[1];
 
       // Build a module that returns the component
       const moduleCode = `
