@@ -27,6 +27,7 @@ import { FlowToolbar } from "./FlowToolbar";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
+import { WhatsAppSimulator } from "./WhatsAppSimulator";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -46,6 +47,7 @@ export function FlowEditor() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -276,6 +278,7 @@ export function FlowEditor() {
         onClear={handleClear}
         onLoadSample={handleLoadSample}
         onValidate={handleValidate}
+        onSimulate={() => setShowSimulator(true)}
       />
 
       <input
@@ -345,6 +348,18 @@ export function FlowEditor() {
               if (node) {
                 setSelectedNode(node);
               }
+            }}
+          />
+        )}
+
+        {showSimulator && (
+          <WhatsAppSimulator
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setShowSimulator(false)}
+            onHighlightNode={(nodeId) => {
+              const node = nodes.find((n) => n.id === nodeId);
+              if (node) setSelectedNode(node);
             }}
           />
         )}
