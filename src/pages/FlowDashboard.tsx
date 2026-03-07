@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { WorkspaceContextBar } from "@/components/WorkspaceContextBar";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Copy, Archive, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Copy, Archive, Trash2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -22,6 +23,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function FlowDashboard() {
+  const { tenantId } = useWorkspace();
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ export default function FlowDashboard() {
     const { data, error } = await supabase
       .from("flows")
       .select("*")
-      .eq("tenant_id", DEMO_TENANT_ID)
+      .eq("tenant_id", tenantId)
       .neq("status", "archived")
       .order("updated_at", { ascending: false });
 
@@ -46,12 +48,12 @@ export default function FlowDashboard() {
 
   useEffect(() => {
     fetchFlows();
-  }, []);
+  }, [tenantId]);
 
   const createFlow = async () => {
     const { data, error } = await supabase
       .from("flows")
-      .insert({ name: "Nuevo Flujo", tenant_id: DEMO_TENANT_ID, nodes: [] as unknown as Json, edges: [] as unknown as Json })
+      .insert({ name: "Nuevo Flujo", tenant_id: tenantId, nodes: [] as unknown as Json, edges: [] as unknown as Json })
       .select("id")
       .single();
 
@@ -63,11 +65,11 @@ export default function FlowDashboard() {
   };
 
   const duplicateFlow = async (flow: Flow) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("flows")
       .insert({
         name: `${flow.name} (copia)`,
-        tenant_id: DEMO_TENANT_ID,
+        tenant_id: tenantId,
         nodes: flow.nodes,
         edges: flow.edges,
         language: flow.language,
@@ -99,11 +101,7 @@ export default function FlowDashboard() {
   };
 
   const deleteFlow = async (id: string) => {
-    const { error } = await supabase
-      .from("flows")
-      .delete()
-      .eq("id", id);
-
+    const { error } = await supabase.from("flows").delete().eq("id", id);
     if (error) {
       toast.error("Error al eliminar");
       return;
@@ -117,7 +115,12 @@ export default function FlowDashboard() {
       <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
         <SidebarTrigger />
         <h1 className="text-lg font-bold text-foreground">Flujos</h1>
-        <div className="ml-auto">
+        <Badge variant="outline" className="text-[8px] border-primary/30 text-primary">Classic Builder</Badge>
+        <div className="ml-auto flex items-center gap-3">
+          <WorkspaceContextBar compact />
+          <Button size="sm" variant="outline" onClick={() => navigate("/studio")} className="text-xs gap-1 border-accent/30 text-accent hover:bg-accent/5">
+            <Sparkles className="h-3 w-3" /> Open XP Studio
+          </Button>
           <Button onClick={createFlow} size="sm">
             <Plus className="mr-1.5 h-4 w-4" /> Nuevo Flujo
           </Button>
@@ -144,32 +147,20 @@ export default function FlowDashboard() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
-                    <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>
-                      {flow.status}
-                    </Badge>
+                    <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>{flow.status}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="pb-2">
                   <p className="text-xs text-muted-foreground">
                     Actualizado {format(new Date(flow.updated_at), "dd MMM yyyy, HH:mm", { locale: es })}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {(flow.nodes as unknown as any[])?.length || 0} nodos
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{(flow.nodes as unknown as any[])?.length || 0} nodos</p>
                 </CardContent>
                 <CardFooter className="gap-1 pt-0">
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/editor?id=${flow.id}`)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => duplicateFlow(flow)}>
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => archiveFlow(flow.id)}>
-                    <Archive className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteFlow(flow.id)}>
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => navigate(`/editor?id=${flow.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => duplicateFlow(flow)}><Copy className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => archiveFlow(flow.id)}><Archive className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteFlow(flow.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </CardFooter>
               </Card>
             ))}
