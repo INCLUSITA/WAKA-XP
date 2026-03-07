@@ -315,6 +315,8 @@ export function FlowEditor() {
           data.url = whAction?.url || "";
           data.method = whAction?.method || "GET";
           data.body = whAction?.body || "";
+          data.headers = whAction?.headers || {};
+          data.resultName = whAction?.result_name || "";
         } else if (n.router && !n.actions?.length) {
           type = "splitExpression";
           data.operand = n.router.operand || "@input.text";
@@ -323,6 +325,8 @@ export function FlowEditor() {
           data.url = n.actions[0].url || "";
           data.method = n.actions[0].method || "GET";
           data.body = n.actions[0].body || "";
+          data.headers = n.actions[0].headers || {};
+          data.resultName = n.actions[0].result_name || "";
         } else {
           const sendAction = n.actions?.find((a: any) => a.type === "send_msg");
           data.text = sendAction?.text || n.actions?.map((a: any) => a.text || a.type).filter(Boolean).join("\n") || "";
