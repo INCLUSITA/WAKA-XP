@@ -1,6 +1,9 @@
 import {
-  Play, Archive, Globe as GlobIcon, Clock, Webhook,
-  Download, Upload, ShieldCheck, Settings, Smartphone, LayoutGrid
+  Home, Map, Smartphone, Hammer, Rocket,
+  BookOpen, LayoutGrid, LayoutTemplate, Upload,
+  Plug, Building2, Settings, Wrench,
+  Archive, Globe as GlobIcon, Clock, Webhook,
+  Download, ShieldCheck,
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -17,27 +20,42 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const flowsItems = [
-  { title: "Dashboard", url: "/", icon: Play },
+const principalItems = [
+  { title: "Home", url: "/", icon: Home },
+  { title: "Journeys", url: "/journeys", icon: Map },
+  { title: "Simulator", url: "/simulator", icon: Smartphone },
+  { title: "Builder", url: "/editor", icon: Hammer },
+  { title: "Production", url: "/production", icon: Rocket },
+];
+
+const assetsItems = [
+  { title: "Library", url: "/library", icon: BookOpen },
+  { title: "Demos", url: "/demos", icon: LayoutGrid },
+  { title: "Templates", url: "/templates", icon: LayoutTemplate },
+  { title: "Imports", url: "/import", icon: Upload },
+];
+
+const infraItems = [
+  { title: "Integrations", url: "/integrations", icon: Plug },
+  { title: "Tenants", url: "/tenants", icon: Building2 },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
+const legacyItems = [
+  { title: "Flow Dashboard", url: "/flows", icon: LayoutGrid },
   { title: "Archived", url: "/archived", icon: Archive },
   { title: "Globals", url: "/globals", icon: GlobIcon },
-];
-
-const historyItems = [
   { title: "Starts", url: "/starts", icon: Clock },
   { title: "Webhooks", url: "/webhooks", icon: Webhook },
-];
-
-const toolsItems = [
-  { title: "Demos", url: "/demos", icon: LayoutGrid },
-  { title: "Simulator", url: "/simulator", icon: Smartphone },
-];
-
-const settingsItems = [
   { title: "Export", url: "/export", icon: Download },
-  { title: "Import", url: "/import", icon: Upload },
   { title: "Validate", url: "/validate", icon: ShieldCheck },
-  { title: "Settings", url: "/settings", icon: Settings },
+];
+
+const sections = [
+  { label: "Principal", items: principalItems },
+  { label: "Assets & Resources", items: assetsItems },
+  { label: "Infrastructure", items: infraItems },
+  { label: "Legacy Tools", items: legacyItems },
 ];
 
 export function AppSidebar() {
@@ -59,108 +77,32 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Flows */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Flows
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {flowsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* History */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            History
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {historyItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Tools */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Tools
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {toolsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Settings
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {section.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        activeClassName="bg-primary/10 text-primary font-medium"
+                      >
+                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );
