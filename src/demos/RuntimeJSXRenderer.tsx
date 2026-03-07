@@ -12,7 +12,14 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
   useEffect(() => {
     try {
       // Transpile JSX → JS
-      const result = transform(jsxSource, {
+      // Strip import/export before transpiling to avoid module issues
+      let preProcessed = jsxSource;
+      preProcessed = preProcessed.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
+      preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
+      preProcessed = preProcessed.replace(/^export\s+default\s+/gm, "");
+      preProcessed = preProcessed.replace(/^export\s+/gm, "");
+
+      const result = transform(preProcessed, {
         transforms: ["jsx", "typescript"],
         jsxRuntime: "classic",
         jsxPragma: "React.createElement",
