@@ -181,6 +181,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           edges: Json
+          experience_id: string | null
           id: string
           language: string
           name: string
@@ -195,6 +196,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           edges?: Json
+          experience_id?: string | null
           id?: string
           language?: string
           name: string
@@ -209,6 +211,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           edges?: Json
+          experience_id?: string | null
           id?: string
           language?: string
           name?: string
@@ -219,6 +222,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "flows_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flows_org_id_fkey"
             columns: ["tenant_id"]
