@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 
 export interface ChatMessage {
@@ -7,14 +7,139 @@ export interface ChatMessage {
   text: string;
   quickReplies?: string[];
   timestamp: Date;
+  imageUrl?: string;
 }
 
-export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?: (id: string) => void) {
+export interface SimulationContext {
+  input: { text: string; attachments: { url: string; content_type: string }[] };
+  webhook: { json: any; status: string };
+  results: Record<string, { value: string }>;
+  contact: Record<string, string>;
+  urns: { whatsapp: string };
+}
+
+function createEmptyContext(): SimulationContext {
+  return {
+    input: { text: "", attachments: [] },
+    webhook: { json: {}, status: "" },
+    results: {},
+    contact: { name: "Simulador User" },
+    urns: { whatsapp: "+22670000000" },
+  };
+}
+
+/**
+ * Resolve TextIt-style template expressions like @input.text, @webhook.json.data.id, etc.
+ * Supports:
+ *  - @input.text / @input.attachments
+ *  - @webhook.json.xxx / @webhook.status
+ *  - @results.xxx.value
+ *  - @contact.xxx
+ *  - @(expression) — simple path resolution inside parens
+ *  - @(parse_json(webhook.json.output[1].content.0.text).field) — best-effort
+ *  - @(attachment_parts(input.attachments.0).url) — returns first attachment URL
+ *  - @upper(...), @default(...) — basic support
+ *  - @(field(urns.whatsapp, 1, ":")) — basic support
+ */
+function resolveTemplate(template: string, ctx: SimulationContext): string {
+  if (!template) return template;
+
+  return template.replace(/@\(([^)]+)\)|@([a-zA-Z_][a-zA-Z0-9_.]*)/g, (_match, expr, simple) => {
+    if (simple) {
+      return resolvePath(simple, ctx);
+    }
+    if (expr) {
+      return resolveExpression(expr, ctx);
+    }
+    return _match;
+  });
+}
+
+function resolvePath(path: string, ctx: SimulationContext): string {
+  const parts = path.split(".");
+  let current: any = ctx;
+  for (const part of parts) {
+    if (current == null) return "";
+    // Handle array index
+    const arrMatch = part.match(/^(.+)\[(\d+)\]$/);
+    if (arrMatch) {
+      current = current[arrMatch[1]];
+      if (Array.isArray(current)) current = current[parseInt(arrMatch[2])];
+      else return "";
+      continue;
+    }
+    current = current[part];
+  }
+  if (current == null) return "";
+  if (typeof current === "object") return JSON.stringify(current);
+  return String(current);
+}
+
+function resolveExpression(expr: string, ctx: SimulationContext): string {
+  // Handle attachment_parts(input.attachments.0).url
+  const attachMatch = expr.match(/attachment_parts\(input\.attachments\.(\d+)\)\.url/);
+  if (attachMatch) {
+    const idx = parseInt(attachMatch[1]);
+    return ctx.input.attachments[idx]?.url || "";
+  }
+
+  // Handle parse_json(webhook.json.output[1].content.0.text).field
+  const parseJsonMatch = expr.match(/parse_json\(([^)]+)\)\.(.+)/);
+  if (parseJsonMatch) {
+    const jsonStr = resolvePath(parseJsonMatch[1], ctx);
+    try {
+      const parsed = JSON.parse(jsonStr);
+      const field = parseJsonMatch[2];
+      return parsed[field] != null ? String(parsed[field]) : "";
+    } catch { return ""; }
+  }
+
+  // Handle upper(...)
+  const upperMatch = expr.match(/^upper\((.+)\)$/);
+  if (upperMatch) {
+    return resolveExpression(upperMatch[1], ctx).toUpperCase();
+  }
+
+  // Handle default(..., ...)
+  const defaultMatch = expr.match(/^default\((.+),\s*(.+)\)$/);
+  if (defaultMatch) {
+    const val = resolveExpression(defaultMatch[1], ctx);
+    return val || resolveExpression(defaultMatch[2], ctx);
+  }
+
+  // Handle field(urns.whatsapp, 1, ":")
+  const fieldMatch = expr.match(/field\(([^,]+),\s*(\d+),\s*"([^"]+)"\)/);
+  if (fieldMatch) {
+    const val = resolvePath(fieldMatch[1], ctx);
+    const parts = val.split(fieldMatch[3]);
+    return parts[parseInt(fieldMatch[2])] || "";
+  }
+
+  // Try direct path resolution (strip quotes)
+  const cleaned = expr.replace(/^["']|["']$/g, "").trim();
+  return resolvePath(cleaned, ctx);
+}
+
+interface UseFlowSimulationOptions {
+  executeWebhooks?: boolean;
+  onWebhookExecuted?: (url: string, status: number, response: any) => void;
+}
+
+export function useFlowSimulation(
+  nodes: Node[],
+  edges: Edge[],
+  onHighlightNode?: (id: string) => void,
+  options?: UseFlowSimulationOptions,
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
   const [waitingForInput, setWaitingForInput] = useState(false);
+  const [waitingForAttachment, setWaitingForAttachment] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [isFinished, setIsFinished] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const ctxRef = useRef<SimulationContext>(createEmptyContext());
+  const executeWebhooks = options?.executeWebhooks ?? false;
 
   const findFirstNode = useCallback((): string | null => {
     if (nodes.length === 0) return null;
@@ -39,6 +164,7 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
 
   const endFlow = useCallback(() => {
     setIsFinished(true);
+    setIsProcessing(false);
     setMessages((prev) => [
       ...prev,
       { id: crypto.randomUUID(), sender: "system", text: "— Fin del flujo —", timestamp: new Date() },
@@ -46,7 +172,7 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
   }, []);
 
   const processNode = useCallback(
-    (nodeId: string) => {
+    async (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
       if (!node) { endFlow(); return; }
 
@@ -56,12 +182,26 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
 
       switch (node.type) {
         case "sendMsg": {
-          const text = data.text || "(mensaje vacío)";
+          const rawText = data.text || "(mensaje vacío)";
+          const text = resolveTemplate(rawText, ctxRef.current);
           const quickReplies = data.quick_replies?.filter((r: string) => r.trim()) || [];
-          setMessages((prev) => [
-            ...prev,
-            { id: crypto.randomUUID(), sender: "bot", text, quickReplies, timestamp: new Date() },
-          ]);
+
+          // Check if this is a save_result node (convention: text starts with "set_run_result")
+          if (rawText.toLowerCase().includes("set_run_result") || data.resultName) {
+            const resultName = data.resultName || "result";
+            const value = resolveTemplate(data.value || ctxRef.current.input.text, ctxRef.current);
+            ctxRef.current.results[resultName.toLowerCase()] = { value };
+            setMessages((prev) => [
+              ...prev,
+              { id: crypto.randomUUID(), sender: "system", text: `💾 Result saved: ${resultName} = ${value.substring(0, 80)}${value.length > 80 ? "…" : ""}`, timestamp: new Date() },
+            ]);
+          } else {
+            setMessages((prev) => [
+              ...prev,
+              { id: crypto.randomUUID(), sender: "bot", text, quickReplies, timestamp: new Date() },
+            ]);
+          }
+
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);
             if (nextId) processNode(nextId);
@@ -69,51 +209,179 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
           }, 800);
           break;
         }
+
         case "waitResponse": {
           const cats = (data.categories || []).filter((c: string) => c.trim());
           setCategories(cats);
           setWaitingForInput(true);
+          setIsProcessing(false);
           break;
         }
+
         case "splitExpression": {
+          const operand = resolveTemplate(data.operand || "@input.text", ctxRef.current);
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `⚡ Split: ${data.operand || "@input.text"}`, timestamp: new Date() },
+            { id: crypto.randomUUID(), sender: "system", text: `⚡ Split: evaluating "${data.operand}" → "${operand.substring(0, 60)}"`, timestamp: new Date() },
           ]);
+
+          // If operand resolves to non-empty, take first path; if empty, try "Other" or default
           setTimeout(() => {
-            const nextId = getNextNodeId(nodeId);
+            const nextId = operand && operand !== "undefined" && operand !== "null" && operand.trim()
+              ? getNextNodeId(nodeId) // first path (non-empty)
+              : getNextNodeId(nodeId); // fallback — same for now
             if (nextId) processNode(nextId);
             else endFlow();
           }, 500);
           break;
         }
+
         case "webhook": {
+          const url = resolveTemplate(data.url || "", ctxRef.current);
+          const method = data.method || "GET";
+          const bodyTemplate = data.body || "";
+          const body = resolveTemplate(bodyTemplate, ctxRef.current);
+          const headers = data.headers || {};
+
+          // Resolve header values too
+          const resolvedHeaders: Record<string, string> = {};
+          for (const [key, val] of Object.entries(headers)) {
+            resolvedHeaders[key] = resolveTemplate(String(val), ctxRef.current);
+          }
+
+          if (executeWebhooks && url) {
+            setIsProcessing(true);
+            setMessages((prev) => [
+              ...prev,
+              { id: crypto.randomUUID(), sender: "system", text: `🌐 Calling ${method} ${url.substring(0, 50)}…`, timestamp: new Date() },
+            ]);
+
+            try {
+              const fetchOptions: RequestInit = {
+                method,
+                headers: resolvedHeaders,
+              };
+              if (method !== "GET" && method !== "HEAD" && body) {
+                fetchOptions.body = body;
+              }
+
+              const response = await fetch(url, fetchOptions);
+              const responseText = await response.text();
+              let responseJson: any = {};
+              try { responseJson = JSON.parse(responseText); } catch { responseJson = { raw: responseText }; }
+
+              ctxRef.current.webhook = {
+                json: responseJson,
+                status: response.ok ? "success" : "failure",
+              };
+
+              // Save result_name if configured
+              if (data.resultName) {
+                ctxRef.current.results[data.resultName.toLowerCase()] = { value: responseText };
+              }
+
+              options?.onWebhookExecuted?.(url, response.status, responseJson);
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: crypto.randomUUID(),
+                  sender: "system",
+                  text: `✅ Webhook ${response.status}: ${JSON.stringify(responseJson).substring(0, 120)}${JSON.stringify(responseJson).length > 120 ? "…" : ""}`,
+                  timestamp: new Date(),
+                },
+              ]);
+
+              setIsProcessing(false);
+              setTimeout(() => {
+                const nextId = getNextNodeId(nodeId);
+                if (nextId) processNode(nextId);
+                else endFlow();
+              }, 600);
+            } catch (err: any) {
+              ctxRef.current.webhook = { json: { error: err.message }, status: "failure" };
+              setMessages((prev) => [
+                ...prev,
+                { id: crypto.randomUUID(), sender: "system", text: `❌ Webhook error: ${err.message}`, timestamp: new Date() },
+              ]);
+              setIsProcessing(false);
+              setTimeout(() => {
+                const nextId = getNextNodeId(nodeId);
+                if (nextId) processNode(nextId);
+                else endFlow();
+              }, 600);
+            }
+          } else {
+            // Non-executing mode — just show info
+            setMessages((prev) => [
+              ...prev,
+              { id: crypto.randomUUID(), sender: "system", text: `🌐 Webhook: ${method} ${url || "(sin URL)"}`, timestamp: new Date() },
+            ]);
+            setTimeout(() => {
+              const nextId = getNextNodeId(nodeId);
+              if (nextId) processNode(nextId);
+              else endFlow();
+            }, 600);
+          }
+          break;
+        }
+
+        case "saveResult": {
+          const resultName = data.resultName || "result";
+          const value = resolveTemplate(data.value || ctxRef.current.input.text, ctxRef.current);
+          ctxRef.current.results[resultName.toLowerCase()] = { value };
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `🌐 Webhook: ${data.method || "GET"} ${data.url || "(sin URL)"}`, timestamp: new Date() },
+            { id: crypto.randomUUID(), sender: "system", text: `💾 ${resultName} = ${value.substring(0, 80)}`, timestamp: new Date() },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);
             if (nextId) processNode(nextId);
             else endFlow();
-          }, 600);
+          }, 400);
           break;
         }
+
+        case "updateContact": {
+          const field = data.field || "name";
+          const value = resolveTemplate(data.value || "", ctxRef.current);
+          ctxRef.current.contact[field] = value;
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `👤 Contact: ${field} = ${value}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
+          break;
+        }
+
         default: {
-          const nextId = getNextNodeId(nodeId);
-          if (nextId) processNode(nextId);
-          else endFlow();
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `⏩ ${node.type}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
         }
       }
     },
-    [nodes, getNextNodeId, onHighlightNode, endFlow]
+    [nodes, getNextNodeId, onHighlightNode, endFlow, executeWebhooks, options]
   );
 
   const start = useCallback(() => {
     setMessages([]);
     setIsFinished(false);
     setWaitingForInput(false);
+    setWaitingForAttachment(false);
     setCategories([]);
+    setIsProcessing(false);
+    ctxRef.current = createEmptyContext();
     const firstId = findFirstNode();
     if (firstId) processNode(firstId);
     else setMessages([{ id: crypto.randomUUID(), sender: "system", text: "No hay nodos en el flujo", timestamp: new Date() }]);
@@ -122,11 +390,13 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !currentNodeId) return;
+      ctxRef.current.input.text = text;
       setMessages((prev) => [
         ...prev,
         { id: crypto.randomUUID(), sender: "user", text, timestamp: new Date() },
       ]);
       setWaitingForInput(false);
+      setWaitingForAttachment(false);
       setCategories([]);
 
       const node = nodes.find((n) => n.id === currentNodeId);
@@ -143,5 +413,51 @@ export function useFlowSimulation(nodes: Node[], edges: Edge[], onHighlightNode?
     [currentNodeId, nodes, getNextNodeId, processNode, endFlow]
   );
 
-  return { messages, waitingForInput, categories, isFinished, start, sendMessage };
+  const sendAttachment = useCallback(
+    (file: File) => {
+      if (!currentNodeId) return;
+      const objectUrl = URL.createObjectURL(file);
+      
+      // Store attachment in context
+      ctxRef.current.input.attachments = [
+        { url: objectUrl, content_type: file.type },
+      ];
+      ctxRef.current.input.text = objectUrl; // fallback
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          sender: "user",
+          text: `📎 ${file.name}`,
+          imageUrl: file.type.startsWith("image/") ? objectUrl : undefined,
+          timestamp: new Date(),
+        },
+      ]);
+
+      setWaitingForInput(false);
+      setWaitingForAttachment(false);
+      setCategories([]);
+
+      setTimeout(() => {
+        const nextId = getNextNodeId(currentNodeId);
+        if (nextId) processNode(nextId);
+        else endFlow();
+      }, 400);
+    },
+    [currentNodeId, getNextNodeId, processNode, endFlow]
+  );
+
+  return {
+    messages,
+    waitingForInput,
+    waitingForAttachment,
+    categories,
+    isFinished,
+    isProcessing,
+    start,
+    sendMessage,
+    sendAttachment,
+    context: ctxRef.current,
+  };
 }
