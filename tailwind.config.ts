@@ -47,6 +47,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        node: {
+          send: "hsl(var(--node-send))",
+          wait: "hsl(var(--node-wait))",
+          split: "hsl(var(--node-split))",
+          webhook: "hsl(var(--node-webhook))",
+        },
+        canvas: {
+          bg: "hsl(var(--canvas-bg))",
+          dot: "hsl(var(--canvas-dot))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
