@@ -257,7 +257,8 @@ export function useFlowSimulation(
             setIsProcessing(true);
             setMessages((prev) => [
               ...prev,
-              { id: crypto.randomUUID(), sender: "system", text: `🌐 Calling ${method} ${url.substring(0, 50)}…`, timestamp: new Date() },
+              { id: crypto.randomUUID(), sender: "system", text: `🌐 ${method} ${url.substring(0, 60)}…`, timestamp: new Date() },
+              ...(body ? [{ id: crypto.randomUUID(), sender: "system" as const, text: `📤 Body: ${body.substring(0, 200)}${body.length > 200 ? "…" : ""}`, timestamp: new Date() }] : []),
             ]);
 
             try {
