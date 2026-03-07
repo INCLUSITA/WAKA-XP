@@ -56,7 +56,7 @@ export function AppSidebar() {
         </div>
 
         {/* Flows */}
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Flows
           </SidebarGroupLabel>
@@ -82,7 +82,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* History */}
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             History
           </SidebarGroupLabel>
@@ -108,7 +108,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Settings */}
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Settings
           </SidebarGroupLabel>
