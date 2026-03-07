@@ -408,6 +408,10 @@ export function FlowEditor() {
             nodes={nodes}
             onClose={() => setSelectedEdge(null)}
             onDelete={deleteEdge}
+            onSelectNode={(node) => {
+              setSelectedEdge(null);
+              setSelectedNode(node);
+            }}
           />
         )}
       </div>
