@@ -1,6 +1,6 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
-  ShieldCheck, Play, Languages, ChevronDown,
+  ShieldCheck, Play, Languages, ChevronDown, History,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ interface FlowToolbarProps {
   onValidate?: () => void;
   onSimulate?: () => void;
   onTranslate?: () => void;
+  onVersions?: () => void;
   saveStatus?: SaveStatus;
 }
 
@@ -68,6 +69,7 @@ export function FlowToolbar({
   onValidate,
   onSimulate,
   onTranslate,
+  onVersions,
   saveStatus,
 }: FlowToolbarProps) {
   return (
@@ -141,6 +143,11 @@ export function FlowToolbar({
         {onValidate && (
           <Button variant="outline" size="sm" onClick={onValidate}>
             <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Validate
+          </Button>
+        )}
+        {onVersions && (
+          <Button variant="outline" size="sm" onClick={onVersions} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
+            <History className="mr-1 h-3.5 w-3.5" /> Versions
           </Button>
         )}
         {onLoadSample && (
