@@ -107,11 +107,9 @@ export default function PhoneSimulator() {
             <button onClick={() => navigate("/")} className="text-white">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366]">
-              <span className="text-lg">🤖</span>
-            </div>
+            <img src="/favicon.png" alt="WAKA" className="h-10 w-10 rounded-full object-cover" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white">Bot WhatsApp</p>
+              <p className="text-sm font-semibold text-white">WAKA Bot</p>
               <p className="text-[11px] text-white/70">
                 {isProcessing ? "procesando…" : isFinished ? "sin conexión" : waitingForInput ? "en línea" : "escribiendo…"}
               </p>
