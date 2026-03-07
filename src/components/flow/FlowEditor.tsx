@@ -120,12 +120,46 @@ export function FlowEditor() {
           defaultData.categories = ["Sí", "No"];
           break;
         case "splitExpression":
+        case "splitContactField":
+        case "splitResult":
+        case "splitRandom":
+        case "splitGroup":
           defaultData.operand = "@input.text";
           break;
         case "webhook":
           defaultData.url = "";
           defaultData.method = "GET";
           defaultData.body = "";
+          break;
+        case "saveResult":
+          defaultData.value = "@input.text";
+          defaultData.resultName = "Result";
+          break;
+        case "updateContact":
+          defaultData.field = "name";
+          defaultData.value = "";
+          break;
+        case "sendEmail":
+          defaultData.to = "";
+          defaultData.subject = "";
+          defaultData.body = "";
+          break;
+        case "callAI":
+          defaultData.prompt = "";
+          break;
+        case "enterFlow":
+          defaultData.flowName = "";
+          break;
+        case "openTicket":
+          defaultData.topic = "";
+          defaultData.body = "";
+          break;
+        case "callZapier":
+          defaultData.url = "";
+          break;
+        case "sendAirtime":
+          defaultData.amount = "";
+          defaultData.currency = "XOF";
           break;
       }
 
