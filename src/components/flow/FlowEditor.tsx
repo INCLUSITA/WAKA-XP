@@ -10,6 +10,7 @@ import {
   addEdge,
   Connection,
   Node,
+  Edge,
   Panel,
   useReactFlow,
   ReactFlowProvider,
@@ -25,6 +26,7 @@ import { SplitNode } from "./SplitNode";
 import { WebhookNode } from "./WebhookNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar } from "./FlowToolbar";
+import { EdgeInfoPanel } from "./EdgeInfoPanel";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
@@ -47,6 +49,7 @@ export function FlowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
@@ -62,9 +65,23 @@ export function FlowEditor() {
     setSelectedNode(node);
   }, []);
 
-  const onPaneClick = useCallback(() => {
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
     setSelectedNode(null);
   }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  }, []);
+
+  const deleteEdge = useCallback(
+    (id: string) => {
+      setEdges((eds) => eds.filter((e) => e.id !== id));
+      setSelectedEdge(null);
+    },
+    [setEdges]
+  );
 
   const addNode = useCallback(
     (type: string) => {
@@ -307,6 +324,7 @@ export function FlowEditor() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
@@ -380,6 +398,15 @@ export function FlowEditor() {
             edges={edges}
             flowName={flowName}
             onClose={() => setShowTranslator(false)}
+          />
+        )}
+
+        {selectedEdge && (
+          <EdgeInfoPanel
+            edge={selectedEdge}
+            nodes={nodes}
+            onClose={() => setSelectedEdge(null)}
+            onDelete={deleteEdge}
           />
         )}
       </div>
