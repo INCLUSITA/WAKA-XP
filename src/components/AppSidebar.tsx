@@ -1,6 +1,6 @@
 import {
   Play, Archive, Globe as GlobIcon, Clock, Webhook,
-  Download, Upload, ShieldCheck, Settings, ChevronLeft
+  Download, Upload, ShieldCheck, Settings, Smartphone, LayoutGrid
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -26,6 +26,11 @@ const flowsItems = [
 const historyItems = [
   { title: "Starts", url: "/starts", icon: Clock },
   { title: "Webhooks", url: "/webhooks", icon: Webhook },
+];
+
+const toolsItems = [
+  { title: "Demos", url: "/demos", icon: LayoutGrid },
+  { title: "Simulator", url: "/simulator", icon: Smartphone },
 ];
 
 const settingsItems = [
