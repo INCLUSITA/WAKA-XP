@@ -49,6 +49,7 @@ export function FlowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
