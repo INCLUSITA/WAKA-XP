@@ -134,7 +134,7 @@ const MoovLogo = () => (
 /* ══════════════════════════════════════════════════════════════
    ONBOARDING SEQUENCES — BURKINA FASO
 ══════════════════════════════════════════════════════════════ */
-const RAW_ONBOARDING = {
+const RAW_ONBOARDING: Record<string, any[]> = {
   gsm2money: [
     { from:"bot", delay:0,    text:"__LS_welcome_gsm__" + "\n\nNous avons remarqué que vous utilisez Moov depuis *2 ans* mais vous n'avez pas encore de compte *Moov Money*.", tag:"WAKA NEXUS → WhatsApp · " + "__LS_tag_greeting__" },
     { from:"bot", delay:1400, text:"💰 Avec *Moov Money* vous pouvez :\n✅ Envoyer & recevoir de l'argent\n✅ Payer vos factures SONABEL / ONEA\n✅ Acheter du crédit Moov\n✅ Payer en boutiques partenaires\n\nTout depuis votre téléphone, *sans compte bancaire.*" },
@@ -301,7 +301,7 @@ const RAW_ONBOARDING = {
 /* ══════════════════════════════════════════════════════════════
    WALLET FLOWS — Moov Money BF
 ══════════════════════════════════════════════════════════════ */
-const RAW_WALLET_FLOWS = {
+const RAW_WALLET_FLOWS: Record<string, any[]> = {
   send_money: [
     { from:"bot",  delay:0,    text:"💸 *Transfert Moov Money*\n\nEntrez le numéro du destinataire :", tag:"WAKA CORE — Transfer Init" },
     { from:"user", delay:1800, text:"+226 71 987 654" },
@@ -686,7 +686,7 @@ const RAW_WALLET_FLOWS = {
 /* ══════════════════════════════════════════════════════════════
    SCENARIOS META
 ══════════════════════════════════════════════════════════════ */
-const SCENARIOS_META = {
+const SCENARIOS_META: Record<string, any> = {
   gsm2money: {
     label:"GSM → Activation Moov Money", icon:"📱", color:C.moovCyan,
     description:"Convertir un abonné GSM en client Moov Money",
