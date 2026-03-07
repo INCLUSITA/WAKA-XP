@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_ORG_ID } from "@/lib/constants";
+import { DEMO_TENANT_ID } from "@/lib/constants";
 import { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -70,7 +70,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenc
               nodes: nodes as unknown as Json,
               edges: edges as unknown as Json,
               name,
-              org_id: DEMO_ORG_ID,
+              tenant_id: DEMO_TENANT_ID,
             })
             .select("id")
             .single();

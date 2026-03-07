@@ -62,8 +62,8 @@ export type Database = {
           language: string
           name: string
           nodes: Json
-          org_id: string
           status: Database["public"]["Enums"]["flow_status"]
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -75,8 +75,8 @@ export type Database = {
           language?: string
           name: string
           nodes?: Json
-          org_id: string
           status?: Database["public"]["Enums"]["flow_status"]
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -88,16 +88,16 @@ export type Database = {
           language?: string
           name?: string
           nodes?: Json
-          org_id?: string
           status?: Database["public"]["Enums"]["flow_status"]
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "flows_org_id_fkey"
-            columns: ["org_id"]
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -108,7 +108,7 @@ export type Database = {
           description: string | null
           id: string
           key: string
-          org_id: string
+          tenant_id: string
           value: string
         }
         Insert: {
@@ -116,7 +116,7 @@ export type Database = {
           description?: string | null
           id?: string
           key: string
-          org_id: string
+          tenant_id: string
           value?: string
         }
         Update: {
@@ -124,77 +124,89 @@ export type Database = {
           description?: string | null
           id?: string
           key?: string
-          org_id?: string
+          tenant_id?: string
           value?: string
         }
         Relationships: [
           {
             foreignKeyName: "globals_org_id_fkey"
-            columns: ["org_id"]
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
-      }
-      organizations: {
-        Row: {
-          channels: string[]
-          country_code: string
-          created_at: string
-          id: string
-          name: string
-          slug: string
-        }
-        Insert: {
-          channels?: string[]
-          country_code?: string
-          created_at?: string
-          id?: string
-          name: string
-          slug: string
-        }
-        Update: {
-          channels?: string[]
-          country_code?: string
-          created_at?: string
-          id?: string
-          name?: string
-          slug?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
           full_name: string | null
           id: string
-          org_id: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
-          org_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
-          org_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "profiles_org_id_fkey"
-            columns: ["org_id"]
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenants: {
+        Row: {
+          channels: string[]
+          country_code: string
+          created_at: string
+          display_name: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          timezone: string | null
+        }
+        Insert: {
+          channels?: string[]
+          country_code?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          timezone?: string | null
+        }
+        Update: {
+          channels?: string[]
+          country_code?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          timezone?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -220,10 +232,10 @@ export type Database = {
           direction: Database["public"]["Enums"]["webhook_direction"]
           flow_id: string | null
           id: string
-          org_id: string
           payload: Json | null
           response_body: string | null
           status_code: number | null
+          tenant_id: string
           url: string | null
         }
         Insert: {
@@ -231,10 +243,10 @@ export type Database = {
           direction?: Database["public"]["Enums"]["webhook_direction"]
           flow_id?: string | null
           id?: string
-          org_id: string
           payload?: Json | null
           response_body?: string | null
           status_code?: number | null
+          tenant_id: string
           url?: string | null
         }
         Update: {
@@ -242,10 +254,10 @@ export type Database = {
           direction?: Database["public"]["Enums"]["webhook_direction"]
           flow_id?: string | null
           id?: string
-          org_id?: string
           payload?: Json | null
           response_body?: string | null
           status_code?: number | null
+          tenant_id?: string
           url?: string | null
         }
         Relationships: [
@@ -258,9 +270,9 @@ export type Database = {
           },
           {
             foreignKeyName: "webhook_logs_org_id_fkey"
-            columns: ["org_id"]
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -271,6 +283,7 @@ export type Database = {
     }
     Functions: {
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
+      get_user_tenant_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
