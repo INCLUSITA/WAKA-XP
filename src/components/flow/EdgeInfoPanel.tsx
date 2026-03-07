@@ -7,6 +7,7 @@ interface EdgeInfoPanelProps {
   nodes: Node[];
   onClose: () => void;
   onDelete: (id: string) => void;
+  onSelectNode: (node: Node) => void;
 }
 
 const nodeTypeLabels: Record<string, { label: string; color: string }> = {
