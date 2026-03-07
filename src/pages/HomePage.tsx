@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Plus, Upload, Download, Sparkles, Hammer, Smartphone,
   Map, LayoutGrid, Rocket, ArrowRight, Search,
@@ -119,6 +120,7 @@ export default function HomePage() {
           <Button size="sm" variant="outline" className="border-border/50 hover:border-accent/30 hover:bg-accent/5" onClick={() => navigate("/demos")}>
             <Upload className="mr-1 h-3.5 w-3.5" /> Upload JSX
           </Button>
+          <ThemeToggle />
         </div>
       </div>
 
