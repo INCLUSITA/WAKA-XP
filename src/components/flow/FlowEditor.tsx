@@ -288,6 +288,7 @@ export function FlowEditor() {
           sessionStorage.setItem("simulator-flow", JSON.stringify({ nodes, edges }));
           navigate("/simulator");
         }}
+        onDemos={() => navigate("/demos")}
       />
 
       <input
