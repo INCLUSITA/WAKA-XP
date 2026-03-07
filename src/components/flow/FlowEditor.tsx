@@ -407,6 +407,10 @@ export function FlowEditor() {
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
         saveStatus={saveStatus}
+        experienceName={experienceName}
+        onOpenExperience={() => {
+          if (experienceId) navigate(`/studio?id=${experienceId}`);
+        }}
       />
 
       <input
