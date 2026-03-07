@@ -28,6 +28,7 @@ import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
+import { TranslatorPanel } from "./TranslatorPanel";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -48,6 +49,7 @@ export function FlowEditor() {
   const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [showTranslator, setShowTranslator] = useState(false);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -279,6 +281,7 @@ export function FlowEditor() {
         onLoadSample={handleLoadSample}
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
+        onTranslate={() => setShowTranslator(true)}
       />
 
       <input
@@ -361,6 +364,17 @@ export function FlowEditor() {
               const node = nodes.find((n) => n.id === nodeId);
               if (node) setSelectedNode(node);
             }}
+          />
+        )}
+
+        {showTranslator && (
+          <TranslatorPanel
+            nodes={nodes}
+            onTranslated={(translatedNodes) => {
+              setNodes(translatedNodes);
+              setShowTranslator(false);
+            }}
+            onClose={() => setShowTranslator(false)}
           />
         )}
       </div>
