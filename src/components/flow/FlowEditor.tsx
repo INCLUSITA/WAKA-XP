@@ -324,6 +324,7 @@ export function FlowEditor() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
@@ -397,6 +398,15 @@ export function FlowEditor() {
             edges={edges}
             flowName={flowName}
             onClose={() => setShowTranslator(false)}
+          />
+        )}
+
+        {selectedEdge && (
+          <EdgeInfoPanel
+            edge={selectedEdge}
+            nodes={nodes}
+            onClose={() => setSelectedEdge(null)}
+            onDelete={deleteEdge}
           />
         )}
       </div>
