@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import HomePage from "./pages/HomePage";
 import FlowDashboard from "./pages/FlowDashboard";
 import Index from "./pages/Index";
 import PhoneSimulator from "./pages/PhoneSimulator";
@@ -17,6 +18,12 @@ import ExportPage from "./pages/ExportPage";
 import ImportPage from "./pages/ImportPage";
 import ValidatePage from "./pages/ValidatePage";
 import SettingsPage from "./pages/SettingsPage";
+import JourneysPage from "./pages/JourneysPage";
+import ProductionPage from "./pages/ProductionPage";
+import LibraryPage from "./pages/LibraryPage";
+import TemplatesPage from "./pages/TemplatesPage";
+import IntegrationsPage from "./pages/IntegrationsPage";
+import TenantsPage from "./pages/TenantsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,19 +36,30 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<FlowDashboard />} />
+            {/* Principal */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/journeys" element={<JourneysPage />} />
+            <Route path="/simulator" element={<PhoneSimulator />} />
             <Route path="/editor" element={<Index />} />
+            <Route path="/production" element={<ProductionPage />} />
+            {/* Assets & Resources */}
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/demos" element={<Demos />} />
+            <Route path="/demo/:id" element={<DemoViewer />} />
+            <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/import" element={<ImportPage />} />
+            {/* Infrastructure */}
+            <Route path="/integrations" element={<IntegrationsPage />} />
+            <Route path="/tenants" element={<TenantsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            {/* Legacy Tools (all preserved) */}
+            <Route path="/flows" element={<FlowDashboard />} />
             <Route path="/archived" element={<ArchivedFlows />} />
             <Route path="/globals" element={<GlobalsPage />} />
             <Route path="/starts" element={<StartsPage />} />
             <Route path="/webhooks" element={<WebhookLogs />} />
             <Route path="/export" element={<ExportPage />} />
-            <Route path="/import" element={<ImportPage />} />
             <Route path="/validate" element={<ValidatePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/simulator" element={<PhoneSimulator />} />
-            <Route path="/demos" element={<Demos />} />
-            <Route path="/demo/:id" element={<DemoViewer />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
