@@ -370,10 +370,8 @@ export function FlowEditor() {
         {showTranslator && (
           <TranslatorPanel
             nodes={nodes}
-            onTranslated={(translatedNodes) => {
-              setNodes(translatedNodes);
-              setShowTranslator(false);
-            }}
+            edges={edges}
+            flowName={flowName}
             onClose={() => setShowTranslator(false)}
           />
         )}
