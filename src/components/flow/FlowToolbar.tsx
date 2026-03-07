@@ -70,6 +70,11 @@ export function FlowToolbar({
             <Play className="mr-1 h-3.5 w-3.5" /> Simular
           </Button>
         )}
+        {onPhoneSimulator && (
+          <Button variant="outline" size="sm" onClick={onPhoneSimulator} className="border-node-send/40 text-node-send hover:bg-node-send/10">
+            <Smartphone className="mr-1 h-3.5 w-3.5" /> Teléfono
+          </Button>
+        )}
         {onTranslate && (
           <Button variant="outline" size="sm" onClick={onTranslate} className="border-node-wait/40 text-node-wait hover:bg-node-wait/10">
             <Languages className="mr-1 h-3.5 w-3.5" /> Traducir
