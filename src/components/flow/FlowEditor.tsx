@@ -124,6 +124,83 @@ export function FlowEditor() {
     fileInputRef.current?.click();
   }, []);
 
+  const importFlowFromJson = useCallback(
+    (json: any) => {
+      const flow = json.flows?.[0];
+      if (!flow) {
+        toast.error("No se encontró un flujo válido en el archivo");
+        return;
+      }
+
+      setFlowName(flow.name || "Importado");
+      const uiNodes = flow._ui?.nodes || {};
+      const SCALE = 0.8;
+
+      const importedNodes: Node[] = flow.nodes.map((n: any, i: number) => {
+        let type = "sendMsg";
+        const data: Record<string, any> = {};
+
+        // Detect node type from router and actions
+        if (n.router?.wait?.type === "msg") {
+          type = "waitResponse";
+          data.label = "";
+          data.categories = n.router.categories
+            ?.filter((c: any) => c.name !== "Other")
+            .map((c: any) => c.name) || [];
+        } else if (n.router && n.actions?.some((a: any) => a.type === "call_webhook")) {
+          type = "webhook";
+          const whAction = n.actions.find((a: any) => a.type === "call_webhook");
+          data.url = whAction?.url || "";
+          data.method = whAction?.method || "GET";
+          data.body = whAction?.body || "";
+        } else if (n.router && !n.actions?.length) {
+          type = "splitExpression";
+          data.operand = n.router.operand || "@input.text";
+        } else if (n.actions?.[0]?.type === "call_webhook") {
+          type = "webhook";
+          data.url = n.actions[0].url || "";
+          data.method = n.actions[0].method || "GET";
+          data.body = n.actions[0].body || "";
+        } else {
+          // send_msg or other execute_actions
+          const sendAction = n.actions?.find((a: any) => a.type === "send_msg");
+          data.text = sendAction?.text || n.actions?.map((a: any) => a.text || a.type).filter(Boolean).join("\n") || "";
+          data.quick_replies = sendAction?.quick_replies || [];
+        }
+
+        // Use _ui positions if available
+        const uiInfo = uiNodes[n.uuid];
+        const position = uiInfo?.position
+          ? { x: (uiInfo.position.left || 0) * SCALE, y: (uiInfo.position.top || 0) * SCALE }
+          : { x: 250, y: i * 180 };
+
+        return {
+          id: n.uuid,
+          type,
+          position,
+          data,
+        };
+      });
+
+      // Filter edges to only reference existing nodes
+      const nodeIds = new Set(importedNodes.map((n) => n.id));
+      const importedEdges = flow.nodes.flatMap((n: any) =>
+        (n.exits || [])
+          .filter((exit: any) => exit.destination_uuid && nodeIds.has(exit.destination_uuid))
+          .map((exit: any) => ({
+            id: uuidv4(),
+            source: n.uuid,
+            target: exit.destination_uuid,
+          }))
+      );
+
+      setNodes(importedNodes);
+      setEdges(importedEdges);
+      toast.success(`Flujo importado: ${importedNodes.length} nodos, ${importedEdges.length} conexiones`);
+    },
+    [setNodes, setEdges]
+  );
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -133,57 +210,7 @@ export function FlowEditor() {
       reader.onload = (ev) => {
         try {
           const json = JSON.parse(ev.target?.result as string);
-          const flow = json.flows?.[0];
-          if (!flow) {
-            toast.error("No se encontró un flujo válido en el archivo");
-            return;
-          }
-
-          setFlowName(flow.name || "Importado");
-
-          const importedNodes: Node[] = flow.nodes.map((n: any, i: number) => {
-            let type = "sendMsg";
-            const data: Record<string, any> = {};
-
-            if (n.router?.wait?.type === "msg") {
-              type = "waitResponse";
-              data.categories = n.router.categories
-                ?.filter((c: any) => c.name !== "Other")
-                .map((c: any) => c.name) || [];
-            } else if (n.router && !n.actions?.length) {
-              type = "splitExpression";
-              data.operand = n.router.operand || "@input.text";
-            } else if (n.actions?.[0]?.type === "call_webhook") {
-              type = "webhook";
-              data.url = n.actions[0].url;
-              data.method = n.actions[0].method;
-              data.body = n.actions[0].body;
-            } else if (n.actions?.[0]?.type === "send_msg") {
-              data.text = n.actions[0].text || "";
-              data.quick_replies = n.actions[0].quick_replies || [];
-            }
-
-            return {
-              id: n.uuid,
-              type,
-              position: { x: 250, y: i * 180 },
-              data,
-            };
-          });
-
-          const importedEdges = flow.nodes.flatMap((n: any) =>
-            (n.exits || [])
-              .filter((exit: any) => exit.destination_uuid)
-              .map((exit: any) => ({
-                id: uuidv4(),
-                source: n.uuid,
-                target: exit.destination_uuid,
-              }))
-          );
-
-          setNodes(importedNodes);
-          setEdges(importedEdges);
-          toast.success("Flujo importado correctamente");
+          importFlowFromJson(json);
         } catch {
           toast.error("Error al leer el archivo JSON");
         }
@@ -191,8 +218,18 @@ export function FlowEditor() {
       reader.readAsText(file);
       e.target.value = "";
     },
-    [setNodes, setEdges]
+    [importFlowFromJson]
   );
+
+  const handleLoadSample = useCallback(async () => {
+    try {
+      const res = await fetch("/sample-flow.json");
+      const json = await res.json();
+      importFlowFromJson(json);
+    } catch {
+      toast.error("Error al cargar el flujo de ejemplo");
+    }
+  }, [importFlowFromJson]);
 
   const handleClear = useCallback(() => {
     setNodes([]);
