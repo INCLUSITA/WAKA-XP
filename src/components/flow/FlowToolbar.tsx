@@ -1,4 +1,4 @@
-import { MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown, ShieldCheck } from "lucide-react";
+import { MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown, ShieldCheck, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ interface FlowToolbarProps {
   onClear: () => void;
   onLoadSample?: () => void;
   onValidate?: () => void;
+  onSimulate?: () => void;
 }
 
 const nodeTypes = [
@@ -30,6 +31,7 @@ export function FlowToolbar({
   onClear,
   onLoadSample,
   onValidate,
+  onSimulate,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
@@ -59,6 +61,11 @@ export function FlowToolbar({
       </div>
 
       <div className="ml-auto flex gap-1">
+        {onSimulate && (
+          <Button variant="outline" size="sm" onClick={onSimulate} className="border-node-send/40 text-node-send hover:bg-node-send/10">
+            <Play className="mr-1 h-3.5 w-3.5" /> Simular
+          </Button>
+        )}
         {onValidate && (
           <Button variant="outline" size="sm" onClick={onValidate}>
             <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Validar
