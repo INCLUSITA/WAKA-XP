@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import FlowDashboard from "./pages/FlowDashboard";
 import Index from "./pages/Index";
 import PhoneSimulator from "./pages/PhoneSimulator";
 import Demos from "./pages/Demos";
@@ -28,7 +29,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<FlowDashboard />} />
+            <Route path="/editor" element={<Index />} />
             <Route path="/archived" element={<ArchivedFlows />} />
             <Route path="/globals" element={<GlobalsPage />} />
             <Route path="/starts" element={<StartsPage />} />

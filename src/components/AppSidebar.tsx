@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const flowsItems = [
-  { title: "Active", url: "/", icon: Play },
+  { title: "Dashboard", url: "/", icon: Play },
   { title: "Archived", url: "/archived", icon: Archive },
   { title: "Globals", url: "/globals", icon: GlobIcon },
 ];
