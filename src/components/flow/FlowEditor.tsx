@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import { SendMsgNode } from "./SendMsgNode";
 import { WaitResponseNode } from "./WaitResponseNode";
@@ -80,6 +81,8 @@ export function FlowEditor() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [experienceName, setExperienceName] = useState<string | null>(null);
+  const [experienceId, setExperienceId] = useState<string | null>(null);
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
 
@@ -94,11 +97,26 @@ export function FlowEditor() {
   useEffect(() => {
     if (flowIdParam && !initialLoadDone.current) {
       initialLoadDone.current = true;
-      loadFlow(flowIdParam).then((result) => {
+      loadFlow(flowIdParam).then(async (result) => {
         if (result) {
           setNodes(result.nodes);
           setEdges(result.edges);
           setFlowName(result.name);
+          // Fetch experience link
+          const { data } = await supabase
+            .from("flows")
+            .select("experience_id")
+            .eq("id", flowIdParam)
+            .single();
+          if (data?.experience_id) {
+            setExperienceId(data.experience_id);
+            const { data: exp } = await supabase
+              .from("experiences")
+              .select("name")
+              .eq("id", data.experience_id)
+              .single();
+            if (exp) setExperienceName(exp.name);
+          }
         }
       });
     }
@@ -389,6 +407,10 @@ export function FlowEditor() {
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
         saveStatus={saveStatus}
+        experienceName={experienceName}
+        onOpenExperience={() => {
+          if (experienceId) navigate(`/studio?id=${experienceId}`);
+        }}
       />
 
       <input

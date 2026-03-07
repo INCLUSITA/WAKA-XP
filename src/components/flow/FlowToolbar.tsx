@@ -1,7 +1,7 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
-  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles
+  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ interface FlowToolbarProps {
   onTranslate?: () => void;
   onVersions?: () => void;
   saveStatus?: SaveStatus;
+  experienceName?: string | null;
+  onOpenExperience?: () => void;
 }
 
 const actionNodes = [
@@ -73,6 +75,8 @@ export function FlowToolbar({
   onTranslate,
   onVersions,
   saveStatus,
+  experienceName,
+  onOpenExperience,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-2 py-2">
@@ -86,6 +90,18 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
+
+      {/* Experience link indicator */}
+      {experienceName && (
+        <button
+          onClick={onOpenExperience}
+          className="flex items-center gap-1 rounded-md bg-accent/10 px-2 py-1 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+          title="Open linked Experience"
+        >
+          <Link2 className="h-3 w-3" />
+          {experienceName}
+        </button>
+      )}
 
       <Separator orientation="vertical" className="mx-1 h-8" />
 
