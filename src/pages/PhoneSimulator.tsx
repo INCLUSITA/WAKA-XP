@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, Send, Phone, Video, MoreVertical, Smile, Paperclip, Mic, Check, CheckCheck, Wifi, Battery, Signal } from "lucide-react";
+import { ArrowLeft, RotateCcw, Send, Phone, Video, MoreVertical, Smile, Paperclip, Mic, Camera, Image, CheckCheck, Wifi, Battery, Signal, Loader2 } from "lucide-react";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
 
 export default function PhoneSimulator() {
@@ -10,9 +10,11 @@ export default function PhoneSimulator() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [inputText, setInputText] = useState("");
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Load flow data from sessionStorage (set by FlowEditor)
   useEffect(() => {
     const data = sessionStorage.getItem("simulator-flow");
     if (data) {
@@ -23,8 +25,13 @@ export default function PhoneSimulator() {
     }
   }, []);
 
-  const { messages, waitingForInput, categories, isFinished, start, sendMessage } =
-    useFlowSimulation(nodes, edges);
+  const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
+    useFlowSimulation(nodes, edges, undefined, {
+      executeWebhooks: true,
+      onWebhookExecuted: (url, status, _response) => {
+        console.log(`[Simulator] Webhook ${status}: ${url}`);
+      },
+    });
 
   useEffect(() => {
     if (loaded && nodes.length > 0) start();
@@ -40,6 +47,14 @@ export default function PhoneSimulator() {
     setInputText("");
   };
 
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    sendAttachment(file);
+    setShowAttachMenu(false);
+    e.target.value = "";
+  };
+
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
 
@@ -48,7 +63,10 @@ export default function PhoneSimulator() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      {/* Phone frame */}
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelected} />
+      <input ref={imageInputRef} type="file" accept="image/*,video/*" capture="environment" className="hidden" onChange={handleFileSelected} />
+
       <div className="relative mx-auto w-[375px]">
         {/* Back button */}
         <button
@@ -65,6 +83,11 @@ export default function PhoneSimulator() {
         >
           <RotateCcw className="h-4 w-4" /> Reiniciar
         </button>
+
+        {/* Mode indicator */}
+        <div className="absolute -right-16 top-20 rounded-lg bg-green-500/20 px-3 py-1.5 text-[10px] font-semibold text-green-400 backdrop-blur-sm">
+          🔴 LIVE MODE
+        </div>
 
         {/* Phone body */}
         <div className="overflow-hidden rounded-[3rem] border-[6px] border-slate-700 bg-black shadow-2xl shadow-black/50">
@@ -90,7 +113,7 @@ export default function PhoneSimulator() {
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">Bot WhatsApp</p>
               <p className="text-[11px] text-white/70">
-                {isFinished ? "sin conexión" : waitingForInput ? "esperando respuesta" : "escribiendo…"}
+                {isProcessing ? "procesando…" : isFinished ? "sin conexión" : waitingForInput ? "en línea" : "escribiendo…"}
               </p>
             </div>
             <div className="flex items-center gap-4 text-white/80">
@@ -115,12 +138,19 @@ export default function PhoneSimulator() {
               </span>
             </div>
 
+            {/* Live mode banner */}
+            <div className="mb-3 flex justify-center">
+              <span className="rounded-lg bg-red-50 border border-red-200 px-3 py-1 text-[10px] text-red-600 shadow-sm font-medium">
+                🔴 Modo Live — Las APIs se ejecutan en tiempo real
+              </span>
+            </div>
+
             <div className="space-y-1.5">
               {messages.map((msg) => {
                 if (msg.sender === "system") {
                   return (
                     <div key={msg.id} className="flex justify-center py-1">
-                      <span className="rounded-lg bg-[#E2F7CB]/80 px-3 py-1 text-[11px] text-gray-600 shadow-sm">
+                      <span className="rounded-lg bg-[#E2F7CB]/80 px-3 py-1 text-[11px] text-gray-600 shadow-sm max-w-[90%] text-center">
                         {msg.text}
                       </span>
                     </div>
@@ -145,7 +175,16 @@ export default function PhoneSimulator() {
                             : "-right-1.5 border-r-[6px] border-t-[6px] border-r-transparent border-t-[#DCF8C6]"
                         }`}
                       />
+
+                      {/* Image attachment */}
+                      {msg.imageUrl && (
+                        <div className="mb-1.5 -mx-1 -mt-0.5 overflow-hidden rounded-md">
+                          <img src={msg.imageUrl} alt="Attachment" className="w-full max-h-48 object-cover" />
+                        </div>
+                      )}
+
                       <p className="whitespace-pre-wrap text-[13.5px] leading-[1.35]">{msg.text}</p>
+
                       {msg.quickReplies && msg.quickReplies.length > 0 && (
                         <div className="mt-1.5 space-y-1 border-t border-gray-200 pt-1.5">
                           {msg.quickReplies.map((r, i) => (
@@ -160,6 +199,7 @@ export default function PhoneSimulator() {
                           ))}
                         </div>
                       )}
+
                       <div className="mt-0.5 flex items-center justify-end gap-0.5">
                         <span className="text-[10px] text-gray-400">{formatTime(msg.timestamp)}</span>
                         {!isBot && <CheckCheck className="h-3 w-3 text-[#53BDEB]" />}
@@ -186,8 +226,18 @@ export default function PhoneSimulator() {
                 </div>
               )}
 
+              {/* Processing indicator */}
+              {isProcessing && (
+                <div className="flex justify-center py-2">
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 shadow-sm">
+                    <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                    <span className="text-[11px] text-blue-600 font-medium">Ejecutando API…</span>
+                  </div>
+                </div>
+              )}
+
               {/* Typing indicator */}
-              {!isFinished && !waitingForInput && messages.length > 0 && (
+              {!isFinished && !waitingForInput && !isProcessing && messages.length > 0 && (
                 <div className="flex justify-start">
                   <div className="rounded-lg rounded-tl-none bg-white px-4 py-2.5 shadow-sm">
                     <div className="flex items-center gap-1">
@@ -203,7 +253,7 @@ export default function PhoneSimulator() {
           </div>
 
           {/* Input bar */}
-          <div className="flex items-center gap-2 bg-[#F0F0F0] px-2 py-2">
+          <div className="relative flex items-center gap-2 bg-[#F0F0F0] px-2 py-2">
             <button className="text-gray-500">
               <Smile className="h-6 w-6" />
             </button>
@@ -214,14 +264,61 @@ export default function PhoneSimulator() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && waitingForInput) handleSend(inputText);
                 }}
-                placeholder={waitingForInput ? "Mensaje" : "Esperando…"}
+                placeholder={waitingForInput ? "Mensaje" : isProcessing ? "Procesando…" : "Esperando…"}
                 disabled={!waitingForInput}
                 className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
               />
-              <button className="ml-2 text-gray-400">
+              <button
+                className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setShowAttachMenu(!showAttachMenu)}
+                disabled={!waitingForInput}
+              >
                 <Paperclip className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Attachment menu */}
+            {showAttachMenu && waitingForInput && (
+              <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-4 rounded-2xl bg-white px-6 py-4 shadow-xl border border-gray-200">
+                <button
+                  onClick={() => { imageInputRef.current?.click(); }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-500 shadow-md">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-[10px] text-gray-500">Cámara</span>
+                </button>
+                <button
+                  onClick={() => { 
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) { sendAttachment(file); setShowAttachMenu(false); }
+                    };
+                    input.click();
+                  }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-500 shadow-md">
+                    <Image className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-[10px] text-gray-500">Galería</span>
+                </button>
+                <button
+                  onClick={() => { fileInputRef.current?.click(); }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 shadow-md">
+                    <Paperclip className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-[10px] text-gray-500">Documento</span>
+                </button>
+              </div>
+            )}
+
             {inputText.trim() ? (
               <button
                 onClick={() => handleSend(inputText)}
@@ -237,7 +334,7 @@ export default function PhoneSimulator() {
             )}
           </div>
 
-          {/* Bottom bar (home indicator) */}
+          {/* Bottom bar */}
           <div className="flex h-8 items-end justify-center bg-[#F0F0F0] pb-2">
             <div className="h-1 w-32 rounded-full bg-gray-400" />
           </div>
