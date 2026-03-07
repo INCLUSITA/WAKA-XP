@@ -40,6 +40,7 @@ import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
 import { useFlowPersistence } from "@/hooks/useFlowPersistence";
+import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -78,6 +79,7 @@ export function FlowEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
 
