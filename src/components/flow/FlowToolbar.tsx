@@ -28,6 +28,7 @@ interface FlowToolbarProps {
   onTranslate?: () => void;
   onPhoneSimulator?: () => void;
   onDemos?: () => void;
+  onWebhooks?: () => void;
 }
 
 const actionNodes = [
@@ -68,6 +69,7 @@ export function FlowToolbar({
   onTranslate,
   onPhoneSimulator,
   onDemos,
+  onWebhooks,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
@@ -140,6 +142,11 @@ export function FlowToolbar({
         {onTranslate && (
           <Button variant="outline" size="sm" onClick={onTranslate} className="border-node-wait/40 text-node-wait hover:bg-node-wait/10">
             <Languages className="mr-1 h-3.5 w-3.5" /> Traducir
+          </Button>
+        )}
+        {onWebhooks && (
+          <Button variant="outline" size="sm" onClick={onWebhooks} className="border-node-webhook/40 text-node-webhook hover:bg-node-webhook/10">
+            <Globe className="mr-1 h-3.5 w-3.5" /> Webhooks
           </Button>
         )}
         {onValidate && (

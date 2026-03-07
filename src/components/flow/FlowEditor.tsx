@@ -362,6 +362,7 @@ export function FlowEditor() {
           navigate("/simulator");
         }}
         onDemos={() => navigate("/demos")}
+        onWebhooks={() => navigate("/webhooks")}
       />
 
       <input
