@@ -2,6 +2,7 @@ import {
   Play, Archive, Globe as GlobIcon, Clock, Webhook,
   Download, Upload, ShieldCheck, Settings, ChevronLeft
 } from "lucide-react";
+import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -44,9 +45,7 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Logo / Brand */}
         <div className={`flex items-center gap-2 px-4 py-4 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-black text-primary-foreground">W</span>
-          </div>
+          <img src={wakaLogo} alt="WAKA XP" className="h-8 w-8 rounded-lg object-contain" />
           {!collapsed && (
             <div>
               <h1 className="text-sm font-bold text-foreground leading-none">WAKA XP</h1>
