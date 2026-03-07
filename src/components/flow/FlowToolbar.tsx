@@ -28,6 +28,7 @@ interface FlowToolbarProps {
   onTranslate?: () => void;
   onPhoneSimulator?: () => void;
   onDemos?: () => void;
+  onWebhooks?: () => void;
 }
 
 const actionNodes = [
