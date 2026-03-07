@@ -247,6 +247,7 @@ export function FlowEditor() {
         onExport={handleExport}
         onImport={handleImport}
         onClear={handleClear}
+        onLoadSample={handleLoadSample}
       />
 
       <input
