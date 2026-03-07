@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import { SendMsgNode } from "./SendMsgNode";
 import { WaitResponseNode } from "./WaitResponseNode";
