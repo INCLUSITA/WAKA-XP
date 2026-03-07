@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, memo, forwardRef, Fragment } from "react";
 import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
@@ -16,6 +16,14 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
       let preProcessed = jsxSource;
       preProcessed = preProcessed.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
       preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
+
+      // Capture the default export component name BEFORE stripping
+      let componentName = "App";
+      const exportMatch = preProcessed.match(/export\s+default\s+function\s+([A-Za-z_]\w*)/);
+      if (exportMatch) {
+        componentName = exportMatch[1];
+      }
+
       preProcessed = preProcessed.replace(/^export\s+default\s+/gm, "");
       preProcessed = preProcessed.replace(/^export\s+/gm, "");
 
@@ -28,20 +36,22 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
 
       let code = result.code;
 
-      // Capture component name from function declarations
-      let componentName = "App";
-      const fnMatch = code.match(/function\s+([A-Z]\w*)\s*\(/);
-      if (fnMatch) componentName = fnMatch[1];
-
       // Build a module that returns the component
       const moduleCode = `
         ${code}
         return typeof ${componentName} === 'function' ? ${componentName} : null;
       `;
 
-      // Execute with React in scope
-      const factory = new Function("React", "useState", "useEffect", "useRef", "useCallback", "useMemo", moduleCode);
-      const Comp = factory(React, useState, useEffect, useRef, useCallback, useMemo);
+      // Execute with React in scope - provide all common hooks and utilities
+      const factory = new Function(
+        "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
+        "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
+        moduleCode
+      );
+      const Comp = factory(
+        React, useState, useEffect, useRef, useCallback, useMemo,
+        useReducer, useContext, createContext, memo, forwardRef, Fragment
+      );
 
       if (Comp) {
         setComponent(() => Comp);
@@ -113,5 +123,28 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
     );
   }
 
-  return <Component />;
+  return (
+    <ErrorBoundary>
+      <Component />
+    </ErrorBoundary>
+  );
+}
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: string | null }> {
+  state = { error: null as string | null };
+  static getDerivedStateFromError(err: Error) { return { error: err.message }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0f172a", color:"#f87171", padding:40 }}>
+          <div style={{ maxWidth:600, textAlign:"center" }}>
+            <p style={{ fontSize:48, marginBottom:16 }}>💥</p>
+            <h2 style={{ fontSize:20, fontWeight:700, marginBottom:12, color:"#fff" }}>Error de ejecución en el demo</h2>
+            <pre style={{ background:"#1e293b", borderRadius:12, padding:20, fontSize:13, textAlign:"left", overflowX:"auto", whiteSpace:"pre-wrap", border:"1px solid #334155" }}>{this.state.error}</pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
