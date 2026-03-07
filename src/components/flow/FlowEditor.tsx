@@ -494,6 +494,26 @@ export function FlowEditor() {
             }}
           />
         )}
+
+        {showVersions && (
+          <div className="absolute right-0 top-0 h-full w-80 border-l border-border bg-card shadow-xl z-20">
+            <VersionHistoryPanel
+              assetType="flow"
+              assetId={flowIdParam}
+              getSnapshotData={() => ({
+                nodes: nodes as unknown as Record<string, unknown>[],
+                edges: edges as unknown as Record<string, unknown>[],
+                flowName,
+              })}
+              onRestore={(data) => {
+                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string };
+                if (snap.nodes) setNodes(snap.nodes);
+                if (snap.edges) setEdges(snap.edges);
+                if (snap.flowName) setFlowName(snap.flowName);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
