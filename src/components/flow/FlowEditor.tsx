@@ -25,6 +25,7 @@ import { SplitNode } from "./SplitNode";
 import { WebhookNode } from "./WebhookNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar } from "./FlowToolbar";
+import { EdgeInfoPanel } from "./EdgeInfoPanel";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
