@@ -1,4 +1,4 @@
-import { MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown, ShieldCheck, Play, Languages, Smartphone } from "lucide-react";
+import { MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown, ShieldCheck, Play, Languages, Smartphone, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ interface FlowToolbarProps {
   onSimulate?: () => void;
   onTranslate?: () => void;
   onPhoneSimulator?: () => void;
+  onDemos?: () => void;
 }
 
 const nodeTypes = [
@@ -36,6 +37,7 @@ export function FlowToolbar({
   onSimulate,
   onTranslate,
   onPhoneSimulator,
+  onDemos,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
@@ -73,6 +75,11 @@ export function FlowToolbar({
         {onPhoneSimulator && (
           <Button variant="outline" size="sm" onClick={onPhoneSimulator} className="border-node-send/40 text-node-send hover:bg-node-send/10">
             <Smartphone className="mr-1 h-3.5 w-3.5" /> Teléfono
+          </Button>
+        )}
+        {onDemos && (
+          <Button variant="outline" size="sm" onClick={onDemos} className="border-purple-400/40 text-purple-500 hover:bg-purple-500/10">
+            <LayoutGrid className="mr-1 h-3.5 w-3.5" /> Demos
           </Button>
         )}
         {onTranslate && (
