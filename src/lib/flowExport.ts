@@ -92,8 +92,9 @@ function buildTextItNode(node: Node, edges: Edge[]): TextItNode {
         type: "call_webhook",
         url: data.url || "",
         method: data.method || "GET",
-        headers: {},
+        headers: data.headers || {},
         body: data.body || "",
+        result_name: data.resultName || data.result_name || "",
       });
 
       const successExitUuid = uuidv4();
