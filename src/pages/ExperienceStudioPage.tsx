@@ -10,7 +10,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye, ArrowLeft,
-  Hammer, Smartphone, Rocket, History, ChevronRight,
+  Hammer, Smartphone, Rocket, History, Link2, Unlink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
+import { Tables } from "@/integrations/supabase/types";
 
 interface Experience {
   id: string;
@@ -32,6 +33,8 @@ interface Experience {
   updated_at: string;
   tenant_id: string;
 }
+
+type Flow = Tables<"flows">;
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -55,17 +58,60 @@ function ExperienceDetail({
 }) {
   const { tenantId } = useWorkspace();
   const navigate = useNavigate();
-  const [flowCount, setFlowCount] = useState(0);
+  const [linkedFlows, setLinkedFlows] = useState<Flow[]>([]);
+  const [unlinkedFlows, setUnlinkedFlows] = useState<Flow[]>([]);
   const [showVersions, setShowVersions] = useState(false);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+
+  const fetchFlows = useCallback(async () => {
+    const [linkedRes, unlinkedRes] = await Promise.all([
+      supabase
+        .from("flows")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("experience_id", experience.id)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("flows")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .is("experience_id", null)
+        .neq("status", "archived")
+        .order("updated_at", { ascending: false }),
+    ]);
+    setLinkedFlows(linkedRes.data || []);
+    setUnlinkedFlows(unlinkedRes.data || []);
+  }, [tenantId, experience.id]);
 
   useEffect(() => {
-    // Count associated flows (placeholder — later link via experience_id)
-    supabase
+    fetchFlows();
+  }, [fetchFlows]);
+
+  const linkFlow = async (flowId: string) => {
+    const { error } = await supabase
       .from("flows")
-      .select("id", { count: "exact", head: true })
-      .eq("tenant_id", tenantId)
-      .then(({ count }) => setFlowCount(count || 0));
-  }, [tenantId]);
+      .update({ experience_id: experience.id })
+      .eq("id", flowId);
+    if (error) {
+      toast.error("Error linking flow");
+      return;
+    }
+    toast.success("Flow linked to experience");
+    fetchFlows();
+  };
+
+  const unlinkFlow = async (flowId: string) => {
+    const { error } = await supabase
+      .from("flows")
+      .update({ experience_id: null })
+      .eq("id", flowId);
+    if (error) {
+      toast.error("Error unlinking flow");
+      return;
+    }
+    toast.success("Flow unlinked");
+    fetchFlows();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -98,7 +144,7 @@ function ExperienceDetail({
             <TabsList className="bg-secondary/50 border border-border/50 mb-6">
               <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
               <TabsTrigger value="demos" className="text-xs">Demos</TabsTrigger>
-              <TabsTrigger value="flows" className="text-xs">Flows</TabsTrigger>
+              <TabsTrigger value="flows" className="text-xs">Flows ({linkedFlows.length})</TabsTrigger>
               <TabsTrigger value="versions" className="text-xs">Versions</TabsTrigger>
             </TabsList>
 
@@ -114,7 +160,7 @@ function ExperienceDetail({
                 <Card className="glass border-gradient rounded-xl">
                   <CardContent className="p-4 text-center">
                     <Hammer className="h-6 w-6 mx-auto text-primary mb-2" />
-                    <p className="text-2xl font-bold text-foreground">{flowCount}</p>
+                    <p className="text-2xl font-bold text-foreground">{linkedFlows.length}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Flows</p>
                   </CardContent>
                 </Card>
@@ -154,19 +200,89 @@ function ExperienceDetail({
             </TabsContent>
 
             <TabsContent value="flows">
-              <Card className="glass border-gradient rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Related Flows</p>
-                  <Button size="sm" variant="outline" onClick={() => navigate("/editor")} className="text-xs gap-1">
-                    <Hammer className="h-3 w-3" /> Open Builder
-                  </Button>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Linked Flows</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setShowLinkDialog(true)} className="text-xs gap-1">
+                      <Link2 className="h-3 w-3" /> Link existing Flow
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => navigate("/editor")} className="text-xs gap-1">
+                      <Plus className="h-3 w-3" /> New Flow
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground/60">
-                  {flowCount > 0
-                    ? `${flowCount} flow${flowCount > 1 ? "s" : ""} in your workspace. Direct linking coming soon.`
-                    : "No flows yet. Create one in the Builder."}
-                </p>
-              </Card>
+
+                {linkedFlows.length === 0 ? (
+                  <Card className="glass border-gradient rounded-xl p-8 text-center">
+                    <Hammer className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground/60">No flows linked yet.</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1">Link existing flows or create new ones</p>
+                  </Card>
+                ) : (
+                  <Card className="glass border-gradient rounded-xl overflow-hidden">
+                    <div className="divide-y divide-border/30">
+                      {linkedFlows.map((flow) => (
+                        <div key={flow.id} className="flex items-center justify-between px-4 py-3 hover:bg-secondary/30 transition-colors">
+                          <div
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                            onClick={() => navigate(`/editor?id=${flow.id}`)}
+                          >
+                            <div className="rounded-md bg-primary/10 p-1"><Hammer className="h-3 w-3 text-primary" /></div>
+                            <span className="text-sm font-medium text-foreground">{flow.name}</span>
+                            <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status]}`}>{flow.status}</Badge>
+                            <span className="text-xs text-muted-foreground/60">{(flow.nodes as unknown as any[])?.length || 0} nodes</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/editor?id=${flow.id}`)} title="Open in Builder">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => unlinkFlow(flow.id)} title="Unlink from experience">
+                              <Unlink className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              {/* Link Flow Dialog */}
+              <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Link Flow to Experience</DialogTitle>
+                    <DialogDescription>Select an unlinked flow to associate with "{experience.name}"</DialogDescription>
+                  </DialogHeader>
+                  <div className="max-h-72 overflow-auto space-y-1 py-2">
+                    {unlinkedFlows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">All flows are already linked to an experience.</p>
+                    ) : (
+                      unlinkedFlows.map((flow) => (
+                        <div
+                          key={flow.id}
+                          className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
+                          onClick={() => {
+                            linkFlow(flow.id);
+                            setShowLinkDialog(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Hammer className="h-3.5 w-3.5 text-primary" />
+                            <span className="text-sm font-medium">{flow.name}</span>
+                            <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status]}`}>{flow.status}</Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{(flow.nodes as unknown as any[])?.length || 0} nodes</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowLinkDialog(false)}>Cancel</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             <TabsContent value="versions">
@@ -230,6 +346,7 @@ export default function ExperienceStudioPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [flowCountMap, setFlowCountMap] = useState<Record<string, number>>({});
   const navigate = useNavigate();
 
   const fetchExperiences = useCallback(async () => {
@@ -245,6 +362,23 @@ export default function ExperienceStudioPage() {
       console.error(error);
     } else {
       setExperiences((data as Experience[]) || []);
+      // Fetch flow counts per experience
+      if (data && data.length > 0) {
+        const ids = data.map((e) => e.id);
+        const { data: flows } = await supabase
+          .from("flows")
+          .select("id, experience_id")
+          .in("experience_id", ids);
+        if (flows) {
+          const counts: Record<string, number> = {};
+          flows.forEach((f) => {
+            if (f.experience_id) {
+              counts[f.experience_id] = (counts[f.experience_id] || 0) + 1;
+            }
+          });
+          setFlowCountMap(counts);
+        }
+      }
     }
     setLoading(false);
   }, [tenantId]);
@@ -379,10 +513,9 @@ export default function ExperienceStudioPage() {
                         <p className="text-[10px] text-muted-foreground/60">
                           Updated {format(new Date(exp.updated_at), "dd MMM yyyy, HH:mm")}
                         </p>
-                        {/* Related assets summary placeholder */}
                         <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground/50">
                           <span className="flex items-center gap-1"><Smartphone className="h-3 w-3" /> 0 demos</span>
-                          <span className="flex items-center gap-1"><Hammer className="h-3 w-3" /> 0 flows</span>
+                          <span className="flex items-center gap-1"><Hammer className="h-3 w-3" /> {flowCountMap[exp.id] || 0} flows</span>
                           <span className="flex items-center gap-1"><Rocket className="h-3 w-3" /> 0 candidates</span>
                         </div>
                       </CardContent>
