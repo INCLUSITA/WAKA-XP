@@ -24,6 +24,7 @@ import LibraryPage from "./pages/LibraryPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import TenantsPage from "./pages/TenantsPage";
+import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             {/* Principal */}
             <Route path="/" element={<HomePage />} />
             <Route path="/journeys" element={<JourneysPage />} />
+            <Route path="/studio" element={<ExperienceStudioPage />} />
             <Route path="/simulator" element={<PhoneSimulator />} />
             <Route path="/editor" element={<Index />} />
             <Route path="/production" element={<ProductionPage />} />
@@ -52,7 +54,7 @@ const App = () => (
             <Route path="/integrations" element={<IntegrationsPage />} />
             <Route path="/tenants" element={<TenantsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            {/* Legacy Tools (all preserved) */}
+            {/* Advanced Tools */}
             <Route path="/flows" element={<FlowDashboard />} />
             <Route path="/archived" element={<ArchivedFlows />} />
             <Route path="/globals" element={<GlobalsPage />} />

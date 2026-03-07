@@ -15,7 +15,8 @@ import {
   Plus, Upload, Download, Sparkles, Hammer, Smartphone,
   Map, LayoutGrid, Rocket, ArrowRight, Search,
   MessageSquare, Phone, Bot, Globe, Instagram, Send,
-  Plug, ChevronRight, Zap, Shield,
+  Plug, ChevronRight, Zap, Shield, Building2, Eye,
+  Radio, CircleDot, Wifi, WifiOff,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -47,6 +48,20 @@ const channels = [
   { label: "Web Agent", icon: Globe, glow: "group-hover:shadow-[0_0_12px_hsla(35,95%,55%,0.2)]" },
 ];
 
+const wakaStack = [
+  { label: "WAKA NEXUS", desc: "Integration Hub", status: "simulated" as const },
+  { label: "WAKA AXIOM", desc: "Data & Analytics", status: "inactive" as const },
+  { label: "WAKA VOICE", desc: "Voice AI Layer", status: "simulated" as const },
+  { label: "WAKA CORE", desc: "Core Runtime", status: "connected" as const },
+  { label: "WAKA CRM", desc: "Customer Relations", status: "inactive" as const },
+];
+
+const stackStatusConfig = {
+  connected: { label: "Connected", icon: Wifi, className: "text-primary bg-primary/10" },
+  simulated: { label: "Simulated", icon: Radio, className: "text-accent bg-accent/10" },
+  inactive: { label: "Inactive", icon: WifiOff, className: "text-muted-foreground bg-muted" },
+};
+
 const createActions = [
   { label: "New Experience", icon: Plus, gradient: "from-primary to-primary/60" },
   { label: "New Flow", icon: Hammer, gradient: "from-primary/80 to-primary/40" },
@@ -56,7 +71,7 @@ const createActions = [
   { label: "Upload JSX", icon: Upload, gradient: "from-muted-foreground/40 to-muted-foreground/20" },
 ];
 
-const createRoutes = ["/journeys", "/editor", "/demos", "/journeys", "/import", "/demos"];
+const createRoutes = ["/studio", "/editor", "/demos", "/studio", "/import", "/demos"];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -67,27 +82,43 @@ const fadeUp = {
   }),
 };
 
+// Simulated workspace context
+const workspaceContext = {
+  tenant: "Waka Internal",
+  workspace: "Default Studio",
+  environment: "Draft",
+  role: "Superadmin",
+};
+
 export default function HomePage() {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [experienceCount, setExperienceCount] = useState(0);
   const navigate = useNavigate();
   const uploadedDemos = getUploadedDemos();
   const allDemos = [...BUILTIN_DEMOS, ...uploadedDemos.map(d => ({ ...d, component: null as any }))];
 
   useEffect(() => {
-    const fetchFlows = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("flows")
-        .select("*")
-        .eq("tenant_id", DEMO_TENANT_ID)
-        .neq("status", "archived")
-        .order("updated_at", { ascending: false })
-        .limit(10);
-      setFlows(data || []);
+      const [flowsRes, expRes] = await Promise.all([
+        supabase
+          .from("flows")
+          .select("*")
+          .eq("tenant_id", DEMO_TENANT_ID)
+          .neq("status", "archived")
+          .order("updated_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("experiences")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", DEMO_TENANT_ID),
+      ]);
+      setFlows(flowsRes.data || []);
+      setExperienceCount(expRes.count || 0);
       setLoading(false);
     };
-    fetchFlows();
+    fetchData();
   }, []);
 
   const lastFlow = flows[0];
@@ -111,7 +142,7 @@ export default function HomePage() {
               className="h-8 w-52 rounded-lg border border-border/50 bg-secondary/50 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
           </div>
-          <Button size="sm" className="glow-primary font-medium tracking-wide" onClick={() => navigate("/journeys")}>
+          <Button size="sm" className="glow-primary font-medium tracking-wide" onClick={() => navigate("/studio")}>
             <Plus className="mr-1 h-3.5 w-3.5" /> New Experience
           </Button>
           <Button size="sm" variant="outline" className="border-border/50 hover:border-primary/30 hover:bg-primary/5" onClick={() => navigate("/import")}>
@@ -128,13 +159,32 @@ export default function HomePage() {
       <div className="flex-1 overflow-auto gradient-mesh">
         <div className="max-w-7xl mx-auto px-6 py-8 space-y-10">
 
+          {/* WORKSPACE CONTEXT BAR */}
+          <motion.section initial="hidden" animate="visible">
+            <motion.div variants={fadeUp} custom={0} className="flex flex-wrap gap-2 items-center">
+              <div className="flex items-center gap-2 rounded-lg bg-secondary/60 border border-border/50 px-3 py-1.5">
+                <Building2 className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-medium text-foreground">{workspaceContext.tenant}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-secondary/60 border border-border/50 px-3 py-1.5">
+                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-medium text-foreground">{workspaceContext.workspace}</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+                {workspaceContext.environment}
+              </Badge>
+              <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                {workspaceContext.role}
+              </Badge>
+            </motion.div>
+          </motion.section>
+
           {/* SECTION 1: Continue where you left off */}
           <motion.section initial="hidden" animate="visible">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">
               Continue where you left off
             </motion.h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Last Builder Flow */}
               {lastFlow && (
                 <motion.div variants={fadeUp} custom={1}>
                   <Card
@@ -163,7 +213,6 @@ export default function HomePage() {
                 </motion.div>
               )}
 
-              {/* Last JSX Demo */}
               {lastDemo && (
                 <motion.div variants={fadeUp} custom={2}>
                   <Card
@@ -193,23 +242,24 @@ export default function HomePage() {
                 </motion.div>
               )}
 
-              {/* Last Journey */}
               <motion.div variants={fadeUp} custom={3}>
                 <Card
                   className="group cursor-pointer glass border-gradient rounded-xl transition-all duration-300 hover:scale-[1.01] opacity-60 hover:opacity-80"
-                  onClick={() => navigate("/journeys")}
+                  onClick={() => navigate("/studio")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2">
                       <div className="rounded-md bg-muted p-1.5">
-                        <Map className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
-                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Journeys</span>
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Experiences</span>
                     </div>
-                    <CardTitle className="text-sm text-muted-foreground mt-1">No journeys yet</CardTitle>
+                    <CardTitle className="text-sm text-muted-foreground mt-1">
+                      {experienceCount > 0 ? `${experienceCount} experience${experienceCount > 1 ? "s" : ""}` : "No experiences yet"}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-xs text-muted-foreground/60">Create your first experience journey</p>
+                    <p className="text-xs text-muted-foreground/60">Open Experience Studio</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -238,25 +288,30 @@ export default function HomePage() {
             </div>
           </motion.section>
 
-          {/* SECTION 3: Active Assets */}
+          {/* SECTION 3: Core Assets */}
           <motion.section initial="hidden" animate="visible">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">
-              Active Assets
+              Core Assets
             </motion.h2>
             <motion.div variants={fadeUp} custom={1}>
               <Tabs defaultValue="flows" className="w-full">
                 <TabsList className="bg-secondary/50 border border-border/50">
-                  <TabsTrigger value="journeys" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary tracking-wide text-xs">Journeys</TabsTrigger>
+                  <TabsTrigger value="experiences" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary tracking-wide text-xs">Experiences</TabsTrigger>
                   <TabsTrigger value="flows" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary tracking-wide text-xs">Flows</TabsTrigger>
                   <TabsTrigger value="demos" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent tracking-wide text-xs">Demos</TabsTrigger>
+                  <TabsTrigger value="candidates" className="data-[state=active]:bg-chart-4/10 data-[state=active]:text-chart-4 tracking-wide text-xs">Candidates</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="journeys">
+                <TabsContent value="experiences">
                   <Card className="glass border-gradient rounded-xl p-8 text-center">
-                    <Map className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
-                    <p className="text-sm text-muted-foreground/60">No journeys yet. Create your first experience.</p>
-                    <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/journeys")}>
-                      <Plus className="mr-1 h-3.5 w-3.5" /> New Journey
+                    <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground/60">
+                      {experienceCount > 0
+                        ? `${experienceCount} experience${experienceCount > 1 ? "s" : ""} in your workspace`
+                        : "No experiences yet. Create your first one."}
+                    </p>
+                    <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/studio")}>
+                      Open Experience Studio <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>
                   </Card>
                 </TabsContent>
@@ -336,6 +391,16 @@ export default function HomePage() {
                     </Card>
                   )}
                 </TabsContent>
+
+                <TabsContent value="candidates">
+                  <Card className="glass border-gradient rounded-xl p-8 text-center">
+                    <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
+                    <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
+                      Go to Production <ArrowRight className="ml-1 h-3 w-3" />
+                    </Button>
+                  </Card>
+                </TabsContent>
               </Tabs>
             </motion.div>
           </motion.section>
@@ -343,12 +408,12 @@ export default function HomePage() {
           {/* SECTION 4: Pipeline */}
           <motion.section initial="hidden" animate="visible">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">
-              Pipeline
+              Production Pipeline
             </motion.h2>
             <motion.div variants={fadeUp} custom={1} className="flex gap-3 overflow-x-auto pb-2">
               {pipelineStages.map((stage, i) => (
                 <div key={stage.label} className="flex items-center gap-3">
-                  <div className={`glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03]`}>
+                  <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03]">
                     <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
                     <p className="text-2xl font-bold text-foreground/80 mt-1">0</p>
@@ -381,7 +446,33 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 6: Integration Readiness */}
+          {/* SECTION 6: Connected WAKA Stack */}
+          <motion.section initial="hidden" animate="visible">
+            <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">
+              Connected WAKA Stack
+            </motion.h2>
+            <motion.div variants={fadeUp} custom={1}>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {wakaStack.map((layer) => {
+                  const cfg = stackStatusConfig[layer.status];
+                  return (
+                    <Card key={layer.label} className="glass border-gradient rounded-xl p-4 transition-all hover:scale-[1.02]">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[11px] font-bold text-foreground tracking-wide">{layer.label}</p>
+                        <cfg.icon className={`h-3.5 w-3.5 ${cfg.className.split(" ")[0]}`} />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/60 mb-2">{layer.desc}</p>
+                      <Badge variant="secondary" className={`text-[9px] ${cfg.className}`}>
+                        {cfg.label}
+                      </Badge>
+                    </Card>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.section>
+
+          {/* SECTION 7: Integration Readiness */}
           <motion.section initial="hidden" animate="visible" className="pb-10">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">
               Integration Readiness
@@ -397,7 +488,7 @@ export default function HomePage() {
                       { label: "Production Readiness", value: "—", icon: Shield, color: "text-chart-3" },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-4">
-                        <div className={`rounded-xl bg-secondary/50 p-3`}>
+                        <div className="rounded-xl bg-secondary/50 p-3">
                           <item.icon className={`h-5 w-5 ${item.color}/60`} />
                         </div>
                         <div>

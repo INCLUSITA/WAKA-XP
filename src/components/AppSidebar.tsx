@@ -1,13 +1,12 @@
 import {
-  Home, Map, Smartphone, Hammer, Rocket,
+  Home, Map, Sparkles, Hammer, Rocket,
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
-  Plug, Building2, Settings, Wrench,
+  Plug, Building2, Settings, 
   Archive, Globe as GlobIcon, Clock, Webhook,
   Download, ShieldCheck,
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +22,7 @@ import {
 const principalItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Journeys", url: "/journeys", icon: Map },
-  { title: "Simulator", url: "/simulator", icon: Smartphone },
+  { title: "Experience Studio", url: "/studio", icon: Sparkles },
   { title: "Builder", url: "/editor", icon: Hammer },
   { title: "Production", url: "/production", icon: Rocket },
 ];
@@ -41,7 +40,7 @@ const infraItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
-const legacyItems = [
+const advancedItems = [
   { title: "Flow Dashboard", url: "/flows", icon: LayoutGrid },
   { title: "Archived", url: "/archived", icon: Archive },
   { title: "Globals", url: "/globals", icon: GlobIcon },
@@ -53,9 +52,9 @@ const legacyItems = [
 
 const sections = [
   { label: "Principal", items: principalItems },
-  { label: "Assets", items: assetsItems },
+  { label: "Assets & Resources", items: assetsItems },
   { label: "Infrastructure", items: infraItems },
-  { label: "Legacy Tools", items: legacyItems },
+  { label: "Advanced Tools", items: advancedItems },
 ];
 
 export function AppSidebar() {
