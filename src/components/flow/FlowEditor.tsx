@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useMemo } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -12,12 +12,10 @@ import {
   Node,
   Edge,
   Panel,
-  useReactFlow,
-  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { SendMsgNode } from "./SendMsgNode";
@@ -35,11 +33,13 @@ import { SendAirtimeNode } from "./SendAirtimeNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar } from "./FlowToolbar";
 import { EdgeInfoPanel } from "./EdgeInfoPanel";
+import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
+import { useFlowPersistence } from "@/hooks/useFlowPersistence";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -54,7 +54,6 @@ const nodeTypes = {
   openTicket: OpenTicketNode,
   callZapier: CallZapierNode,
   sendAirtime: SendAirtimeNode,
-  // Split variants reuse the SplitNode component
   splitContactField: SplitNode,
   splitResult: SplitNode,
   splitRandom: SplitNode,
@@ -68,6 +67,9 @@ const defaultEdgeOptions = {
 };
 
 export function FlowEditor() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const flowIdParam = searchParams.get("id");
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -77,6 +79,41 @@ export function FlowEditor() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const navigate = useNavigate();
+  const initialLoadDone = useRef(false);
+
+  const { loadFlow, debouncedSave, saveStatus, isLoading } = useFlowPersistence({
+    flowId: flowIdParam,
+    onFlowIdChange: (id) => {
+      setSearchParams({ id }, { replace: true });
+    },
+  });
+
+  // Load flow from DB on mount if ?id= is present
+  useEffect(() => {
+    if (flowIdParam && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      loadFlow(flowIdParam).then((result) => {
+        if (result) {
+          setNodes(result.nodes);
+          setEdges(result.edges);
+          setFlowName(result.name);
+        }
+      });
+    }
+  }, [flowIdParam, loadFlow, setNodes, setEdges]);
+
+  // Auto-save on changes (skip initial load)
+  const changeCount = useRef(0);
+  useEffect(() => {
+    // Skip the first render and the load hydration
+    if (!initialLoadDone.current && !flowIdParam) {
+      // New flow — allow saving after first edit
+    }
+    changeCount.current++;
+    if (changeCount.current <= 2) return; // skip initial setState calls
+
+    debouncedSave(nodes, edges, flowName);
+  }, [nodes, edges, flowName, debouncedSave]);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -246,7 +283,6 @@ export function FlowEditor() {
         let type = "sendMsg";
         const data: Record<string, any> = {};
 
-        // Detect node type from router and actions
         if (n.router?.wait?.type === "msg") {
           type = "waitResponse";
           data.label = "";
@@ -268,27 +304,19 @@ export function FlowEditor() {
           data.method = n.actions[0].method || "GET";
           data.body = n.actions[0].body || "";
         } else {
-          // send_msg or other execute_actions
           const sendAction = n.actions?.find((a: any) => a.type === "send_msg");
           data.text = sendAction?.text || n.actions?.map((a: any) => a.text || a.type).filter(Boolean).join("\n") || "";
           data.quick_replies = sendAction?.quick_replies || [];
         }
 
-        // Use _ui positions if available
         const uiInfo = uiNodes[n.uuid];
         const position = uiInfo?.position
           ? { x: (uiInfo.position.left || 0) * SCALE, y: (uiInfo.position.top || 0) * SCALE }
           : { x: 250, y: i * 180 };
 
-        return {
-          id: n.uuid,
-          type,
-          position,
-          data,
-        };
+        return { id: n.uuid, type, position, data };
       });
 
-      // Filter edges to only reference existing nodes
       const nodeIds = new Set(importedNodes.map((n) => n.id));
       const importedEdges = flow.nodes.flatMap((n: any) =>
         (n.exits || [])
@@ -357,6 +385,7 @@ export function FlowEditor() {
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
+        saveStatus={saveStatus}
       />
 
       <input
@@ -397,7 +426,7 @@ export function FlowEditor() {
           />
           <Background variant={BackgroundVariant.Dots} gap={16} size={0.8} color="hsl(220, 10%, 85%)" />
 
-          {nodes.length === 0 && (
+          {nodes.length === 0 && !isLoading && (
             <Panel position="top-center" className="mt-20">
               <div className="rounded-2xl border border-dashed border-border bg-card/80 px-10 py-8 text-center shadow-lg backdrop-blur-sm">
                 <p className="text-lg font-semibold text-foreground">¡Comienza a crear tu flujo!</p>
@@ -424,9 +453,7 @@ export function FlowEditor() {
             onClose={() => setShowValidation(false)}
             onFocusNode={(nodeId) => {
               const node = nodes.find((n) => n.id === nodeId);
-              if (node) {
-                setSelectedNode(node);
-              }
+              if (node) setSelectedNode(node);
             }}
           />
         )}

@@ -15,6 +15,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SaveStatusIndicator } from "./SaveStatusIndicator";
+import { SaveStatus } from "@/hooks/useFlowPersistence";
 
 interface FlowToolbarProps {
   flowName: string;
@@ -27,6 +29,7 @@ interface FlowToolbarProps {
   onValidate?: () => void;
   onSimulate?: () => void;
   onTranslate?: () => void;
+  saveStatus?: SaveStatus;
 }
 
 const actionNodes = [
@@ -65,6 +68,7 @@ export function FlowToolbar({
   onValidate,
   onSimulate,
   onTranslate,
+  saveStatus,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-2 py-2">
@@ -76,6 +80,8 @@ export function FlowToolbar({
         className="w-52 border-none bg-transparent text-base font-bold text-foreground focus-visible:ring-0"
         placeholder="Flow name"
       />
+
+      {saveStatus && <SaveStatusIndicator status={saveStatus} />}
 
       <Separator orientation="vertical" className="mx-1 h-8" />
 
