@@ -52,7 +52,6 @@ export function FlowEditor() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const navigate = useNavigate();
-  const [showTranslator, setShowTranslator] = useState(false);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
