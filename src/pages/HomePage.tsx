@@ -93,7 +93,7 @@ export default function HomePage() {
             <Plus className="mr-1 h-3.5 w-3.5" /> New Experience
           </Button>
           <Button size="sm" variant="outline" onClick={() => navigate("/import")}>
-            <Download className="mr-1 h-3.5 w-3.5" /> Import TextIt
+            <Download className="mr-1 h-3.5 w-3.5" /> Import JSON
           </Button>
           <Button size="sm" variant="outline" onClick={() => navigate("/demos")}>
             <Upload className="mr-1 h-3.5 w-3.5" /> Upload JSX
@@ -183,7 +183,7 @@ export default function HomePage() {
                 { label: "New Flow", icon: Hammer, color: "text-primary", to: "/editor" },
                 { label: "New Demo", icon: Smartphone, color: "text-accent", to: "/demos" },
                 { label: "Generate with AI", icon: Sparkles, color: "text-accent", to: "/journeys" },
-                { label: "Import TextIt", icon: Download, color: "text-muted-foreground", to: "/import" },
+                { label: "Import JSON", icon: Download, color: "text-muted-foreground", to: "/import" },
                 { label: "Upload JSX", icon: Upload, color: "text-muted-foreground", to: "/demos" },
               ].map((item) => (
                 <Card
