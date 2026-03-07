@@ -140,6 +140,8 @@ export function useFlowSimulation(
   const [isFinished, setIsFinished] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const ctxRef = useRef<SimulationContext>(createEmptyContext());
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const executeWebhooks = options?.executeWebhooks ?? false;
 
   const findFirstNode = useCallback((): string | null => {
@@ -245,7 +247,7 @@ export function useFlowSimulation(
           const headers = data.headers || {};
 
           // Merge default headers + node headers, then resolve templates
-          const mergedHeaders = { ...(options?.defaultHeaders || {}), ...headers };
+          const mergedHeaders = { ...(optionsRef.current?.defaultHeaders || {}), ...headers };
           const resolvedHeaders: Record<string, string> = {};
           for (const [key, val] of Object.entries(mergedHeaders)) {
             resolvedHeaders[key] = resolveTemplate(String(val), ctxRef.current);
@@ -282,7 +284,7 @@ export function useFlowSimulation(
                 ctxRef.current.results[data.resultName.toLowerCase()] = { value: responseText };
               }
 
-              options?.onWebhookExecuted?.(url, response.status, responseJson);
+              optionsRef.current?.onWebhookExecuted?.(url, response.status, responseJson);
 
               setMessages((prev) => [
                 ...prev,
@@ -373,7 +375,7 @@ export function useFlowSimulation(
         }
       }
     },
-    [nodes, getNextNodeId, onHighlightNode, endFlow, executeWebhooks, options]
+    [nodes, getNextNodeId, onHighlightNode, endFlow, executeWebhooks]
   );
 
   const start = useCallback(() => {
