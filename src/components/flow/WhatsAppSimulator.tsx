@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation } from "@/hooks/useFlowSimulation";
@@ -15,7 +15,7 @@ interface WhatsAppSimulatorProps {
 export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: WhatsAppSimulatorProps) {
   const [inputText, setInputText] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const { messages, waitingForInput, categories, isFinished, start, sendMessage } =
+  const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
     useFlowSimulation(nodes, edges, onHighlightNode);
 
   const scrollToBottom = useCallback(() => {
@@ -30,6 +30,17 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
     setInputText("");
   };
 
+  const handleFileAttach = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) sendAttachment(file);
+    };
+    input.click();
+  };
+
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
 
@@ -42,7 +53,7 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
         <div className="flex-1">
           <p className="text-sm font-semibold text-primary-foreground">Simulador WhatsApp</p>
           <p className="text-xs text-primary-foreground/70">
-            {isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
+            {isProcessing ? "procesando API…" : isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
           </p>
         </div>
         <div className="flex gap-1">
@@ -61,7 +72,7 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
             if (msg.sender === "system") {
               return (
                 <div key={msg.id} className="flex justify-center">
-                  <span className="rounded-lg bg-muted px-3 py-1 text-[11px] text-muted-foreground shadow-sm">{msg.text}</span>
+                  <span className="rounded-lg bg-muted px-3 py-1 text-[11px] text-muted-foreground shadow-sm max-w-[90%] text-center">{msg.text}</span>
                 </div>
               );
             }
@@ -69,6 +80,11 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
             return (
               <div key={msg.id} className={`flex ${isBot ? "justify-start" : "justify-end"}`}>
                 <div className={`relative max-w-[80%] rounded-xl px-3 py-2 shadow-sm ${isBot ? "rounded-tl-sm bg-card text-foreground" : "rounded-tr-sm bg-node-send text-primary-foreground"}`}>
+                  {msg.imageUrl && (
+                    <div className="mb-1.5 -mx-1 -mt-0.5 overflow-hidden rounded-md">
+                      <img src={msg.imageUrl} alt="Attachment" className="w-full max-h-40 object-cover" />
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
                   {msg.quickReplies && msg.quickReplies.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1 border-t border-border/30 pt-2">
@@ -97,7 +113,17 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
 
       <div className="border-t border-border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
-          <Input value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && waitingForInput) handleSend(inputText); }} placeholder={waitingForInput ? "Escribe tu respuesta…" : "Esperando al bot…"} disabled={!waitingForInput} className="flex-1 rounded-full border-border bg-background text-sm" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={handleFileAttach}
+            disabled={!waitingForInput}
+            title="Adjuntar archivo"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Input value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && waitingForInput) handleSend(inputText); }} placeholder={waitingForInput ? "Escribe tu respuesta…" : isProcessing ? "Procesando API…" : "Esperando al bot…"} disabled={!waitingForInput} className="flex-1 rounded-full border-border bg-background text-sm" />
           <Button size="icon" onClick={() => handleSend(inputText)} disabled={!waitingForInput || !inputText.trim()} className="h-9 w-9 shrink-0 rounded-full bg-node-send hover:bg-node-send/90">
             <Send className="h-4 w-4 text-primary-foreground" />
           </Button>
