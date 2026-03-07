@@ -122,6 +122,7 @@ function resolveExpression(expr: string, ctx: SimulationContext): string {
 
 interface UseFlowSimulationOptions {
   executeWebhooks?: boolean;
+  defaultHeaders?: Record<string, string>;
   onWebhookExecuted?: (url: string, status: number, response: any) => void;
 }
 
@@ -243,9 +244,10 @@ export function useFlowSimulation(
           const body = resolveTemplate(bodyTemplate, ctxRef.current);
           const headers = data.headers || {};
 
-          // Resolve header values too
+          // Merge default headers + node headers, then resolve templates
+          const mergedHeaders = { ...(options?.defaultHeaders || {}), ...headers };
           const resolvedHeaders: Record<string, string> = {};
-          for (const [key, val] of Object.entries(headers)) {
+          for (const [key, val] of Object.entries(mergedHeaders)) {
             resolvedHeaders[key] = resolveTemplate(String(val), ctxRef.current);
           }
 

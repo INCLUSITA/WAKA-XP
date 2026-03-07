@@ -36,6 +36,7 @@ export default function PhoneSimulator() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [ready, setReady] = useState(false);
   const [inputText, setInputText] = useState("");
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("waka-simulator-api-key") || "");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,9 +86,12 @@ export default function PhoneSimulator() {
     setEdges([]);
   };
 
+  const defaultHeaders = apiKey ? { "x-api-key": apiKey } : {};
+
   const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
     useFlowSimulation(nodes, edges, undefined, {
       executeWebhooks: true,
+      defaultHeaders,
       onWebhookExecuted: (url, status, _response) => {
         console.log(`[Simulator] Webhook ${status}: ${url}`);
       },
@@ -160,8 +164,21 @@ export default function PhoneSimulator() {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="bg-[#F0F0F0] px-4 py-3">
+            {/* API Key + Search */}
+            <div className="bg-[#F0F0F0] px-4 py-2.5 space-y-2">
+              <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
+                <span className="text-[10px] font-medium text-gray-400 shrink-0">🔑</span>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    localStorage.setItem("waka-simulator-api-key", e.target.value);
+                  }}
+                  placeholder="x-api-key (waka_...)"
+                  className="flex-1 bg-transparent text-xs text-gray-800 outline-none placeholder:text-gray-400"
+                />
+              </div>
               <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
                 <Search className="h-4 w-4 text-gray-400" />
                 <input
