@@ -366,6 +366,17 @@ export function FlowEditor() {
             }}
           />
         )}
+
+        {showTranslator && (
+          <TranslatorPanel
+            nodes={nodes}
+            onTranslated={(translatedNodes) => {
+              setNodes(translatedNodes);
+              setShowTranslator(false);
+            }}
+            onClose={() => setShowTranslator(false)}
+          />
+        )}
       </div>
     </div>
   );
