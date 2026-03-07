@@ -10,6 +10,7 @@ export interface TextItAction {
   method?: string;
   headers?: Record<string, string>;
   body?: string;
+  result_name?: string;
 }
 
 export interface TextItCategory {
