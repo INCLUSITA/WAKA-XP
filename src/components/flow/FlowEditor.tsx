@@ -40,6 +40,7 @@ import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
 import { useFlowPersistence } from "@/hooks/useFlowPersistence";
+import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 
 const nodeTypes = {
   sendMsg: SendMsgNode,
@@ -78,6 +79,7 @@ export function FlowEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
 
@@ -385,6 +387,7 @@ export function FlowEditor() {
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
+        onVersions={() => setShowVersions((v) => !v)}
         saveStatus={saveStatus}
       />
 
@@ -490,6 +493,26 @@ export function FlowEditor() {
               setSelectedNode(node);
             }}
           />
+        )}
+
+        {showVersions && (
+          <div className="absolute right-0 top-0 h-full w-80 border-l border-border bg-card shadow-xl z-20">
+            <VersionHistoryPanel
+              assetType="flow"
+              assetId={flowIdParam}
+              getSnapshotData={() => ({
+                nodes: nodes as unknown as Record<string, unknown>[],
+                edges: edges as unknown as Record<string, unknown>[],
+                flowName,
+              })}
+              onRestore={(data) => {
+                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string };
+                if (snap.nodes) setNodes(snap.nodes);
+                if (snap.edges) setEdges(snap.edges);
+                if (snap.flowName) setFlowName(snap.flowName);
+              }}
+            />
+          </div>
         )}
       </div>
     </div>

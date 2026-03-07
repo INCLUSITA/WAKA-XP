@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_versions: {
+        Row: {
+          asset_id: string
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at: string
+          created_by: string | null
+          environment: Database["public"]["Enums"]["version_environment"]
+          id: string
+          is_current: boolean
+          parent_version_id: string | null
+          snapshot_data: Json
+          status: Database["public"]["Enums"]["version_status"]
+          tenant_id: string
+          version_name: string
+          version_note: string | null
+          version_number: number
+        }
+        Insert: {
+          asset_id: string
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at?: string
+          created_by?: string | null
+          environment?: Database["public"]["Enums"]["version_environment"]
+          id?: string
+          is_current?: boolean
+          parent_version_id?: string | null
+          snapshot_data?: Json
+          status?: Database["public"]["Enums"]["version_status"]
+          tenant_id: string
+          version_name?: string
+          version_note?: string | null
+          version_number: number
+        }
+        Update: {
+          asset_id?: string
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          created_at?: string
+          created_by?: string | null
+          environment?: Database["public"]["Enums"]["version_environment"]
+          id?: string
+          is_current?: boolean
+          parent_version_id?: string | null
+          snapshot_data?: Json
+          status?: Database["public"]["Enums"]["version_status"]
+          tenant_id?: string
+          version_name?: string
+          version_note?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_versions_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "asset_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_versions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flow_versions: {
         Row: {
           created_at: string
@@ -291,10 +357,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_asset_version_number: {
+        Args: {
+          _asset_id: string
+          _asset_type: Database["public"]["Enums"]["asset_type"]
+        }
+        Returns: number
+      }
+      set_current_version: { Args: { _version_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "editor" | "viewer"
+      asset_type: "experience" | "demo" | "flow" | "production_candidate"
       flow_status: "draft" | "active" | "archived"
+      version_environment: "draft" | "sandbox" | "production"
+      version_status: "draft" | "validated" | "candidate" | "live" | "archived"
       webhook_direction: "inbound" | "outbound"
     }
     CompositeTypes: {
@@ -424,7 +501,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "viewer"],
+      asset_type: ["experience", "demo", "flow", "production_candidate"],
       flow_status: ["draft", "active", "archived"],
+      version_environment: ["draft", "sandbox", "production"],
+      version_status: ["draft", "validated", "candidate", "live", "archived"],
       webhook_direction: ["inbound", "outbound"],
     },
   },
