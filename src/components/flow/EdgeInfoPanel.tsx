@@ -7,6 +7,7 @@ interface EdgeInfoPanelProps {
   nodes: Node[];
   onClose: () => void;
   onDelete: (id: string) => void;
+  onSelectNode: (node: Node) => void;
 }
 
 const nodeTypeLabels: Record<string, { label: string; color: string }> = {
@@ -40,7 +41,7 @@ function getNodeSummary(node: Node | undefined) {
   return { ...info, preview };
 }
 
-export function EdgeInfoPanel({ edge, nodes, onClose, onDelete }: EdgeInfoPanelProps) {
+export function EdgeInfoPanel({ edge, nodes, onClose, onDelete, onSelectNode }: EdgeInfoPanelProps) {
   const sourceNode = nodes.find((n) => n.id === edge.source);
   const targetNode = nodes.find((n) => n.id === edge.target);
   const source = getNodeSummary(sourceNode);
@@ -60,7 +61,10 @@ export function EdgeInfoPanel({ edge, nodes, onClose, onDelete }: EdgeInfoPanelP
 
       <div className="flex items-center gap-3">
         {/* Source */}
-        <div className="min-w-0 flex-1 rounded-lg border border-border bg-muted/50 p-3">
+        <button
+          onClick={() => sourceNode && onSelectNode(sourceNode)}
+          className="min-w-0 flex-1 rounded-lg border border-border bg-muted/50 p-3 text-left transition-colors hover:bg-muted hover:border-primary/40 cursor-pointer"
+        >
           <div className="flex items-center gap-1.5">
             <span
               className="h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -69,7 +73,7 @@ export function EdgeInfoPanel({ edge, nodes, onClose, onDelete }: EdgeInfoPanelP
             <span className="text-xs font-semibold text-foreground truncate">{source.label}</span>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground truncate">{source.preview}</p>
-        </div>
+        </button>
 
         {/* Arrow */}
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
@@ -77,7 +81,10 @@ export function EdgeInfoPanel({ edge, nodes, onClose, onDelete }: EdgeInfoPanelP
         </div>
 
         {/* Target */}
-        <div className="min-w-0 flex-1 rounded-lg border border-border bg-muted/50 p-3">
+        <button
+          onClick={() => targetNode && onSelectNode(targetNode)}
+          className="min-w-0 flex-1 rounded-lg border border-border bg-muted/50 p-3 text-left transition-colors hover:bg-muted hover:border-primary/40 cursor-pointer"
+        >
           <div className="flex items-center gap-1.5">
             <span
               className="h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -86,7 +93,7 @@ export function EdgeInfoPanel({ edge, nodes, onClose, onDelete }: EdgeInfoPanelP
             <span className="text-xs font-semibold text-foreground truncate">{target.label}</span>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground truncate">{target.preview}</p>
-        </div>
+        </button>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
