@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { SendMsgNode } from "./SendMsgNode";
@@ -49,6 +50,8 @@ export function FlowEditor() {
   const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [showTranslator, setShowTranslator] = useState(false);
+  const navigate = useNavigate();
   const [showTranslator, setShowTranslator] = useState(false);
 
   const onConnect = useCallback(
@@ -282,6 +285,10 @@ export function FlowEditor() {
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
+        onPhoneSimulator={() => {
+          sessionStorage.setItem("simulator-flow", JSON.stringify({ nodes, edges }));
+          navigate("/simulator");
+        }}
       />
 
       <input
