@@ -140,6 +140,8 @@ export function useFlowSimulation(
   const [isFinished, setIsFinished] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const ctxRef = useRef<SimulationContext>(createEmptyContext());
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const executeWebhooks = options?.executeWebhooks ?? false;
 
   const findFirstNode = useCallback((): string | null => {
