@@ -148,6 +148,7 @@ export function FlowToolbar({
           <Button variant="outline" size="sm" onClick={onWebhooks} className="border-node-webhook/40 text-node-webhook hover:bg-node-webhook/10">
             <Globe className="mr-1 h-3.5 w-3.5" /> Webhooks
           </Button>
+        )}
         {onValidate && (
           <Button variant="outline" size="sm" onClick={onValidate}>
             <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Validar
