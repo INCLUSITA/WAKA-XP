@@ -69,6 +69,7 @@ export function FlowToolbar({
   onTranslate,
   onPhoneSimulator,
   onDemos,
+  onWebhooks,
 }: FlowToolbarProps) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
