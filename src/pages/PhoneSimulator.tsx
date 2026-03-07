@@ -36,6 +36,7 @@ export default function PhoneSimulator() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [ready, setReady] = useState(false);
   const [inputText, setInputText] = useState("");
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("waka-simulator-api-key") || "");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,9 +86,12 @@ export default function PhoneSimulator() {
     setEdges([]);
   };
 
+  const defaultHeaders = apiKey ? { "x-api-key": apiKey } : {};
+
   const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
     useFlowSimulation(nodes, edges, undefined, {
       executeWebhooks: true,
+      defaultHeaders,
       onWebhookExecuted: (url, status, _response) => {
         console.log(`[Simulator] Webhook ${status}: ${url}`);
       },
