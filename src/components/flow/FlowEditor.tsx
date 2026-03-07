@@ -41,9 +41,9 @@ const nodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  type: "smoothstep",
+  type: "step",
   animated: false,
-  style: { strokeWidth: 2, stroke: "hsl(160, 84%, 39%)", strokeDasharray: "6 3" },
+  style: { strokeWidth: 2, stroke: "hsl(200, 30%, 65%)" },
 };
 
 export function FlowEditor() {

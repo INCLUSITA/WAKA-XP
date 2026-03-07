@@ -114,22 +114,28 @@ All colors MUST be HSL.
 /* TextIt-style edge interactions */
 .react-flow__edge-path {
   cursor: pointer;
-  transition: stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+  transition: stroke 0.15s ease, stroke-width 0.15s ease;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: hsl(160, 84%, 50%) !important;
-  stroke-width: 4 !important;
-  filter: drop-shadow(0 0 6px hsl(160, 84%, 39%));
+  stroke: hsl(200, 60%, 50%) !important;
+  stroke-width: 3 !important;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: hsl(160, 84%, 55%) !important;
-  stroke-width: 4.5 !important;
-  filter: drop-shadow(0 0 8px hsl(160, 84%, 45%));
+  stroke: hsl(200, 70%, 45%) !important;
+  stroke-width: 3 !important;
 }
 
 /* Increase clickable area for edges */
 .react-flow__edge-interaction {
   stroke-width: 20 !important;
+}
+
+/* Clean canvas */
+.react-flow__node {
+  cursor: grab;
+}
+.react-flow__node:active {
+  cursor: grabbing;
 }
