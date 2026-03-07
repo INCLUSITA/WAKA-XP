@@ -16,6 +16,14 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
       let preProcessed = jsxSource;
       preProcessed = preProcessed.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
       preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
+
+      // Capture the default export component name BEFORE stripping
+      let componentName = "App";
+      const exportMatch = preProcessed.match(/export\s+default\s+function\s+([A-Za-z_]\w*)/);
+      if (exportMatch) {
+        componentName = exportMatch[1];
+      }
+
       preProcessed = preProcessed.replace(/^export\s+default\s+/gm, "");
       preProcessed = preProcessed.replace(/^export\s+/gm, "");
 
@@ -27,11 +35,6 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
       });
 
       let code = result.code;
-
-      // Capture component name from function declarations
-      let componentName = "App";
-      const fnMatch = code.match(/function\s+([A-Z]\w*)\s*\(/);
-      if (fnMatch) componentName = fnMatch[1];
 
       // Build a module that returns the component
       const moduleCode = `
