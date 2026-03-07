@@ -120,6 +120,7 @@ export default function HomePage() {
           <Button size="sm" variant="outline" className="border-border/50 hover:border-accent/30 hover:bg-accent/5" onClick={() => navigate("/demos")}>
             <Upload className="mr-1 h-3.5 w-3.5" /> Upload JSX
           </Button>
+          <ThemeToggle />
         </div>
       </div>
 
