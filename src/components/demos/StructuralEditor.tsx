@@ -12,7 +12,7 @@ interface StructuralEditorProps {
   onBlocksChange?: (blocks: StructuralBlock[]) => void;
 }
 
-export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed }: StructuralEditorProps) {
+export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed, onBlocksChange }: StructuralEditorProps) {
   const storageKey = `structural-blocks-${demoId}`;
 
   const [blocks, setBlocks] = useState<StructuralBlock[]>(() => {
