@@ -415,6 +415,62 @@ export type Database = {
         }
         Relationships: []
       }
+      uploaded_demos: {
+        Row: {
+          color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          jsx_source: string
+          source_id: string | null
+          source_name: string | null
+          status: string
+          tags: string[]
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id: string
+          jsx_source: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          tags?: string[]
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          jsx_source?: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          tags?: string[]
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploaded_demos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
