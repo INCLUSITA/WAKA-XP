@@ -281,10 +281,10 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                     </button>
                   )}
 
-                  {/* Applied: done indicator */}
+                  {/* Applied: queued indicator */}
                   {p.status === "applied" && (
                     <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
-                      <Zap className="h-3 w-3" /> Applied to sandbox
+                      <Zap className="h-3 w-3" /> Approved · visual apply coming soon
                     </span>
                   )}
 
