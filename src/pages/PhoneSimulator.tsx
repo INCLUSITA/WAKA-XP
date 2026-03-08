@@ -464,7 +464,7 @@ export default function PhoneSimulator() {
                   className="flex flex-col items-center gap-1"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-500 shadow-md">
-                    <Image className="h-5 w-5 text-white" />
+                    <ImageIcon className="h-5 w-5 text-white" />
                   </div>
                   <span className="text-[10px] text-gray-500">Galería</span>
                 </button>
