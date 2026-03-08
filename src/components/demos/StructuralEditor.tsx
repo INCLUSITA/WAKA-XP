@@ -9,6 +9,7 @@ interface StructuralEditorProps {
   demoTitle: string;
   pendingBlock?: StructuralBlock | null;
   onPendingBlockConsumed?: () => void;
+  onBlocksChange?: (blocks: StructuralBlock[]) => void;
 }
 
 export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed }: StructuralEditorProps) {
