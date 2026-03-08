@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Plus, Trash2, Sparkles, Save, RefreshCw, Database, Flag, MessageSquareText } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, Sparkles, Save, RefreshCw, Database, Flag, MessageSquareText, Hexagon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,12 @@ export interface NodeEffect {
   key: string;
   value: string;
   scope?: "flow" | "module" | "experience";
+  entityTarget?: string;
+}
+
+export interface AvailableEntity {
+  name: string;
+  entityType?: string;
 }
 
 const EFFECT_META: Record<NodeEffect["type"], { label: string; icon: React.ReactNode; color: string }> = {
@@ -31,13 +37,22 @@ const SCOPE_HINTS: Record<string, string> = {
 interface NodeEffectsEditorProps {
   effects: NodeEffect[];
   onChange: (effects: NodeEffect[]) => void;
+  availableEntities?: AvailableEntity[];
 }
 
-export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps) {
+export function NodeEffectsEditor({ effects, onChange, availableEntities = [] }: NodeEffectsEditorProps) {
   const [open, setOpen] = useState(effects.length > 0);
 
   const addEffect = (type: NodeEffect["type"]) => {
-    onChange([...effects, { id: uuidv4(), type, key: "", value: "", scope: "flow" }]);
+    const newEffect: NodeEffect = {
+      id: uuidv4(),
+      type,
+      key: "",
+      value: "",
+      scope: type === "update_entity" ? "experience" : "flow",
+      entityTarget: type === "update_entity" && availableEntities.length > 0 ? availableEntities[0].name : undefined,
+    };
+    onChange([...effects, newEffect]);
     setOpen(true);
   };
 
@@ -80,8 +95,7 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
                 Side effects run alongside this node's main action
               </p>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                Save results, update context, or set state — without extra nodes.
-                Effects can target module, flow, or experience scope.
+                Save results, update context, target entities, or set state — without extra nodes.
               </p>
             </div>
           )}
@@ -89,13 +103,29 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
           {/* Effect cards */}
           {effects.map((effect) => {
             const meta = EFFECT_META[effect.type];
+            const isEntityEffect = effect.type === "update_entity";
+            const isContextEffect = effect.type === "update_context" || effect.type === "set_state";
+
             return (
-              <div key={effect.id} className="rounded-md border border-border/60 bg-card p-2 space-y-1.5">
+              <div
+                key={effect.id}
+                className={`rounded-md border p-2 space-y-1.5 ${
+                  isEntityEffect
+                    ? "border-[hsl(var(--xp-structure))]/30 bg-[hsl(var(--xp-structure))]/5"
+                    : "border-border/60 bg-card"
+                }`}
+              >
                 {/* Effect header */}
                 <div className="flex items-center gap-1.5">
                   <span className={meta.color}>{meta.icon}</span>
                   <span className="text-[11px] font-medium text-foreground">{meta.label}</span>
-                  {effect.scope && (
+                  {isEntityEffect && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-[hsl(var(--xp-structure))]/10 px-1 py-px text-[8px] font-medium text-[hsl(var(--xp-structure))]">
+                      <Hexagon className="h-2 w-2" />
+                      Structured
+                    </span>
+                  )}
+                  {!isEntityEffect && effect.scope && (
                     <span className="rounded bg-muted px-1 py-px text-[9px] text-muted-foreground capitalize">{effect.scope}</span>
                   )}
                   <button
@@ -106,39 +136,113 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
                   </button>
                 </div>
 
-                {/* Key / Value fields */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <Input
-                    value={effect.key}
-                    onChange={(e) => updateEffect(effect.id, { key: e.target.value })}
-                    placeholder={effect.type === "update_entity" ? "entity.field" : "key"}
-                    className="h-7 text-[11px] font-mono"
-                  />
-                  <Input
-                    value={effect.value}
-                    onChange={(e) => updateEffect(effect.id, { value: e.target.value })}
-                    placeholder="@input.text"
-                    className="h-7 text-[11px] font-mono"
-                  />
-                </div>
+                {/* ── Update Entity: entity-aware layout ── */}
+                {isEntityEffect && (
+                  <div className="space-y-1.5">
+                    {/* Entity target selector */}
+                    <div className="space-y-0.5">
+                      <label className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider pl-0.5">Target entity</label>
+                      {availableEntities.length > 0 ? (
+                        <Select
+                          value={effect.entityTarget || ""}
+                          onValueChange={(v) => updateEffect(effect.id, { entityTarget: v })}
+                        >
+                          <SelectTrigger className="h-6 text-[10px] border-[hsl(var(--xp-structure))]/20 bg-[hsl(var(--xp-structure))]/5">
+                            <div className="flex items-center gap-1">
+                              <Hexagon className="h-2.5 w-2.5 text-[hsl(var(--xp-structure))]" />
+                              <SelectValue placeholder="Select entity..." />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableEntities.map((e) => (
+                              <SelectItem key={e.name} value={e.name} className="text-xs">
+                                <span className="flex items-center gap-1.5">
+                                  <Hexagon className="h-2.5 w-2.5 text-[hsl(var(--xp-structure))]" />
+                                  {e.name}
+                                  {e.entityType && (
+                                    <span className="text-[9px] text-muted-foreground">· {e.entityType}</span>
+                                  )}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={effect.entityTarget || ""}
+                          onChange={(e) => updateEffect(effect.id, { entityTarget: e.target.value })}
+                          placeholder="customer"
+                          className="h-6 text-[10px] font-mono border-[hsl(var(--xp-structure))]/20 bg-[hsl(var(--xp-structure))]/5"
+                        />
+                      )}
+                    </div>
 
-                {/* Scope selector for context/entity types */}
-                {(effect.type === "update_context" || effect.type === "set_state") && (
-                  <div className="space-y-0.5">
-                    <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
-                      <SelectTrigger className="h-6 text-[10px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="module">Module — only this module</SelectItem>
-                        <SelectItem value="flow">Flow — only this flow</SelectItem>
-                        <SelectItem value="experience">Experience — shared across flows</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[9px] text-muted-foreground/70 pl-0.5">
-                      {SCOPE_HINTS[effect.scope || "flow"]}
+                    {/* Field + Value */}
+                    <div className="flex items-center gap-1">
+                      <div className="flex-1 space-y-0.5">
+                        <label className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider pl-0.5">Field</label>
+                        <Input
+                          value={effect.key}
+                          onChange={(e) => updateEffect(effect.id, { key: e.target.value })}
+                          placeholder="status"
+                          className="h-6 text-[10px] font-mono"
+                        />
+                      </div>
+                      <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/40 mt-3 shrink-0" />
+                      <div className="flex-1 space-y-0.5">
+                        <label className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider pl-0.5">Value</label>
+                        <Input
+                          value={effect.value}
+                          onChange={(e) => updateEffect(effect.id, { value: e.target.value })}
+                          placeholder="@input.text"
+                          className="h-6 text-[10px] font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-[8px] text-[hsl(var(--xp-structure))]/50 pl-0.5">
+                      Targets XP Entity · Experience scope
                     </p>
                   </div>
+                )}
+
+                {/* ── Non-entity effects: standard key/value ── */}
+                {!isEntityEffect && (
+                  <>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Input
+                        value={effect.key}
+                        onChange={(e) => updateEffect(effect.id, { key: e.target.value })}
+                        placeholder="key"
+                        className="h-7 text-[11px] font-mono"
+                      />
+                      <Input
+                        value={effect.value}
+                        onChange={(e) => updateEffect(effect.id, { value: e.target.value })}
+                        placeholder="@input.text"
+                        className="h-7 text-[11px] font-mono"
+                      />
+                    </div>
+
+                    {/* Scope selector for context/state types */}
+                    {isContextEffect && (
+                      <div className="space-y-0.5">
+                        <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
+                          <SelectTrigger className="h-6 text-[10px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="module">Module — only this module</SelectItem>
+                            <SelectItem value="flow">Flow — only this flow</SelectItem>
+                            <SelectItem value="experience">Experience — shared across flows</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[9px] text-muted-foreground/70 pl-0.5">
+                          {SCOPE_HINTS[effect.scope || "flow"]}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             );
@@ -151,7 +255,9 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
                 key={type}
                 variant="ghost"
                 size="sm"
-                className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                className={`h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground ${
+                  type === "update_entity" ? "hover:bg-[hsl(var(--xp-structure))]/10 hover:text-[hsl(var(--xp-structure))]" : ""
+                }`}
                 onClick={() => addEffect(type)}
               >
                 <Plus className="h-2.5 w-2.5" />
