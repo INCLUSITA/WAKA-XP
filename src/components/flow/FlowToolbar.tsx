@@ -39,13 +39,14 @@ interface FlowToolbarProps {
   saveStatus?: SaveStatus;
   experienceName?: string | null;
   onOpenExperience?: () => void;
-  // New: view mode & modules
   viewMode: EditorViewMode;
   onViewModeChange: (mode: EditorViewMode) => void;
   onToggleContext: () => void;
   showContext: boolean;
   onAddModule: (label?: string) => void;
   moduleTemplates: string[];
+  channel: string;
+  onChannelChange: (ch: string) => void;
 }
 
 const actionNodes = [
