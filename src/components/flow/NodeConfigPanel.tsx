@@ -135,7 +135,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete }: NodeConfi
               </p>
             </div>
             {renderListEditor("quick_replies", "Quick Replies", "Option")}
-            {renderListEditor("attachments", "Attachments", "URL")}
+            <AttachmentsEditor
+              attachments={data.attachments || []}
+              onChange={(attachments) => update("attachments", attachments)}
+            />
           </>
         )}
 
