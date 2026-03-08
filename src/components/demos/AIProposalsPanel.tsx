@@ -306,13 +306,16 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
       </div>
 
       {/* Safe workflow hint */}
-      <div className="px-4 py-2.5 border-t border-white/5">
+      <div className="px-4 py-2.5 border-t border-white/5 space-y-1">
         <div className="flex items-center gap-1.5">
           <FlaskConical className="h-3 w-3 text-amber-400/50" />
           <p className="text-[9px] text-white/20 leading-relaxed">
             All proposals target this sandbox only — review before promoting to stable.
           </p>
         </div>
+        <p className="text-[9px] text-white/15 leading-relaxed pl-[18px]">
+          Approved proposals are recorded for future visual application when the AI editing engine is connected.
+        </p>
       </div>
     </div>
   );
