@@ -192,6 +192,13 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                       <img src={msg.imageUrl} alt="Attachment" className="w-full max-h-40 object-cover" />
                     </div>
                   )}
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="mb-1.5 space-y-1">
+                      {msg.attachments.map((att, i) => (
+                        <AttachmentBubble key={i} att={att} />
+                      ))}
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
                   {msg.quickReplies && msg.quickReplies.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1 border-t border-border/30 pt-2">
