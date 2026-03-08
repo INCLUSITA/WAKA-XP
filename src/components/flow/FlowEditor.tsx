@@ -595,7 +595,9 @@ function FlowEditorInner() {
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
-            fitView
+            fitView={nodes.length > 0 && !selectedNode}
+            fitViewOptions={{ padding: 0.2, maxZoom: 1.5 }}
+            connectOnClick
             className="bg-canvas-bg"
           >
             <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
