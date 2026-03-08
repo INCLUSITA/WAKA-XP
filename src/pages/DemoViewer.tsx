@@ -97,6 +97,7 @@ export default function DemoViewer() {
 
   // Ref to structural editor's insert handler
   const [pendingContextBlock, setPendingContextBlock] = useState<StructuralBlock | null>(null);
+  const [liveBlocks, setLiveBlocks] = useState<StructuralBlock[]>([]);
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
 
