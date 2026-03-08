@@ -312,10 +312,10 @@ export function StructuredView({
                                 <Select
                                   onValueChange={(moduleId) => handleAssign(n.id, moduleId)}
                                 >
-                                  <SelectTrigger className="h-5 w-[72px] border border-border/50 bg-transparent text-[9px] text-muted-foreground opacity-0 group-hover/node:opacity-100 transition-opacity focus:ring-0 rounded [&>svg]:h-2 [&>svg]:w-2">
+                                  <SelectTrigger className="h-6 w-[80px] shrink-0 border border-primary/30 bg-primary/5 text-[10px] font-medium text-primary hover:bg-primary/10 transition-colors focus:ring-1 focus:ring-primary/30 rounded-md [&>svg]:h-2.5 [&>svg]:w-2.5">
                                     <SelectValue placeholder="Assign →" />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent align="end">
                                     {modules.map((m) => (
                                       <SelectItem key={m.id} value={m.id} className="text-xs">
                                         <span className="mr-1.5 inline-block h-2 w-2 rounded-sm" style={{ background: m.color }} />
