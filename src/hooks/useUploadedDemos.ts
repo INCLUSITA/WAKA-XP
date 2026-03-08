@@ -18,17 +18,27 @@ function rowToDemo(row: any): UploadedDemo {
   };
 }
 
+// Use type assertion to work with the uploaded_demos table
+// which may not yet be in the auto-generated types
+const demosTable = () => (supabase as any).from("uploaded_demos");
+
 export function useUploadedDemos() {
   const [demos, setDemos] = useState<UploadedDemo[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDemos = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("uploaded_demos")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) {
-      setDemos(data.map(rowToDemo));
+    try {
+      const { data, error } = await demosTable()
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("[useUploadedDemos] fetch error:", error);
+        setLoading(false);
+        return;
+      }
+      setDemos((data || []).map(rowToDemo));
+    } catch (e) {
+      console.error("[useUploadedDemos] unexpected error:", e);
     }
     setLoading(false);
   }, []);
@@ -38,7 +48,7 @@ export function useUploadedDemos() {
   }, [fetchDemos]);
 
   const saveDemo = useCallback(async (demo: UploadedDemo) => {
-    const { error } = await supabase.from("uploaded_demos").upsert({
+    const { error } = await demosTable().upsert({
       id: demo.id,
       title: demo.title,
       description: demo.description,
@@ -50,32 +60,46 @@ export function useUploadedDemos() {
       source_id: demo.sourceId || null,
       source_name: demo.sourceName || null,
     });
-    if (!error) await fetchDemos();
-    return !error;
+    if (error) {
+      console.error("[useUploadedDemos] save error:", error);
+      return false;
+    }
+    await fetchDemos();
+    return true;
   }, [fetchDemos]);
 
   const deleteDemo = useCallback(async (id: string) => {
-    const { error } = await supabase.from("uploaded_demos").delete().eq("id", id);
-    if (!error) await fetchDemos();
-    return !error;
+    const { error } = await demosTable().delete().eq("id", id);
+    if (error) {
+      console.error("[useUploadedDemos] delete error:", error);
+      return false;
+    }
+    await fetchDemos();
+    return true;
   }, [fetchDemos]);
 
   const updateStatus = useCallback(async (id: string, status: DemoStatus) => {
-    const { error } = await supabase
-      .from("uploaded_demos")
+    const { error } = await demosTable()
       .update({ status })
       .eq("id", id);
-    if (!error) await fetchDemos();
-    return !error;
+    if (error) {
+      console.error("[useUploadedDemos] updateStatus error:", error);
+      return false;
+    }
+    await fetchDemos();
+    return true;
   }, [fetchDemos]);
 
   const getDemo = useCallback(async (id: string): Promise<UploadedDemo | null> => {
-    const { data, error } = await supabase
-      .from("uploaded_demos")
+    const { data, error } = await demosTable()
       .select("*")
       .eq("id", id)
       .maybeSingle();
-    if (error || !data) return null;
+    if (error) {
+      console.error("[useUploadedDemos] getDemo error:", error);
+      return null;
+    }
+    if (!data) return null;
     return rowToDemo(data);
   }, []);
 
