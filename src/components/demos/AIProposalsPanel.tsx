@@ -220,7 +220,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     ]);
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Applied: ${proposal.prompt.slice(0, 60)}`);
       persist(proposals.map((p) =>
         p.id === id ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
       ));
