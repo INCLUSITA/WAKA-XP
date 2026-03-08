@@ -17,7 +17,7 @@ import {
   Map, LayoutGrid, Rocket, ArrowRight, Search,
   MessageSquare, Phone, Bot, Globe, Instagram, Send,
   Plug, ChevronRight, Zap, Shield,
-  Radio, Wifi, WifiOff,
+  Radio, Wifi, WifiOff, AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -31,11 +31,11 @@ const statusColors: Record<string, string> = {
 };
 
 const pipelineStages = [
-  { label: "Idea", icon: Sparkles },
-  { label: "Demo", icon: Smartphone },
-  { label: "Validated", icon: Shield },
-  { label: "Candidate", icon: Rocket },
-  { label: "Live", icon: Zap },
+  { label: "Idea", icon: Sparkles, filterStatus: null },
+  { label: "Demo", icon: Smartphone, filterStatus: null },
+  { label: "Candidate", icon: Rocket, filterStatus: "candidate" },
+  { label: "Validated", icon: Shield, filterStatus: "validated" },
+  { label: "Live", icon: Zap, filterStatus: "live" },
 ];
 
 const channels = [
@@ -117,6 +117,7 @@ export default function HomePage() {
 
   const lastFlow = flows[0];
   const lastDemo = allDemos[allDemos.length - 1];
+  const needsAttention = candidateStats.candidate;
 
   return (
     <div className="flex flex-col h-screen">
@@ -253,7 +254,14 @@ export default function HomePage() {
                   <TabsTrigger value="experiences" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary tracking-wide text-xs">Experiences</TabsTrigger>
                   <TabsTrigger value="flows" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary tracking-wide text-xs">Flows</TabsTrigger>
                   <TabsTrigger value="demos" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent tracking-wide text-xs">Demos</TabsTrigger>
-                  <TabsTrigger value="candidates" className="data-[state=active]:bg-chart-4/10 data-[state=active]:text-chart-4 tracking-wide text-xs">Candidates</TabsTrigger>
+                  <TabsTrigger value="candidates" className="data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-600 tracking-wide text-xs">
+                    Candidates
+                    {candidateStats.candidate + candidateStats.validated + candidateStats.live > 0 && (
+                      <Badge variant="secondary" className="ml-1.5 text-[8px] bg-amber-500/15 text-amber-600 px-1">
+                        {candidateStats.candidate + candidateStats.validated + candidateStats.live}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="experiences">
@@ -337,6 +345,7 @@ export default function HomePage() {
                     <Card className="glass border-gradient rounded-xl p-8 text-center">
                       <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
                       <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
+                      <p className="text-[10px] text-muted-foreground/40 mt-1">Promote from Experience Studio or Builder to create candidates</p>
                       <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
                         Go to Production <ArrowRight className="ml-1 h-3 w-3" />
                       </Button>
@@ -349,7 +358,12 @@ export default function HomePage() {
                             <div className="flex items-center gap-3">
                               <div className="rounded-md bg-amber-500/10 p-1"><Rocket className="h-3 w-3 text-amber-600" /></div>
                               <span className="text-sm font-medium text-foreground">{c.name}</span>
-                              <Badge variant="secondary" className="text-[10px] bg-amber-500/15 text-amber-600">{c.status}</Badge>
+                              <Badge variant="secondary" className={`text-[10px] ${
+                                c.status === "candidate" ? "bg-amber-500/15 text-amber-600" :
+                                c.status === "validated" ? "bg-chart-4/15 text-chart-4" :
+                                c.status === "live" ? "bg-primary/15 text-primary" :
+                                "bg-muted text-muted-foreground"
+                              }`}>{c.status}</Badge>
                             </div>
                             <div className="flex items-center gap-3">
                               <Badge variant="outline" className="text-[10px]">{c.environment}</Badge>
@@ -373,18 +387,36 @@ export default function HomePage() {
 
           {/* Pipeline */}
           <motion.section initial="hidden" animate="visible">
-            <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">Production Pipeline</motion.h2>
+            <motion.div variants={fadeUp} custom={0} className="flex items-center gap-3 mb-4">
+              <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em]">Production Pipeline</h2>
+              {needsAttention > 0 && (
+                <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-[9px] gap-1">
+                  <AlertCircle className="h-2.5 w-2.5" /> {needsAttention} awaiting validation
+                </Badge>
+              )}
+            </motion.div>
             <motion.div variants={fadeUp} custom={1} className="flex gap-3 overflow-x-auto pb-2">
               {pipelineStages.map((stage, i) => {
                 let count = 0;
-                if (stage.label === "Candidate") count = candidateStats.candidate;
-                else if (stage.label === "Validated") count = candidateStats.validated;
-                else if (stage.label === "Live") count = candidateStats.live;
+                if (stage.filterStatus === "candidate") count = candidateStats.candidate;
+                else if (stage.filterStatus === "validated") count = candidateStats.validated;
+                else if (stage.filterStatus === "live") count = candidateStats.live;
                 else if (stage.label === "Demo") count = allDemos.length;
+                const isClickable = !!stage.filterStatus;
                 return (
                   <div key={stage.label} className="flex items-center gap-3">
-                    <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03] cursor-pointer" onClick={() => { if (stage.label === "Candidate" || stage.label === "Validated" || stage.label === "Live") navigate("/production"); }}>
-                      <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
+                    <div
+                      className={`glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03] ${isClickable ? "cursor-pointer" : "cursor-default"} ${
+                        stage.filterStatus === "candidate" && count > 0 ? "ring-1 ring-amber-500/30" : ""
+                      }`}
+                      onClick={() => { if (isClickable) navigate("/production"); }}
+                    >
+                      <stage.icon className={`h-5 w-5 mx-auto mb-2 ${
+                        stage.filterStatus === "live" && count > 0 ? "text-primary" :
+                        stage.filterStatus === "validated" && count > 0 ? "text-chart-4" :
+                        stage.filterStatus === "candidate" && count > 0 ? "text-amber-600" :
+                        "text-muted-foreground/60"
+                      }`} />
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
                       <p className="text-2xl font-bold text-foreground/80 mt-1">{count}</p>
                     </div>
@@ -440,7 +472,7 @@ export default function HomePage() {
                       { label: "Connectors Linked", value: "0", icon: Plug, color: "text-primary" },
                       { label: "Mock Integrations", value: "0", icon: LayoutGrid, color: "text-accent" },
                       { label: "Live Integrations", value: "0", icon: Rocket, color: "text-chart-4" },
-                      { label: "Production Readiness", value: "—", icon: Shield, color: "text-chart-3" },
+                      { label: "Production Readiness", value: candidateStats.live > 0 ? `${candidateStats.live} live` : "—", icon: Shield, color: "text-chart-3" },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-4">
                         <div className="rounded-xl bg-secondary/50 p-3"><item.icon className={`h-5 w-5 ${item.color}/60`} /></div>
