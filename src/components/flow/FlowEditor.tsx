@@ -529,7 +529,7 @@ export function FlowEditor() {
         onViewModeChange={setViewMode}
         onToggleContext={() => setShowContext((v) => !v)}
         showContext={showContext}
-        onAddModule={addModule}
+        onAddModule={handleAddModuleAndFocus}
         moduleTemplates={MODULE_TEMPLATES}
       />
 
