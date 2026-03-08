@@ -255,6 +255,10 @@ export default function DemoViewer() {
           onContextMenu={handleDemoContextMenu}
         >
           {demoContent}
+          {/* Live structural blocks preview */}
+          {isSandboxDemo && liveBlocks.length > 0 && (
+            <StructuralBlocksPreview blocks={liveBlocks} />
+          )}
         </div>
 
         {isSandboxDemo && activePanel === "ai" && (
