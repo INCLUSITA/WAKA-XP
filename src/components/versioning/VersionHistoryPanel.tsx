@@ -348,16 +348,29 @@ export function VersionHistoryPanel({
             {versions.length}
           </Badge>
         </div>
-        <Button
-          size="sm"
-          variant="default"
-          className="h-7 text-xs"
-          onClick={() => setShowSaveDialog(true)}
-          disabled={!assetId}
-        >
-          <Save className="h-3 w-3 mr-1" />
-          Guardar
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="default"
+            className="h-7 text-xs"
+            onClick={() => setShowSaveDialog(true)}
+            disabled={!assetId}
+          >
+            <Save className="h-3 w-3 mr-1" />
+            Guardar
+          </Button>
+          {onClose && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              onClick={onClose}
+              title="Cerrar panel de versiones"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Compare mode indicator */}

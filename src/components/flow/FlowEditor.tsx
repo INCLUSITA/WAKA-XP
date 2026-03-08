@@ -724,6 +724,7 @@ function FlowEditorInner() {
                 if (snap.flowName) setFlowName(snap.flowName);
                 if (snap.contextItems) setContextItems(snap.contextItems);
               }}
+              onClose={() => setShowVersions(false)}
             />
           </div>
         )}
