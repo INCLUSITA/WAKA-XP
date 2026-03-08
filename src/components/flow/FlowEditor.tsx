@@ -573,6 +573,8 @@ function FlowEditorInner() {
         showContext={showContext}
         onAddModule={handleAddModuleAndFocus}
         moduleTemplates={MODULE_TEMPLATES}
+        channel={channel}
+        onChannelChange={setChannel}
       />
 
       <input
