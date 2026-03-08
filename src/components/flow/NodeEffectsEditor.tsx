@@ -22,6 +22,12 @@ const EFFECT_META: Record<NodeEffect["type"], { label: string; icon: React.React
   add_reflection:  { label: "Add Reflection",   icon: <MessageSquareText className="h-3 w-3" />,  color: "text-muted-foreground" },
 };
 
+const SCOPE_HINTS: Record<string, string> = {
+  module: "Only within this module",
+  flow: "Local to this flow",
+  experience: "Shared across flows in this experience",
+};
+
 interface NodeEffectsEditorProps {
   effects: NodeEffect[];
   onChange: (effects: NodeEffect[]) => void;
