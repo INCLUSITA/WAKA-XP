@@ -93,6 +93,7 @@ function FlowEditorInner() {
   const [showContext, setShowContext] = useState(false);
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const navigate = useNavigate();
+  const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);
 
   const { loadFlow, debouncedSave, saveStatus, isLoading } = useFlowPersistence({
@@ -282,19 +283,30 @@ function FlowEditorInner() {
           break;
       }
 
+      // Calculate position at viewport center so the new node is always visible
+      let position = { x: 250, y: 200 };
+      try {
+        const viewport = reactFlowInstance.getViewport();
+        const bounds = document.querySelector('.react-flow')?.getBoundingClientRect();
+        if (bounds) {
+          const cx = (bounds.width / 2 - viewport.x) / viewport.zoom;
+          const cy = (bounds.height / 2 - viewport.y) / viewport.zoom;
+          position = { x: cx - 110, y: cy - 40 };
+        }
+      } catch {
+        // fallback to default position
+      }
+
       const newNode: Node = {
         id,
         type,
-        position: {
-          x: 250 + Math.random() * 200,
-          y: 100 + nodes.length * 150,
-        },
+        position,
         data: defaultData,
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [nodes.length, setNodes]
+    [setNodes, reactFlowInstance]
   );
 
   const updateNodeData = useCallback(
@@ -477,7 +489,6 @@ function FlowEditorInner() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
-  const reactFlowInstance = useReactFlow();
 
   const handleFocusNode = useCallback(
     (nodeId: string) => {
@@ -585,6 +596,8 @@ function FlowEditorInner() {
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
+            fitViewOptions={{ padding: 0.2, maxZoom: 1.5 }}
+            connectOnClick
             className="bg-canvas-bg"
           >
             <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
