@@ -203,10 +203,15 @@ export default function Demos() {
   };
 
   /* ─ Delete ─ */
-  const handleDelete = (id: string) => {
-    if (!confirm("¿Eliminar este demo?")) return;
-    deleteUploadedDemo(id);
+  const requestDelete = (id: string, title: string, isStable: boolean) => {
+    setDeleteTarget({ id, title, isStable });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteUploadedDemo(deleteTarget.id);
     refreshUploaded();
+    setDeleteTarget(null);
   };
 
   /* ─ Open demo ─ */
