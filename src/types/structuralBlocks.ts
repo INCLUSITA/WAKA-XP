@@ -195,16 +195,27 @@ export const BLOCK_TYPE_CONFIGS: Record<StructuralBlockType, BlockTypeConfig> = 
     bgColor: "bg-orange-500/10",
     borderColor: "border-orange-500/25",
     category: "logic",
-    defaultProperties: { condition: "", operand: "equals", value: "" },
+    defaultProperties: { splitType: "expression", condition: "", operand: "equals", value: "", defaultCategory: "Other" },
     propertyFields: [
+      { key: "splitType", label: "Split type", type: "select", options: [
+        { value: "expression", label: "By expression" },
+        { value: "contact_field", label: "By contact field" },
+        { value: "run_result", label: "By flow result" },
+        { value: "random", label: "Random" },
+      ]},
       { key: "condition", label: "Variable to check", type: "text", placeholder: "@result.choice", required: true },
       { key: "operand", label: "Condition", type: "select", options: [
         { value: "equals", label: "Equals" },
         { value: "contains", label: "Contains" },
         { value: "starts_with", label: "Starts with" },
+        { value: "ends_with", label: "Ends with" },
         { value: "not_empty", label: "Not empty" },
+        { value: "gt", label: "Greater than" },
+        { value: "lt", label: "Less than" },
+        { value: "regex", label: "Matches regex" },
       ]},
       { key: "value", label: "Compare value", type: "text", placeholder: "yes, 1, active…" },
+      { key: "defaultCategory", label: "Default category", type: "text", placeholder: "Other" },
     ],
   },
   webhook: {
