@@ -1,8 +1,24 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Paperclip, Image, FileText, Music, Video, File } from "lucide-react";
+
+function AttachmentIcon({ mime }: { mime?: string }) {
+  const cls = "h-3 w-3 text-muted-foreground";
+  if (!mime) return <File className={cls} />;
+  if (mime.startsWith("image")) return <Image className={cls} />;
+  if (mime.startsWith("audio")) return <Music className={cls} />;
+  if (mime.startsWith("video")) return <Video className={cls} />;
+  if (mime.includes("pdf")) return <FileText className={cls} />;
+  return <File className={cls} />;
+}
 
 export function SendMsgNode({ data, selected }: NodeProps) {
   const d = data as any;
+
+  // Normalize attachments (legacy string[] or new object[])
+  const attachments: { url: string; name?: string; mime?: string }[] = (d.attachments || []).map((a: any) =>
+    typeof a === "string" ? { url: a } : a
+  );
+
   return (
     <div
       className={`min-w-[220px] max-w-[320px] rounded-lg border bg-white shadow-md transition-all ${
@@ -13,6 +29,12 @@ export function SendMsgNode({ data, selected }: NodeProps) {
       <div className="flex items-center gap-2 rounded-t-lg bg-node-send px-3 py-1.5">
         <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />
         <span className="text-xs font-bold tracking-wide text-primary-foreground uppercase">Send Message</span>
+        {attachments.length > 0 && (
+          <span className="ml-auto flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5">
+            <Paperclip className="h-3 w-3 text-primary-foreground" />
+            <span className="text-[10px] font-semibold text-primary-foreground">{attachments.length}</span>
+          </span>
+        )}
       </div>
 
       {/* Body */}
@@ -20,6 +42,19 @@ export function SendMsgNode({ data, selected }: NodeProps) {
         <p className="text-[13px] leading-relaxed text-foreground line-clamp-4 whitespace-pre-wrap">
           {d.text || "No message configured"}
         </p>
+
+        {/* Attachment badges */}
+        {attachments.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {attachments.map((att, i) => (
+              <span key={i} className="inline-flex items-center gap-1 rounded border border-border/50 bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <AttachmentIcon mime={att.mime} />
+                <span className="max-w-[100px] truncate">{att.name || "file"}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {d.quick_replies?.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {d.quick_replies.map((r: string, i: number) => (
