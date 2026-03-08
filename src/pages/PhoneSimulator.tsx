@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
 import {
-  ArrowLeft, RotateCcw, Send, Phone, Video, MoreVertical, Smile,
-  Paperclip, Mic, Camera, Image, CheckCheck, Wifi, Battery, Signal,
-  Loader2, Play, Search,
+  ArrowLeft, RotateCcw, Send, Phone, Video as VideoIcon, MoreVertical, Smile,
+  Paperclip, Mic, Camera, Image as ImageIcon, CheckCheck, Wifi, Battery, Signal,
+  Loader2, Play, Search, FileText, Volume2, Film, File,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Json } from "@/integrations/supabase/types";
