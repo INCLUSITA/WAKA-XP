@@ -371,14 +371,7 @@ export default function PhoneSimulator() {
                             if (isVideo) {
                               return (
                                 <div key={i} className="rounded-md overflow-hidden border border-gray-200">
-                                  <div className="flex items-center justify-center h-24 bg-gray-50">
-                                    <div className="flex flex-col items-center gap-1">
-                                      <div className="h-8 w-8 rounded-full bg-[#075E54]/15 flex items-center justify-center">
-                                        <Play className="h-4 w-4 text-[#075E54]" />
-                                      </div>
-                                      <span className="text-[9px] text-gray-400">Video</span>
-                                    </div>
-                                  </div>
+                                  <video src={att.url} controls className="w-full max-h-48" preload="metadata" />
                                   <div className="px-2 py-1 bg-gray-100 flex items-center gap-1">
                                     <Film className="h-3 w-3 text-gray-400" />
                                     <span className="text-[10px] text-gray-500 truncate">{fileName}</span>

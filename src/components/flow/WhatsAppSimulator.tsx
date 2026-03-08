@@ -66,14 +66,7 @@ function AttachmentBubble({ att }: { att: { url: string; name?: string; mime?: s
   if (isVideo) {
     return (
       <div className="rounded-lg overflow-hidden border border-border/20 bg-muted/30">
-        <div className="flex items-center justify-center h-24 bg-black/5">
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center">
-              <Play className="h-4 w-4 text-primary" />
-            </div>
-            <span className="text-[9px] text-muted-foreground">Video</span>
-          </div>
-        </div>
+        <video src={att.url} controls className="w-full max-h-48 rounded-t-lg" preload="metadata" />
         <div className="px-2 py-1 bg-muted/40 flex items-center gap-1.5">
           <Film className="h-3 w-3 text-primary/60" />
           <span className="text-[10px] text-muted-foreground truncate">{fileName}</span>
