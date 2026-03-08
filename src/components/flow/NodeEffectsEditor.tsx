@@ -22,6 +22,12 @@ const EFFECT_META: Record<NodeEffect["type"], { label: string; icon: React.React
   add_reflection:  { label: "Add Reflection",   icon: <MessageSquareText className="h-3 w-3" />,  color: "text-muted-foreground" },
 };
 
+const SCOPE_HINTS: Record<string, string> = {
+  module: "Only within this module",
+  flow: "Local to this flow",
+  experience: "Shared across flows in this experience",
+};
+
 interface NodeEffectsEditorProps {
   effects: NodeEffect[];
   onChange: (effects: NodeEffect[]) => void;
@@ -74,7 +80,8 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
                 Side effects run alongside this node's main action
               </p>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                Save results, update context, or set state — without extra nodes
+                Save results, update context, or set state — without extra nodes.
+                Effects can target module, flow, or experience scope.
               </p>
             </div>
           )}
@@ -117,16 +124,21 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
 
                 {/* Scope selector for context/entity types */}
                 {(effect.type === "update_context" || effect.type === "set_state") && (
-                  <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
-                    <SelectTrigger className="h-6 text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="flow">Flow scope</SelectItem>
-                      <SelectItem value="module">Module scope</SelectItem>
-                      <SelectItem value="experience">Experience scope</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-0.5">
+                    <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
+                      <SelectTrigger className="h-6 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="module">Module — only this module</SelectItem>
+                        <SelectItem value="flow">Flow — only this flow</SelectItem>
+                        <SelectItem value="experience">Experience — shared across flows</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[9px] text-muted-foreground/70 pl-0.5">
+                      {SCOPE_HINTS[effect.scope || "flow"]}
+                    </p>
+                  </div>
                 )}
               </div>
             );
