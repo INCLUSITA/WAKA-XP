@@ -8,6 +8,7 @@ import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRi
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
+import StructuralBlocksPreview from "@/components/demos/StructuralBlocksPreview";
 import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
