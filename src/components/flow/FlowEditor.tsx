@@ -396,6 +396,25 @@ export function FlowEditor() {
     toast.info("Canvas limpiado");
   }, [setNodes, setEdges]);
 
+  const handlePromoteToCandidate = useCallback(async () => {
+    if (!flowIdParam) {
+      toast.error("Save the flow first before promoting");
+      return;
+    }
+    const { data, error } = await supabase.from("production_candidates").insert({
+      name: `${flowName} — Candidate`,
+      flow_id: flowIdParam,
+      experience_id: experienceId,
+      tenant_id: (await supabase.from("flows").select("tenant_id").eq("id", flowIdParam).single()).data?.tenant_id,
+    }).select("id").single();
+    if (error) {
+      toast.error("Error creating candidate");
+      return;
+    }
+    toast.success("Production Candidate created");
+    navigate(`/production?id=${data.id}`);
+  }, [flowIdParam, flowName, experienceId, navigate]);
+
   return (
     <div className="relative flex h-screen flex-col">
       <FlowToolbar
@@ -410,6 +429,7 @@ export function FlowEditor() {
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
+        onPromoteToCandidate={flowIdParam ? handlePromoteToCandidate : undefined}
         saveStatus={saveStatus}
         experienceName={experienceName}
         onOpenExperience={() => {
