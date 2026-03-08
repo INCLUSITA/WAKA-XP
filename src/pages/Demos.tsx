@@ -138,6 +138,7 @@ export default function Demos() {
   const [formIcon, setFormIcon] = useState("🤖");
   const [formColor, setFormColor] = useState(DEMO_COLORS[0]);
   const [formTags, setFormTags] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isStable: boolean } | null>(null);
 
   const refreshUploaded = useCallback(() => setUploadedDemos(getUploadedDemos()), []);
 
