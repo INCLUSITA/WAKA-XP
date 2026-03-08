@@ -52,14 +52,17 @@ export const BLOCK_TYPE_CONFIGS: Record<StructuralBlockType, BlockTypeConfig> = 
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/25",
     category: "conversation",
-    defaultProperties: { text: "", channel: "whatsapp" },
+    defaultProperties: { text: "", channel: "whatsapp", quickReplies: "", attachments: "" },
     propertyFields: [
       { key: "text", label: "Message text", type: "textarea", placeholder: "Type your message…", required: true },
       { key: "channel", label: "Channel", type: "select", options: [
         { value: "whatsapp", label: "WhatsApp" },
         { value: "sms", label: "SMS" },
         { value: "ussd", label: "USSD" },
+        { value: "telegram", label: "Telegram" },
       ]},
+      { key: "quickReplies", label: "Quick replies (comma separated)", type: "text", placeholder: "Yes, No, Maybe later" },
+      { key: "attachments", label: "Attachments (URLs, comma separated)", type: "text", placeholder: "https://example.com/image.jpg" },
     ],
   },
   wait_response: {
