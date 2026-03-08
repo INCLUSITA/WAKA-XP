@@ -1,11 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Node } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NodeConfigPanelProps {
   node: Node;
@@ -32,6 +33,130 @@ const nodeTypeLabels: Record<string, string> = {
   callZapier: "Call Zapier",
   sendAirtime: "Send Airtime",
 };
+
+interface Attachment {
+  type: "url" | "upload";
+  url: string;
+  name?: string;
+  mime?: string;
+}
+
+const ACCEPT_TYPES = "image/*,application/pdf,audio/*,video/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx";
+
+const mimeIcon = (mime?: string) => {
+  if (!mime) return <File className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (mime.startsWith("image")) return <Image className="h-3.5 w-3.5 text-blue-500" />;
+  if (mime.startsWith("audio")) return <Music className="h-3.5 w-3.5 text-purple-500" />;
+  if (mime.startsWith("video")) return <Video className="h-3.5 w-3.5 text-red-500" />;
+  if (mime.includes("pdf")) return <FileText className="h-3.5 w-3.5 text-orange-500" />;
+  return <File className="h-3.5 w-3.5 text-muted-foreground" />;
+};
+
+function AttachmentsEditor({ attachments, onChange }: { attachments: (string | Attachment)[]; onChange: (v: Attachment[]) => void }) {
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlDraft, setUrlDraft] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Normalise legacy string[] to Attachment[]
+  const items: Attachment[] = attachments.map((a) =>
+    typeof a === "string" ? { type: "url" as const, url: a, name: a } : a
+  );
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const path = `attachments/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("flow-attachments").upload(path, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("flow-attachments").getPublicUrl(path);
+      onChange([...items, { type: "upload", url: urlData.publicUrl, name: file.name, mime: file.type }]);
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const addUrl = () => {
+    if (!urlDraft.trim()) return;
+    onChange([...items, { type: "url", url: urlDraft.trim(), name: urlDraft.trim() }]);
+    setUrlDraft("");
+    setShowUrlInput(false);
+  };
+
+  const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-foreground">Attachments</Label>
+      </div>
+
+      {items.length > 0 && (
+        <div className="space-y-1.5">
+          {items.map((att, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs">
+              {mimeIcon(att.mime)}
+              <span className="flex-1 truncate text-foreground">{att.name || att.url}</span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">{att.type}</span>
+              <button onClick={() => remove(i)} className="text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showUrlInput && (
+        <div className="flex gap-1.5">
+          <Input
+            value={urlDraft}
+            onChange={(e) => setUrlDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addUrl()}
+            placeholder="https://example.com/file.pdf"
+            className="text-xs"
+            autoFocus
+          />
+          <Button variant="outline" size="sm" onClick={addUrl} disabled={!urlDraft.trim()}>
+            Add
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setShowUrlInput(false); setUrlDraft(""); }}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 gap-1.5"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+          {uploading ? "Uploading…" : "Upload file"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 gap-1.5"
+          onClick={() => setShowUrlInput(true)}
+          disabled={showUrlInput}
+        >
+          <Link className="h-3.5 w-3.5" />
+          Paste URL
+        </Button>
+      </div>
+
+      <input ref={fileRef} type="file" accept={ACCEPT_TYPES} className="hidden" onChange={handleUpload} />
+    </div>
+  );
+}
 
 export function NodeConfigPanel({ node, onUpdate, onClose, onDelete }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
@@ -134,7 +259,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete }: NodeConfi
               </p>
             </div>
             {renderListEditor("quick_replies", "Quick Replies", "Option")}
-            {renderListEditor("attachments", "Attachments", "URL")}
+            <AttachmentsEditor
+              attachments={data.attachments || []}
+              onChange={(attachments) => update("attachments", attachments)}
+            />
           </>
         )}
 
