@@ -312,10 +312,9 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
           AI-powered proposal analysis & visual apply.
         </p>
 
-        {/* Engine badge */}
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Cpu className="h-3 w-3 text-violet-400/50" />
-          <span className="text-[9px] text-white/25">Engine: Waka AI (Gemini Flash)</span>
+        {/* Engine selector */}
+        <div className="mt-1.5">
+          <LLMSelector selectedId={selectedLLM} onSelect={setSelectedLLM} />
         </div>
 
         {/* Stats bar */}
