@@ -921,6 +921,7 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             <NodeEffectsEditor
               effects={(data.xpEffects as NodeEffect[]) || []}
               onChange={(effects) => update("xpEffects", effects)}
+              availableEntities={availableEntities}
             />
           </>
         )}
