@@ -1,11 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Node } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NodeConfigPanelProps {
   node: Node;
