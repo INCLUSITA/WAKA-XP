@@ -590,8 +590,9 @@ export function FlowEditor() {
             edges={edges}
             modules={modules}
             onFocusModule={handleFocusModule}
-            onFocusNode={handleFocusNode}
+            onFocusNode={handleFocusNodeInCanvas}
             onSwitchToCanvas={() => setViewMode("canvas")}
+            onAssignNode={assignNodeToModule}
           />
         )}
 
