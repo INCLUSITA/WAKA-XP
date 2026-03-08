@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle } from "lucide-react";
+import { NodeEffectsEditor, NodeEffect } from "./NodeEffectsEditor";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -909,6 +911,16 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
                 Airtime will be sent to the contact's phone number. Make sure your account has sufficient balance.
               </p>
             </div>
+          </>
+        )}
+        {/* ─── XP NODE EFFECTS ─── */}
+        {node.type !== "moduleGroup" && (
+          <>
+            <Separator className="my-1" />
+            <NodeEffectsEditor
+              effects={(data.xpEffects as NodeEffect[]) || []}
+              onChange={(effects) => update("xpEffects", effects)}
+            />
           </>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { MessageSquare, Paperclip, Image, FileText, Music, Video, File } from "lucide-react";
+import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles } from "lucide-react";
 
 function AttachmentIcon({ mime }: { mime?: string }) {
   const cls = "h-3 w-3 text-muted-foreground";
@@ -29,6 +29,11 @@ export function SendMsgNode({ data, selected }: NodeProps) {
       <div className="flex items-center gap-2 rounded-t-lg bg-node-send px-3 py-1.5">
         <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />
         <span className="text-xs font-bold tracking-wide text-primary-foreground uppercase">Send Message</span>
+        {(d.xpEffects?.length > 0) && (
+          <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5" title={`${d.xpEffects.length} XP effect(s)`}>
+            <Sparkles className="h-2.5 w-2.5 text-primary-foreground" />
+          </span>
+        )}
         {attachments.length > 0 && (
           <span className="ml-auto flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5">
             <Paperclip className="h-3 w-3 text-primary-foreground" />
