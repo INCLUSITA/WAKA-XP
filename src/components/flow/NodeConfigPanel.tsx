@@ -326,27 +326,56 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
 
         {/* ─── SEND MESSAGE ─── */}
-        {node.type === "sendMsg" && (
-          <>
-            <div className="space-y-2">
-              <Label className="text-foreground">Message Text</Label>
-              <Textarea
-                value={data.text || ""}
-                onChange={(e) => update("text", e.target.value)}
-                placeholder="Type your message here... Use @contact.name for variables"
-                className="min-h-[120px]"
+        {node.type === "sendMsg" && (() => {
+          const constraints = getChannelConstraints(channel);
+          const textLen = (data.text || "").length;
+          const qrCount = (data.quick_replies || []).filter((r: string) => r.trim()).length;
+          const warnings: string[] = [];
+          if (textLen > constraints.maxTextLength) warnings.push(`Texto excede ${constraints.maxTextLength} chars (${textLen})`);
+          if (qrCount > constraints.maxQuickReplies) warnings.push(`${qrCount} quick replies exceden el límite de ${constraints.maxQuickReplies}`);
+          return (
+            <>
+              {/* Channel inline warnings */}
+              {warnings.length > 0 && (
+                <div className="space-y-1">
+                  {warnings.map((w, i) => (
+                    <div key={i} className="flex items-center gap-1.5 rounded-md border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="h-3 w-3 shrink-0" />
+                      {w} <span className="text-muted-foreground ml-1">({channel || "default"})</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground">Message Text</Label>
+                  <span className={`text-[10px] ${textLen > constraints.maxTextLength ? "text-amber-600 font-semibold" : "text-muted-foreground"}`}>
+                    {textLen}/{constraints.maxTextLength}
+                  </span>
+                </div>
+                <Textarea
+                  value={data.text || ""}
+                  onChange={(e) => update("text", e.target.value)}
+                  placeholder="Type your message here... Use @contact.name for variables"
+                  className="min-h-[120px]"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Use @contact.name, @input.text, @results.value for dynamic content
+                </p>
+              </div>
+              {renderListEditor("quick_replies", "Quick Replies", "Option")}
+              {qrCount > 0 && constraints.maxQuickReplies > 0 && (
+                <p className="text-[10px] text-muted-foreground">{qrCount}/{constraints.maxQuickReplies} para {channel || "default"}</p>
+              )}
+              <AttachmentsEditor
+                attachments={data.attachments || []}
+                onChange={(attachments) => update("attachments", attachments)}
+                channel={channel}
               />
-              <p className="text-[11px] text-muted-foreground">
-                Use @contact.name, @input.text, @results.value for dynamic content
-              </p>
-            </div>
-            {renderListEditor("quick_replies", "Quick Replies", "Option")}
-            <AttachmentsEditor
-              attachments={data.attachments || []}
-              onChange={(attachments) => update("attachments", attachments)}
-            />
-          </>
-        )}
+            </>
+          );
+        })()}
 
         {/* ─── WAIT FOR RESPONSE ─── */}
         {node.type === "waitResponse" && (
