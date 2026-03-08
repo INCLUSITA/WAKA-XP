@@ -75,6 +75,7 @@ export function FlowToolbar({
   onSimulate,
   onTranslate,
   onVersions,
+  onPromoteToCandidate,
   saveStatus,
   experienceName,
   onOpenExperience,
