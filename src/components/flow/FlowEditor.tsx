@@ -92,6 +92,7 @@ function FlowEditorInner() {
   const [viewMode, setViewMode] = useState<EditorViewMode>("canvas");
   const [showContext, setShowContext] = useState(false);
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
+  const [channel, setChannel] = useState("whatsapp");
   const navigate = useNavigate();
   const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);
@@ -332,11 +333,11 @@ function FlowEditorInner() {
   const [showValidation, setShowValidation] = useState(false);
 
   const handleValidate = useCallback(() => {
-    const errors = validateFlow(nodes, edges);
+    const errors = validateFlow(nodes, edges, channel);
     setValidationErrors(errors);
     setShowValidation(true);
     return errors;
-  }, [nodes, edges]);
+  }, [nodes, edges, channel]);
 
   const handleExport = useCallback(() => {
     const errors = validateFlow(nodes, edges);
@@ -572,6 +573,8 @@ function FlowEditorInner() {
         showContext={showContext}
         onAddModule={handleAddModuleAndFocus}
         moduleTemplates={MODULE_TEMPLATES}
+        channel={channel}
+        onChannelChange={setChannel}
       />
 
       <input
@@ -654,6 +657,7 @@ function FlowEditorInner() {
             onUpdate={updateNodeData}
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
+            channel={channel}
           />
         )}
 

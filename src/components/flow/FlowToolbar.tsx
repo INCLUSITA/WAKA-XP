@@ -2,7 +2,7 @@ import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
-  Layers, LayoutGrid, Database, Plus, Box,
+  Layers, LayoutGrid, Database, Plus, Box, Radio,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,13 +39,14 @@ interface FlowToolbarProps {
   saveStatus?: SaveStatus;
   experienceName?: string | null;
   onOpenExperience?: () => void;
-  // New: view mode & modules
   viewMode: EditorViewMode;
   onViewModeChange: (mode: EditorViewMode) => void;
   onToggleContext: () => void;
   showContext: boolean;
   onAddModule: (label?: string) => void;
   moduleTemplates: string[];
+  channel: string;
+  onChannelChange: (ch: string) => void;
 }
 
 const actionNodes = [
@@ -95,6 +96,8 @@ export function FlowToolbar({
   showContext,
   onAddModule,
   moduleTemplates,
+  channel,
+  onChannelChange,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   return (
@@ -160,6 +163,24 @@ export function FlowToolbar({
         <Database className="mr-1 h-3.5 w-3.5" />
         Context
       </Button>
+
+      {/* Channel selector */}
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-0.5">
+        <Radio className="h-3 w-3 text-muted-foreground ml-1.5" />
+        {["whatsapp", "sms", "telegram"].map((ch) => (
+          <button
+            key={ch}
+            onClick={() => onChannelChange(ch)}
+            className={`rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
+              channel === ch
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {ch === "whatsapp" ? "WhatsApp" : ch === "sms" ? "SMS" : "Telegram"}
+          </button>
+        ))}
+      </div>
 
       <Separator orientation="vertical" className="mx-1 h-8" />
 

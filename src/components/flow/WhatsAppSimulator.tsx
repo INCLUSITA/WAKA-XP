@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation } from "@/hooks/useFlowSimulation";
@@ -12,18 +12,59 @@ interface WhatsAppSimulatorProps {
   onHighlightNode?: (nodeId: string) => void;
 }
 
+type EntrypointStatus = "clear" | "ambiguous" | "none";
+
+function detectEntrypointStatus(nodes: Node[], edges: Edge[]): { status: EntrypointStatus; candidates: Node[]; reason: string } {
+  const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
+  if (executableNodes.length === 0) return { status: "none", candidates: [], reason: "No hay nodos en el flujo" };
+
+  // Check for explicit start
+  const startNode = executableNodes.find((n) => n.type === "enterFlow" || (n.data as any)?.isStart === true);
+  if (startNode) return { status: "clear", candidates: [startNode], reason: `Inicio explícito: ${(startNode.data as any)?.label || startNode.type}` };
+
+  const targetIds = new Set(edges.map((e) => e.target));
+
+  // Check for entry module
+  const entryModule = nodes.find((n) => n.type === "moduleGroup" && /entry|inicio|start/i.test((n.data as any)?.label || ""));
+  if (entryModule) {
+    const moduleNodeIds = new Set<string>((entryModule.data as any)?.nodeIds || []);
+    const entryNode = executableNodes.find((n) => moduleNodeIds.has(n.id) && !targetIds.has(n.id));
+    if (entryNode) return { status: "clear", candidates: [entryNode], reason: `Primer nodo del módulo "${(entryModule.data as any)?.label}"` };
+  }
+
+  // Root nodes (no incoming edges)
+  const rootNodes = executableNodes.filter((n) => !targetIds.has(n.id));
+  if (rootNodes.length === 1) return { status: "clear", candidates: rootNodes, reason: "Único nodo sin conexiones de entrada" };
+  if (rootNodes.length > 1) return { status: "ambiguous", candidates: rootNodes, reason: `${rootNodes.length} nodos raíz detectados — selecciona el punto de inicio` };
+  
+  return { status: "ambiguous", candidates: executableNodes.slice(0, 5), reason: "Todos los nodos tienen conexiones de entrada — no hay un punto de inicio claro" };
+}
+
+const nodeTypeLabelsShort: Record<string, string> = {
+  sendMsg: "Send Msg", waitResponse: "Wait", splitExpression: "Split", webhook: "Webhook",
+  saveResult: "Save", updateContact: "Update", sendEmail: "Email", callAI: "AI",
+  enterFlow: "Enter Flow", openTicket: "Ticket", callZapier: "Zapier", sendAirtime: "Airtime",
+};
+
 export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: WhatsAppSimulatorProps) {
   const [inputText, setInputText] = useState("");
+  const [selectedEntrypoint, setSelectedEntrypoint] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
     useFlowSimulation(nodes, edges, onHighlightNode);
+
+  const entryInfo = detectEntrypointStatus(nodes, edges);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }, []);
 
   useEffect(() => { scrollToBottom(); }, [messages.length, scrollToBottom]);
-  useEffect(() => { start(); }, []); // eslint-disable-line
+  
+  // Auto-start if clear entrypoint
+  useEffect(() => {
+    if (entryInfo.status === "clear") start();
+  }, []); // eslint-disable-line
 
   const handleSend = (text: string) => {
     sendMessage(text);
@@ -57,7 +98,7 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
           </p>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={start} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar">
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedEntrypoint(null); start(); }} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar">
             <RotateCcw className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={onClose} className="text-primary-foreground hover:bg-primary-foreground/20">
@@ -65,6 +106,35 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
           </Button>
         </div>
       </div>
+
+      {/* Entrypoint selector for ambiguous/no-entry flows */}
+      {entryInfo.status !== "clear" && messages.length === 0 && (
+        <div className="border-b border-border bg-muted/50 px-4 py-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${entryInfo.status === "none" ? "text-destructive" : "text-amber-500"}`} />
+            <p className="text-xs text-foreground leading-relaxed">{entryInfo.reason}</p>
+          </div>
+          {entryInfo.candidates.length > 0 && (
+            <div className="space-y-1">
+              {entryInfo.candidates.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => { setSelectedEntrypoint(n.id); start(); }}
+                  className={`w-full flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs transition-colors hover:bg-card ${
+                    selectedEntrypoint === n.id ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground"
+                  }`}
+                >
+                  <Play className="h-3 w-3" />
+                  <span className="font-medium">{nodeTypeLabelsShort[n.type || ""] || n.type}</span>
+                  <span className="text-muted-foreground truncate flex-1 text-left">
+                    {(n.data as any)?.text?.substring(0, 40) || (n.data as any)?.label || n.id.slice(0, 8)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-3 py-4" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e5ddd5' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`, backgroundColor: "hsl(var(--muted))" }}>
         <div className="space-y-2">
