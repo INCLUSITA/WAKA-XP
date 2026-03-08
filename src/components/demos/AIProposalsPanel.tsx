@@ -142,8 +142,9 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
   const [promptValue, setPromptValue] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [applying, setApplying] = useState<string | null>(null); // id of proposal being applied
+  const [applying, setApplying] = useState<string | null>(null);
   const [applyingAll, setApplyingAll] = useState(false);
+  const [selectedLLM, setSelectedLLM] = useState("waka-ai-gemini");
 
   const canApply = !!currentJsx && !!onJsxUpdate;
 
