@@ -39,16 +39,21 @@ export function useFlowModules(
     }));
 
   const addModule = useCallback(
-    (label?: string) => {
+    (label?: string, viewportCenter?: { x: number; y: number }) => {
       const id = uuidv4();
       const idx = modules.length;
       const color = MODULE_COLORS[idx % MODULE_COLORS.length];
       const name = label || MODULE_TEMPLATES[idx] || `Module ${idx + 1}`;
 
+      // Place at viewport center if available, otherwise stagger from origin
+      const pos = viewportCenter
+        ? { x: viewportCenter.x - 200, y: viewportCenter.y - 150 }
+        : { x: 50 + idx * 40, y: 50 + idx * 220 };
+
       const moduleNode: Node = {
         id,
         type: "moduleGroup",
-        position: { x: 50 + idx * 40, y: 50 + idx * 220 },
+        position: pos,
         data: {
           label: name,
           color,
@@ -59,7 +64,7 @@ export function useFlowModules(
         draggable: true,
       };
 
-      setNodes((nds) => [moduleNode, ...nds]); // groups first so they render behind
+      setNodes((nds) => [moduleNode, ...nds]);
       return id;
     },
     [modules.length, setNodes]
@@ -68,7 +73,7 @@ export function useFlowModules(
   const deleteModule = useCallback(
     (moduleId: string) => {
       setNodes((nds) =>
-        nds.map((n) => (n.parentId === moduleId ? { ...n, parentId: undefined, position: { x: n.position.x + 50, y: n.position.y + 50 } } : n))
+        nds.map((n) => (n.parentId === moduleId ? { ...n, parentId: undefined, extent: undefined, position: { x: n.position.x + 50, y: n.position.y + 50 } } : n))
           .filter((n) => n.id !== moduleId)
       );
     },
@@ -141,11 +146,19 @@ export function useFlowModules(
           counts[n.parentId] = (counts[n.parentId] || 0) + 1;
         }
       }
-      return nds.map((n) =>
-        n.type === "moduleGroup"
-          ? { ...n, data: { ...n.data, nodeCount: counts[n.id] || 0 } }
-          : n
-      );
+      // Only update if counts actually changed
+      let changed = false;
+      const updated = nds.map((n) => {
+        if (n.type === "moduleGroup") {
+          const newCount = counts[n.id] || 0;
+          if (n.data.nodeCount !== newCount) {
+            changed = true;
+            return { ...n, data: { ...n.data, nodeCount: newCount } };
+          }
+        }
+        return n;
+      });
+      return changed ? updated : nds;
     });
   }, [setNodes]);
 

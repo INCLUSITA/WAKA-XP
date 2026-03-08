@@ -113,29 +113,40 @@ function FlowEditorInner() {
     MODULE_TEMPLATES,
   } = useFlowModules(nodes, setNodes);
 
-  // Inject callbacks into module group nodes
+  // Inject callbacks into module group nodes — use ref to avoid re-triggering setNodes
+  const moduleCallbacksRef = useRef({ toggleCollapse, renameModule, deleteModule });
+  moduleCallbacksRef.current = { toggleCollapse, renameModule, deleteModule };
+
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((n) =>
+    setNodes((nds) => {
+      const hasModules = nds.some((n) => n.type === "moduleGroup");
+      if (!hasModules) return nds;
+      return nds.map((n) =>
         n.type === "moduleGroup"
           ? {
               ...n,
               data: {
                 ...n.data,
-                onToggleCollapse: toggleCollapse,
-                onRename: renameModule,
-                onDelete: deleteModule,
+                onToggleCollapse: moduleCallbacksRef.current.toggleCollapse,
+                onRename: moduleCallbacksRef.current.renameModule,
+                onDelete: moduleCallbacksRef.current.deleteModule,
               },
             }
           : n
-      )
-    );
-  }, [toggleCollapse, renameModule, deleteModule, setNodes]);
+      );
+    });
+    // Only re-inject when nodes array identity changes (load, add, delete)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, setNodes]);
 
-  // Keep module counts updated
+  // Keep module counts updated (only when node count or parentId changes)
+  const prevCountKey = useRef("");
   useEffect(() => {
+    const key = nodes.map((n) => `${n.id}:${n.parentId || ""}`).join(",");
+    if (key === prevCountKey.current) return;
+    prevCountKey.current = key;
     updateModuleCounts();
-  }, [nodes.length, updateModuleCounts]);
+  }, [nodes, updateModuleCounts]);
 
   // Load flow from DB on mount if ?id= is present
   useEffect(() => {
@@ -469,10 +480,20 @@ function FlowEditorInner() {
 
   const handleAddModuleAndFocus = useCallback(
     (label?: string) => {
-      const id = addModule(label);
+      // Get viewport center in flow coordinates for smart placement
+      const viewport = reactFlowInstance.getViewport();
+      const bounds = document.querySelector('.react-flow')?.getBoundingClientRect();
+      let center: { x: number; y: number } | undefined;
+      if (bounds) {
+        const cx = (bounds.width / 2 - viewport.x) / viewport.zoom;
+        const cy = (bounds.height / 2 - viewport.y) / viewport.zoom;
+        center = { x: cx, y: cy };
+      }
+      const id = addModule(label, center);
+      // Wait for render then smoothly zoom to the new module
       setTimeout(() => {
-        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.3, duration: 400 });
-      }, 150);
+        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.4, duration: 500 });
+      }, 200);
       return id;
     },
     [addModule, reactFlowInstance]
@@ -480,26 +501,29 @@ function FlowEditorInner() {
 
   const handleFocusModule = useCallback(
     (moduleId: string) => {
+      const wasStructure = viewMode !== "canvas";
       setViewMode("canvas");
+      // Longer delay when switching from structure view (ReactFlow needs to mount)
       setTimeout(() => {
-        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
-      }, 100);
+        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.4, duration: 500 });
+      }, wasStructure ? 300 : 100);
     },
-    [reactFlowInstance]
+    [reactFlowInstance, viewMode]
   );
 
   const handleFocusNodeInCanvas = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
       if (node) {
+        const wasStructure = viewMode !== "canvas";
         setSelectedNode(node);
         setViewMode("canvas");
         setTimeout(() => {
-          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 400 });
-        }, 100);
+          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 500 });
+        }, wasStructure ? 300 : 100);
       }
     },
-    [nodes, reactFlowInstance]
+    [nodes, reactFlowInstance, viewMode]
   );
 
   return (
@@ -665,12 +689,14 @@ function FlowEditorInner() {
                 nodes: nodes as unknown as Record<string, unknown>[],
                 edges: edges as unknown as Record<string, unknown>[],
                 flowName,
+                contextItems,
               })}
               onRestore={(data) => {
-                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string };
+                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string; contextItems?: ContextItem[] };
                 if (snap.nodes) setNodes(snap.nodes);
                 if (snap.edges) setEdges(snap.edges);
                 if (snap.flowName) setFlowName(snap.flowName);
+                if (snap.contextItems) setContextItems(snap.contextItems);
               }}
             />
           </div>
