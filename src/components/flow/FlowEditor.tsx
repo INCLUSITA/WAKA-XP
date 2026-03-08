@@ -92,6 +92,7 @@ function FlowEditorInner() {
   const [viewMode, setViewMode] = useState<EditorViewMode>("canvas");
   const [showContext, setShowContext] = useState(false);
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
+  const [channel, setChannel] = useState("whatsapp");
   const navigate = useNavigate();
   const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);

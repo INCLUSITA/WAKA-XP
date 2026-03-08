@@ -164,6 +164,24 @@ export function FlowToolbar({
         Context
       </Button>
 
+      {/* Channel selector */}
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-0.5">
+        <Radio className="h-3 w-3 text-muted-foreground ml-1.5" />
+        {["whatsapp", "sms", "telegram"].map((ch) => (
+          <button
+            key={ch}
+            onClick={() => onChannelChange(ch)}
+            className={`rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
+              channel === ch
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {ch === "whatsapp" ? "WhatsApp" : ch === "sms" ? "SMS" : "Telegram"}
+          </button>
+        ))}
+      </div>
+
       <Separator orientation="vertical" className="mx-1 h-8" />
 
       {/* Add Node Dropdown — only in canvas */}
