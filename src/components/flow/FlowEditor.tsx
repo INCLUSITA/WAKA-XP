@@ -466,18 +466,33 @@ export function FlowEditor() {
     [nodes]
   );
 
+  const reactFlowInstance = useReactFlow();
+
   const handleFocusModule = useCallback(
     (moduleId: string) => {
-      // Switch to canvas and center on module
       setViewMode("canvas");
-      // We'll just select nothing and let the user see it
-      const moduleNode = nodes.find((n) => n.id === moduleId);
-      if (moduleNode) {
-        // The fitView doesn't easily target a node without ReactFlow instance, 
-        // but switching to canvas is the main action
+      setTimeout(() => {
+        const moduleNode = nodes.find((n) => n.id === moduleId);
+        if (moduleNode) {
+          reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
+        }
+      }, 100);
+    },
+    [nodes, reactFlowInstance]
+  );
+
+  const handleFocusNodeInCanvas = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) {
+        setSelectedNode(node);
+        setViewMode("canvas");
+        setTimeout(() => {
+          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 400 });
+        }, 100);
       }
     },
-    [nodes]
+    [nodes, reactFlowInstance]
   );
 
   return (
