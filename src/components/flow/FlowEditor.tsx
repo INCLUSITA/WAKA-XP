@@ -13,6 +13,7 @@ import {
   Edge,
   Panel,
   useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
