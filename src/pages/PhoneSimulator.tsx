@@ -417,7 +417,7 @@ export default function PhoneSimulator() {
                             );
                           })}
                         </div>
-                      )
+                      )}
 
                       <p className="whitespace-pre-wrap text-[13.5px] leading-[1.35]">{msg.text}</p>
 
