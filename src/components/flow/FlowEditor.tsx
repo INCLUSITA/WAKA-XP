@@ -489,7 +489,6 @@ function FlowEditorInner() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
-  const reactFlowInstance = useReactFlow();
 
   const handleFocusNode = useCallback(
     (nodeId: string) => {
