@@ -125,7 +125,7 @@ interface AIProposalsPanelProps {
   demoId: string;
   demoTitle: string;
   currentJsx?: string | null;
-  onJsxUpdate?: (newJsx: string) => void;
+  onJsxUpdate?: (newJsx: string, label?: string) => void;
 }
 
 export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxUpdate }: AIProposalsPanelProps) {
