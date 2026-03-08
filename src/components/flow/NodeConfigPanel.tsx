@@ -5,8 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library } from "lucide-react";
+import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -67,6 +68,12 @@ function getCategoryFromMime(mime?: string): string {
   return "document";
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (string | Attachment)[]; onChange: (v: Attachment[]) => void; channel?: string }) {
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
@@ -74,7 +81,6 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
   const fileRef = useRef<HTMLInputElement>(null);
   const constraints = getChannelConstraints(channel);
 
-  // Normalise legacy string[] to Attachment[]
   const items: Attachment[] = attachments.map((a) =>
     typeof a === "string" ? { type: "url" as const, url: a, name: a } : a
   );
@@ -83,16 +89,27 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check channel size limit
-    if (constraints.maxAttachmentSizeMB > 0 && file.size > constraints.maxAttachmentSizeMB * 1024 * 1024) {
-      alert(`El archivo excede el límite de ${constraints.maxAttachmentSizeMB}MB para el canal ${channel || "default"}`);
+    const category = getCategoryFromMime(file.type);
+
+    // Pre-check: channel supports attachments at all
+    if (constraints.maxAttachmentSizeMB === 0) {
+      toast.error(`El canal ${channel || "SMS"} no soporta adjuntos`);
       return;
     }
 
-    // Check attachment type
-    const category = getCategoryFromMime(file.type);
+    // Pre-check: file size
+    if (file.size > constraints.maxAttachmentSizeMB * 1024 * 1024) {
+      toast.error(`Archivo demasiado grande`, {
+        description: `${formatFileSize(file.size)} excede el límite de ${constraints.maxAttachmentSizeMB}MB para ${channel || "default"}`,
+      });
+      return;
+    }
+
+    // Pre-check: attachment type
     if (constraints.allowedAttachmentTypes.length > 0 && !constraints.allowedAttachmentTypes.includes(category)) {
-      alert(`El tipo "${category}" no está soportado en el canal ${channel || "default"}`);
+      toast.error(`Tipo no soportado`, {
+        description: `"${category}" no está permitido en el canal ${channel || "default"}`,
+      });
       return;
     }
 
@@ -103,10 +120,12 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("flow-attachments").getPublicUrl(path);
       onChange([...items, { type: "upload", url: urlData.publicUrl, name: file.name, mime: file.type }]);
+      toast.success(`Archivo subido`, { description: file.name });
     } catch (err: any) {
       console.error("Upload failed", err);
-      const msg = err?.message || "Error desconocido al subir el archivo";
-      alert(`❌ Upload failed: ${msg}`);
+      toast.error("Error al subir archivo", {
+        description: err?.message || "Verifica tu conexión e intenta de nuevo",
+      });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -115,17 +134,33 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
 
   const addUrl = () => {
     if (!urlDraft.trim()) return;
-    // Guess MIME from extension
+    try { new URL(urlDraft.trim()); } catch {
+      toast.error("URL inválida", { description: "Ingresa una URL completa (https://...)" });
+      return;
+    }
     const ext = urlDraft.split(".").pop()?.toLowerCase() || "";
     const mimeMap: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", mp4: "video/mp4", mp3: "audio/mpeg", wav: "audio/wav", pdf: "application/pdf", doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
     const guessedMime = mimeMap[ext] || undefined;
     const name = urlDraft.split("/").pop() || urlDraft.trim();
+
+    // Check type compatibility
+    if (guessedMime) {
+      const cat = getCategoryFromMime(guessedMime);
+      if (constraints.allowedAttachmentTypes.length > 0 && !constraints.allowedAttachmentTypes.includes(cat)) {
+        toast.warning(`"${cat}" puede no ser soportado en ${channel || "default"}`);
+      }
+    }
+
     onChange([...items, { type: "url", url: urlDraft.trim(), name, mime: guessedMime }]);
     setUrlDraft("");
     setShowUrlInput(false);
   };
 
-  const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
+  const remove = (idx: number) => {
+    const removed = items[idx];
+    onChange(items.filter((_, i) => i !== idx));
+    toast(`Adjunto eliminado`, { description: removed.name || "archivo" });
+  };
 
   const noAttachmentSupport = constraints.maxAttachmentSizeMB === 0;
 
@@ -140,16 +175,16 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
 
       {/* Channel warning: no attachment support */}
       {noAttachmentSupport && (
-        <div className="flex items-center gap-1.5 rounded-md border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
-          <AlertTriangle className="h-3 w-3 shrink-0" />
-          El canal <strong className="mx-0.5">{channel || "SMS"}</strong> no soporta adjuntos
+        <div className="flex items-center gap-1.5 rounded-md border border-destructive/20 bg-destructive/5 px-2.5 py-2 text-[11px] text-destructive">
+          <XCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>El canal <strong>{channel || "SMS"}</strong> no soporta adjuntos</span>
         </div>
       )}
 
       {/* Empty state */}
       {items.length === 0 && !noAttachmentSupport && (
         <div className="rounded-lg border border-dashed border-border bg-muted/30 py-4 text-center">
-          <File className="mx-auto h-6 w-6 text-muted-foreground/40" />
+          <Upload className="mx-auto h-5 w-5 text-muted-foreground/40" />
           <p className="mt-1.5 text-xs text-muted-foreground">Sin adjuntos</p>
           <p className="text-[10px] text-muted-foreground/60">Sube archivos o pega URLs</p>
         </div>
@@ -157,21 +192,38 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
 
       {/* Attachment list */}
       {items.length > 0 && (
-        <div className="space-y-1.5">
-          {items.map((att, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs group">
-              {mimeIcon(att.mime)}
-              <div className="flex-1 min-w-0">
-                <span className="block truncate text-foreground">{att.name || att.url}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {getCategoryFromMime(att.mime)} · {att.type === "upload" ? "subido" : "URL"}
-                </span>
+        <div className="space-y-1">
+          {items.map((att, i) => {
+            const isUpload = att.type === "upload";
+            return (
+              <div key={i} className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs group transition-colors ${
+                isUpload
+                  ? "border-primary/20 bg-primary/5"
+                  : "border-border bg-muted/40"
+              }`}>
+                {mimeIcon(att.mime)}
+                <div className="flex-1 min-w-0">
+                  <span className="block truncate text-foreground text-[12px]">{att.name || att.url}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="rounded bg-muted px-1 py-px text-[9px] font-medium text-muted-foreground uppercase">
+                      {getCategoryFromMime(att.mime)}
+                    </span>
+                    <span className={`inline-flex items-center gap-0.5 rounded px-1 py-px text-[9px] font-medium ${
+                      isUpload
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {isUpload ? <CheckCircle2 className="h-2 w-2" /> : <Link className="h-2 w-2" />}
+                      {isUpload ? "Subido" : "URL"}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => remove(i)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity" title="Eliminar">
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
-              <button onClick={() => remove(i)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity">
-                <Trash2 className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -234,6 +286,13 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
           Media Library
           <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase">Soon</span>
         </Button>
+      )}
+
+      {/* Channel limits hint */}
+      {!noAttachmentSupport && (
+        <p className="text-[10px] text-muted-foreground">
+          Máx. {constraints.maxAttachmentSizeMB}MB · {constraints.allowedAttachmentTypes.join(", ")}
+        </p>
       )}
 
       <input ref={fileRef} type="file" accept={ACCEPT_TYPES} className="hidden" onChange={handleUpload} />
@@ -335,13 +394,13 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
           if (qrCount > constraints.maxQuickReplies) warnings.push(`${qrCount} quick replies exceden el límite de ${constraints.maxQuickReplies}`);
           return (
             <>
-              {/* Channel inline warnings */}
+          {/* Channel inline warnings */}
               {warnings.length > 0 && (
                 <div className="space-y-1">
                   {warnings.map((w, i) => (
-                    <div key={i} className="flex items-center gap-1.5 rounded-md border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
-                      <AlertTriangle className="h-3 w-3 shrink-0" />
-                      {w} <span className="text-muted-foreground ml-1">({channel || "default"})</span>
+                    <div key={i} className="flex items-start gap-2 rounded-md border border-amber-500/15 bg-amber-500/5 px-2.5 py-2 text-[11px] text-foreground/80">
+                      <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
+                      <span>{w} <span className="text-muted-foreground">· {channel || "default"}</span></span>
                     </div>
                   ))}
                 </div>

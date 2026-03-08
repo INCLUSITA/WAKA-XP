@@ -165,16 +165,17 @@ export function FlowToolbar({
       </Button>
 
       {/* Channel selector */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-0.5">
-        <Radio className="h-3 w-3 text-muted-foreground ml-1.5" />
+      <div className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 p-0.5">
+        <Radio className="h-3 w-3 text-primary ml-1.5" />
+        <span className="text-[10px] font-semibold text-primary uppercase tracking-wider ml-0.5 mr-1">Canal</span>
         {["whatsapp", "sms", "telegram"].map((ch) => (
           <button
             key={ch}
             onClick={() => onChannelChange(ch)}
-            className={`rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
+            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
               channel === ch
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
             }`}
           >
             {ch === "whatsapp" ? "WhatsApp" : ch === "sms" ? "SMS" : "Telegram"}

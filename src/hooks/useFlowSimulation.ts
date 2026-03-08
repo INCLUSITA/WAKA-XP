@@ -8,6 +8,7 @@ export interface ChatMessage {
   quickReplies?: string[];
   timestamp: Date;
   imageUrl?: string;
+  attachments?: { url: string; name?: string; mime?: string }[];
 }
 
 export interface SimulationContext {
@@ -221,7 +222,11 @@ export function useFlowSimulation(
           const text = resolveTemplate(rawText, ctxRef.current);
           const quickReplies = data.quick_replies?.filter((r: string) => r.trim()) || [];
 
-          // Check if this is a save_result node (convention: text starts with "set_run_result")
+          // Normalize attachments for display
+          const nodeAttachments: { url: string; name?: string; mime?: string }[] = (data.attachments || []).map((a: any) =>
+            typeof a === "string" ? { url: a } : a
+          );
+
           if (rawText.toLowerCase().includes("set_run_result") || data.resultName) {
             const resultName = data.resultName || "result";
             const value = resolveTemplate(data.value || ctxRef.current.input.text, ctxRef.current);
@@ -233,7 +238,15 @@ export function useFlowSimulation(
           } else {
             setMessages((prev) => [
               ...prev,
-              { id: crypto.randomUUID(), sender: "bot", text, quickReplies, timestamp: new Date() },
+              {
+                id: crypto.randomUUID(),
+                sender: "bot",
+                text,
+                quickReplies,
+                timestamp: new Date(),
+                imageUrl: nodeAttachments.find((a) => a.mime?.startsWith("image"))?.url,
+                attachments: nodeAttachments.filter((a) => !a.mime?.startsWith("image")),
+              },
             ]);
           }
 
