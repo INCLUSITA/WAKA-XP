@@ -158,7 +158,7 @@ export function FlowToolbar({
             <Rocket className="mr-1 h-3.5 w-3.5" /> Promote
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => { const nav = new CustomEvent("navigate-spa", { detail: "/studio" }); window.dispatchEvent(nav); }} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
+        <Button variant="outline" size="sm" onClick={() => navigate("/studio")} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
           <Sparkles className="mr-1 h-3.5 w-3.5" /> XP Studio
         </Button>
         {onSimulate && (
