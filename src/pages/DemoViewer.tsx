@@ -1,11 +1,35 @@
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { BUILTIN_DEMOS, getUploadedDemos, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus } from "@/demos/registry";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { ArrowLeft, Shield, FlaskConical, ChevronRight, Home, LayoutGrid } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
+import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 
-function DemoStatusBar({ status, title, sourceName }: { status: DemoStatus; title: string; sourceName?: string }) {
+const LoadingFallback = () => (
+  <div className="flex min-h-[80vh] items-center justify-center text-white">
+    <div className="flex items-center gap-3">
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+      <span>Cargando demo...</span>
+    </div>
+  </div>
+);
+
+function DemoStatusBar({
+  status,
+  title,
+  sourceName,
+  isSandboxDemo,
+  showProposals,
+  onToggleProposals,
+}: {
+  status: DemoStatus;
+  title: string;
+  sourceName?: string;
+  isSandboxDemo: boolean;
+  showProposals: boolean;
+  onToggleProposals: () => void;
+}) {
   const cfg = DEMO_STATUS_CONFIG[status];
   const isSandbox = status === "sandbox" || status === "draft";
   return (
@@ -30,6 +54,22 @@ function DemoStatusBar({ status, title, sourceName }: { status: DemoStatus; titl
           <span className="text-white/30 truncate">Desde: {sourceName}</span>
         </>
       )}
+
+      {/* AI Proposals toggle — sandbox only */}
+      {isSandboxDemo && (
+        <button
+          onClick={onToggleProposals}
+          className={`ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+            showProposals
+              ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+              : "bg-white/5 text-white/40 border border-white/10 hover:bg-violet-500/10 hover:text-violet-300 hover:border-violet-500/20"
+          }`}
+        >
+          <Sparkles className="h-3 w-3" />
+          AI Proposals
+          {showProposals ? <PanelRightClose className="h-3 w-3" /> : <PanelRightOpen className="h-3 w-3" />}
+        </button>
+      )}
     </div>
   );
 }
@@ -37,94 +77,91 @@ function DemoStatusBar({ status, title, sourceName }: { status: DemoStatus; titl
 export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [showProposals, setShowProposals] = useState(false);
 
-  // Check built-in demos first
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
+  const uploadedDemo = !builtinDemo ? getUploadedDemos().find((d) => d.id === id) : undefined;
+
+  const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
+
+  // Resolve what to render
+  let demoContent: React.ReactNode = null;
+  let demoStatus: DemoStatus = "stable";
+  let demoTitle = id || "Demo";
+  let demoSourceName: string | undefined;
 
   if (builtinDemo) {
     const DemoComponent = builtinDemo.component;
-    return (
-      <div className="flex flex-col min-h-screen bg-slate-900">
-        <DemoStatusBar status="stable" title={builtinDemo.title} />
-        <div className="flex-1">
-          <Suspense
-            fallback={
-              <div className="flex min-h-[80vh] items-center justify-center text-white">
-                <div className="flex items-center gap-3">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  <span>Cargando demo...</span>
-                </div>
-              </div>
-            }
-          >
-            <DemoComponent />
-          </Suspense>
-        </div>
-      </div>
+    demoStatus = "stable";
+    demoTitle = builtinDemo.title;
+    demoContent = (
+      <Suspense fallback={<LoadingFallback />}>
+        <DemoComponent />
+      </Suspense>
     );
-  }
-
-  // Check uploaded demos
-  const uploadedDemo = getUploadedDemos().find((d) => d.id === id);
-
-  // If uploaded demo is a copy of a builtin, render the builtin component
-  if (uploadedDemo?.sourceId) {
+  } else if (uploadedDemo?.sourceId) {
     const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
+    demoStatus = uploadedDemo.status;
+    demoTitle = uploadedDemo.title;
+    demoSourceName = uploadedDemo.sourceName;
     if (sourceBuiltin) {
       const DemoComponent = sourceBuiltin.component;
-      return (
-        <div className="flex flex-col min-h-screen bg-slate-900">
-          <DemoStatusBar
-            status={uploadedDemo.status}
-            title={uploadedDemo.title}
-            sourceName={uploadedDemo.sourceName}
-          />
-          <div className="flex-1">
-            <Suspense
-              fallback={
-                <div className="flex min-h-[80vh] items-center justify-center text-white">
-                  <div className="flex items-center gap-3">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    <span>Cargando demo...</span>
-                  </div>
-                </div>
-              }
-            >
-              <DemoComponent />
-            </Suspense>
-          </div>
-        </div>
+      demoContent = (
+        <Suspense fallback={<LoadingFallback />}>
+          <DemoComponent />
+        </Suspense>
       );
     }
   }
 
-  const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
-  const jsxSource = sessionSource || uploadedDemo?.jsxSource;
+  if (!demoContent && uploadedDemo) {
+    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
+    const jsxSource = sessionSource || uploadedDemo.jsxSource;
+    if (jsxSource) {
+      demoStatus = uploadedDemo.status;
+      demoTitle = uploadedDemo.title;
+      demoSourceName = uploadedDemo.sourceName;
+      demoContent = <RuntimeJSXRenderer jsxSource={jsxSource} />;
+    }
+  }
 
-  if (jsxSource) {
+  if (!demoContent && !builtinDemo && !uploadedDemo) {
+    // Check session-only source
+    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
+    if (sessionSource) {
+      demoContent = <RuntimeJSXRenderer jsxSource={sessionSource} />;
+    }
+  }
+
+  if (!demoContent) {
     return (
-      <div className="flex flex-col min-h-screen bg-slate-900">
-        <DemoStatusBar
-          status={uploadedDemo?.status || "stable"}
-          title={uploadedDemo?.title || id || "Demo"}
-          sourceName={uploadedDemo?.sourceName}
-        />
-        <div className="flex-1">
-          <RuntimeJSXRenderer jsxSource={jsxSource} />
+      <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
+        <div className="text-center">
+          <p className="text-4xl mb-4">🚫</p>
+          <p className="text-lg font-bold mb-2">Demo no encontrado</p>
+          <button onClick={() => navigate("/demos")} className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
+            Volver a la galería
+          </button>
         </div>
       </div>
     );
   }
 
-  // Not found
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-      <div className="text-center">
-        <p className="text-4xl mb-4">🚫</p>
-        <p className="text-lg font-bold mb-2">Demo no encontrado</p>
-        <button onClick={() => navigate("/demos")} className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
-          Volver a la galería
-        </button>
+    <div className="flex flex-col min-h-screen bg-slate-900">
+      <DemoStatusBar
+        status={demoStatus}
+        title={demoTitle}
+        sourceName={demoSourceName}
+        isSandboxDemo={isSandboxDemo}
+        showProposals={showProposals}
+        onToggleProposals={() => setShowProposals((v) => !v)}
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto">{demoContent}</div>
+        {isSandboxDemo && showProposals && (
+          <AIProposalsPanel demoId={id || ""} demoTitle={demoTitle} />
+        )}
       </div>
     </div>
   );
