@@ -1,5 +1,15 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Play, Upload, Trash2, X, Copy, Shield, FlaskConical, Sparkles, ChevronRight } from "lucide-react";
 import {
   BUILTIN_DEMOS,
