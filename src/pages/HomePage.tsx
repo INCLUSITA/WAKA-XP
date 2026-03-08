@@ -87,6 +87,8 @@ export default function HomePage() {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
   const [experienceCount, setExperienceCount] = useState(0);
+  const [candidateStats, setCandidateStats] = useState<{ candidate: number; validated: number; live: number }>({ candidate: 0, validated: 0, live: 0 });
+  const [candidates, setCandidates] = useState<any[]>([]);
   const navigate = useNavigate();
   const uploadedDemos = getUploadedDemos();
   const allDemos = [...BUILTIN_DEMOS, ...uploadedDemos.map(d => ({ ...d, component: null as any }))];
@@ -94,12 +96,20 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [flowsRes, expRes] = await Promise.all([
+      const [flowsRes, expRes, candRes] = await Promise.all([
         supabase.from("flows").select("*").eq("tenant_id", tenantId).neq("status", "archived").order("updated_at", { ascending: false }).limit(10),
         supabase.from("experiences").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId),
+        supabase.from("production_candidates").select("*").eq("tenant_id", tenantId).order("updated_at", { ascending: false }),
       ]);
       setFlows(flowsRes.data || []);
       setExperienceCount(expRes.count || 0);
+      const allCandidates = candRes.data || [];
+      setCandidates(allCandidates);
+      setCandidateStats({
+        candidate: allCandidates.filter((c: any) => c.status === "candidate").length,
+        validated: allCandidates.filter((c: any) => c.status === "validated").length,
+        live: allCandidates.filter((c: any) => c.status === "live").length,
+      });
       setLoading(false);
     };
     fetchData();
