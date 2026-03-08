@@ -73,8 +73,10 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("flow-attachments").getPublicUrl(path);
       onChange([...items, { type: "upload", url: urlData.publicUrl, name: file.name, mime: file.type }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Upload failed", err);
+      const msg = err?.message || "Error desconocido al subir el archivo";
+      alert(`❌ Upload failed: ${msg}`);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
