@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import LLMSelector from "./LLMSelector";
 
 // --- Types ---
 
@@ -124,7 +125,7 @@ interface AIProposalsPanelProps {
   demoId: string;
   demoTitle: string;
   currentJsx?: string | null;
-  onJsxUpdate?: (newJsx: string) => void;
+  onJsxUpdate?: (newJsx: string, label?: string) => void;
 }
 
 export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxUpdate }: AIProposalsPanelProps) {
@@ -141,8 +142,9 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
   const [promptValue, setPromptValue] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [applying, setApplying] = useState<string | null>(null); // id of proposal being applied
+  const [applying, setApplying] = useState<string | null>(null);
   const [applyingAll, setApplyingAll] = useState(false);
+  const [selectedLLM, setSelectedLLM] = useState("waka-ai-gemini");
 
   const canApply = !!currentJsx && !!onJsxUpdate;
 
@@ -218,7 +220,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     ]);
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Applied: ${proposal.prompt.slice(0, 60)}`);
       persist(proposals.map((p) =>
         p.id === id ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
       ));
@@ -251,7 +253,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     );
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Batch apply: ${toApply.length} change(s)`);
       const appliedIds = new Set(toApply.map((p) => p.id));
       persist(proposals.map((p) =>
         appliedIds.has(p.id) ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
@@ -275,7 +277,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     ]);
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Re-applied: ${proposal.prompt.slice(0, 60)}`);
       toast({ title: "✅ Re-applied to sandbox", description: `"${proposal.prompt.slice(0, 50)}…" — applied again.` });
     }
 
@@ -310,10 +312,9 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
           AI-powered proposal analysis & visual apply.
         </p>
 
-        {/* Engine badge */}
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Cpu className="h-3 w-3 text-violet-400/50" />
-          <span className="text-[9px] text-white/25">Engine: Waka AI (Gemini Flash)</span>
+        {/* Engine selector */}
+        <div className="mt-1.5">
+          <LLMSelector selectedId={selectedLLM} onSelect={setSelectedLLM} />
         </div>
 
         {/* Stats bar */}
