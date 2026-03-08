@@ -4,11 +4,14 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
+import StructuralEditor from "@/components/demos/StructuralEditor";
 import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import { toast } from "@/hooks/use-toast";
+
+type SandboxPanel = "none" | "ai" | "structure";
 
 const LoadingFallback = () => (
   <div className="flex min-h-[80vh] items-center justify-center text-white">
@@ -20,9 +23,10 @@ const LoadingFallback = () => (
 );
 
 function DemoStatusBar({
-  status, title, sourceName, isSandboxDemo, showProposals, onToggleProposals,
+  status, title, sourceName, isSandboxDemo, activePanel, onSetPanel,
 }: {
-  status: DemoStatus; title: string; sourceName?: string; isSandboxDemo: boolean; showProposals: boolean; onToggleProposals: () => void;
+  status: DemoStatus; title: string; sourceName?: string; isSandboxDemo: boolean;
+  activePanel: SandboxPanel; onSetPanel: (p: SandboxPanel) => void;
 }) {
   const cfg = DEMO_STATUS_CONFIG[status];
   const isSandbox = status === "sandbox" || status === "draft";
@@ -44,19 +48,36 @@ function DemoStatusBar({
           <span className="text-white/30 truncate">Desde: {sourceName}</span>
         </>
       )}
+
       {isSandboxDemo && (
-        <button
-          onClick={onToggleProposals}
-          className={`ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
-            showProposals
-              ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white border border-violet-400/40 shadow-violet-500/30"
-              : "bg-gradient-to-r from-violet-600/80 to-purple-600/80 text-white border border-violet-500/30 shadow-violet-500/20 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40 hover:scale-105"
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-          Waka AI
-          {showProposals ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          {/* Structure toggle */}
+          <button
+            onClick={() => onSetPanel(activePanel === "structure" ? "none" : "structure")}
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all shadow-lg ${
+              activePanel === "structure"
+                ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white border border-teal-400/40 shadow-teal-500/30"
+                : "bg-white/5 text-white/50 border border-white/10 hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/30 hover:shadow-teal-500/20"
+            }`}
+          >
+            <Layers className="h-4 w-4" />
+            Structure
+          </button>
+
+          {/* Waka AI toggle */}
+          <button
+            onClick={() => onSetPanel(activePanel === "ai" ? "none" : "ai")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
+              activePanel === "ai"
+                ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white border border-violet-400/40 shadow-violet-500/30"
+                : "bg-gradient-to-r from-violet-600/80 to-purple-600/80 text-white border border-violet-500/30 shadow-violet-500/20 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40 hover:scale-105"
+            }`}
+          >
+            <Sparkles className="h-4 w-4" />
+            Waka AI
+            {activePanel === "ai" ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -65,7 +86,7 @@ function DemoStatusBar({
 export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [showProposals, setShowProposals] = useState(false);
+  const [activePanel, setActivePanel] = useState<SandboxPanel>("none");
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
@@ -90,7 +111,6 @@ export default function DemoViewer() {
   const [versions, setVersions] = useState<SandboxVersion[]>([]);
   const [versionIndex, setVersionIndex] = useState(0);
 
-  // Init versions when demo loads
   useEffect(() => {
     if (baseJsx && versions.length === 0) {
       setVersions([{ id: "v-original", jsx: baseJsx, timestamp: new Date().toISOString(), label: "Original" }]);
@@ -116,7 +136,6 @@ export default function DemoViewer() {
       return base.length;
     });
 
-    // Persist to database
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
       await saveDemo(updated);
@@ -190,14 +209,24 @@ export default function DemoViewer() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-900">
-      <DemoStatusBar status={demoStatus} title={demoTitle} sourceName={demoSourceName} isSandboxDemo={isSandboxDemo} showProposals={showProposals} onToggleProposals={() => setShowProposals((v) => !v)} />
+      <DemoStatusBar
+        status={demoStatus}
+        title={demoTitle}
+        sourceName={demoSourceName}
+        isSandboxDemo={isSandboxDemo}
+        activePanel={activePanel}
+        onSetPanel={setActivePanel}
+      />
       {isSandboxDemo && versions.length > 1 && (
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
       )}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-auto">{demoContent}</div>
-        {isSandboxDemo && showProposals && (
+        {isSandboxDemo && activePanel === "ai" && (
           <AIProposalsPanel demoId={id || ""} demoTitle={demoTitle} currentJsx={currentJsx} onJsxUpdate={handleJsxUpdate} />
+        )}
+        {isSandboxDemo && activePanel === "structure" && (
+          <StructuralEditor demoId={id || ""} demoTitle={demoTitle} />
         )}
       </div>
     </div>
