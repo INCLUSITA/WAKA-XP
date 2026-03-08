@@ -66,6 +66,8 @@ const SUGGESTED_ENTITIES: { name: string; entityType: string }[] = [
 export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelProps) {
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<ContextItem["category"]>("field");
+  const [newEntityName, setNewEntityName] = useState("");
+  const [newEntityType, setNewEntityType] = useState("custom");
   const [entitiesOpen, setEntitiesOpen] = useState(true);
   const [contextsOpen, setContextsOpen] = useState(true);
 
