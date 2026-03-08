@@ -1,10 +1,13 @@
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { BUILTIN_DEMOS, getUploadedDemos, saveUploadedDemo, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
+import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
+import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
+import { toast } from "@/hooks/use-toast";
 
 const LoadingFallback = () => (
   <div className="flex min-h-[80vh] items-center justify-center text-white">
@@ -16,19 +19,9 @@ const LoadingFallback = () => (
 );
 
 function DemoStatusBar({
-  status,
-  title,
-  sourceName,
-  isSandboxDemo,
-  showProposals,
-  onToggleProposals,
+  status, title, sourceName, isSandboxDemo, showProposals, onToggleProposals,
 }: {
-  status: DemoStatus;
-  title: string;
-  sourceName?: string;
-  isSandboxDemo: boolean;
-  showProposals: boolean;
-  onToggleProposals: () => void;
+  status: DemoStatus; title: string; sourceName?: string; isSandboxDemo: boolean; showProposals: boolean; onToggleProposals: () => void;
 }) {
   const cfg = DEMO_STATUS_CONFIG[status];
   const isSandbox = status === "sandbox" || status === "draft";
@@ -72,14 +65,12 @@ export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showProposals, setShowProposals] = useState(false);
-  const [liveJsx, setLiveJsx] = useState<string | null>(null);
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
   const uploadedDemo = !builtinDemo ? getUploadedDemos().find((d) => d.id === id) : undefined;
-
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
 
-  // Get the JSX source for this demo
+  // Get the base JSX source
   const getBaseJsx = (): string | null => {
     if (uploadedDemo?.jsxSource) return uploadedDemo.jsxSource;
     const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
@@ -88,23 +79,66 @@ export default function DemoViewer() {
   };
 
   const baseJsx = getBaseJsx();
-  const currentJsx = liveJsx || baseJsx;
 
-  // Handle JSX update from AI apply
-  const handleJsxUpdate = useCallback((newJsx: string) => {
-    setLiveJsx(newJsx);
+  // --- Version history ---
+  const [versions, setVersions] = useState<SandboxVersion[]>(() => {
+    if (!baseJsx) return [];
+    return [{ id: "v-original", jsx: baseJsx, timestamp: new Date().toISOString(), label: "Original" }];
+  });
+  const [versionIndex, setVersionIndex] = useState(0);
 
-    // Persist to localStorage if it's an uploaded demo
+  // Current JSX is whatever version we're viewing
+  const currentJsx = versions.length > 0 ? versions[versionIndex]?.jsx : baseJsx;
+
+  // Handle JSX update from AI apply — creates a new version
+  const handleJsxUpdate = useCallback((newJsx: string, label?: string) => {
+    const newVersion: SandboxVersion = {
+      id: `v-${Date.now().toString(36)}`,
+      jsx: newJsx,
+      timestamp: new Date().toISOString(),
+      label: label || "AI change applied",
+    };
+
+    setVersions((prev) => {
+      // If we're not at the latest, branch from current position
+      const base = prev.slice(0, versionIndex + 1);
+      return [...base, newVersion];
+    });
+    setVersionIndex((prev) => {
+      // Move to the new version
+      const base = versions.slice(0, prev + 1);
+      return base.length; // index of the newly added version
+    });
+
+    // Persist
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
       saveUploadedDemo(updated);
     }
-
-    // Also persist to sessionStorage for session-only demos
     if (id) {
       sessionStorage.setItem(`demo-jsx-${id}`, newJsx);
     }
-  }, [uploadedDemo, id]);
+  }, [uploadedDemo, id, versionIndex, versions]);
+
+  const handleVersionNavigate = useCallback((index: number) => {
+    if (index < 0 || index >= versions.length) return;
+    setVersionIndex(index);
+  }, [versions.length]);
+
+  const handleVersionRestore = useCallback((index: number) => {
+    const version = versions[index];
+    if (!version) return;
+
+    // Persist this version as the current active one
+    if (uploadedDemo) {
+      const updated: UploadedDemo = { ...uploadedDemo, jsxSource: version.jsx };
+      saveUploadedDemo(updated);
+    }
+    if (id) {
+      sessionStorage.setItem(`demo-jsx-${id}`, version.jsx);
+    }
+    toast({ title: "Version restored", description: `Restored: "${version.label}"` });
+  }, [versions, uploadedDemo, id]);
 
   // Resolve what to render
   let demoContent: React.ReactNode = null;
@@ -122,7 +156,6 @@ export default function DemoViewer() {
       </Suspense>
     );
   } else if (currentJsx && uploadedDemo) {
-    // Prefer live/updated JSX for sandbox demos
     demoStatus = uploadedDemo.status;
     demoTitle = uploadedDemo.title;
     demoSourceName = uploadedDemo.sourceName;
@@ -184,6 +217,15 @@ export default function DemoViewer() {
         showProposals={showProposals}
         onToggleProposals={() => setShowProposals((v) => !v)}
       />
+      {/* Version history bar — only for sandbox with versions */}
+      {isSandboxDemo && versions.length > 1 && (
+        <SandboxVersionBar
+          versions={versions}
+          currentIndex={versionIndex}
+          onNavigate={handleVersionNavigate}
+          onRestore={handleVersionRestore}
+        />
+      )}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-auto">{demoContent}</div>
         {isSandboxDemo && showProposals && (
