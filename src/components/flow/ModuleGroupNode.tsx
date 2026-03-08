@@ -1,13 +1,32 @@
-import { memo, useState } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { ChevronDown, ChevronRight, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export const ModuleGroupNode = memo(({ data, selected, id }: NodeProps) => {
   const [editing, setEditing] = useState(false);
+  const committedRef = useRef(false); // prevent double-fire from blur after enter
   const collapsed = data.collapsed as boolean;
   const label = (data.label as string) || "Module";
   const color = (data.color as string) || "hsl(var(--primary))";
+
+  const commitRename = useCallback(
+    (value: string) => {
+      if (committedRef.current) return;
+      committedRef.current = true;
+      const trimmed = value.trim();
+      if (trimmed && trimmed !== label) {
+        (data as any).onRename?.(id, trimmed);
+      }
+      setEditing(false);
+    },
+    [data, id, label]
+  );
+
+  const startEditing = useCallback(() => {
+    committedRef.current = false;
+    setEditing(true);
+  }, []);
 
   return (
     <>
@@ -53,13 +72,13 @@ export const ModuleGroupNode = memo(({ data, selected, id }: NodeProps) => {
               autoFocus
               defaultValue={label}
               className="h-6 w-36 border-none bg-background/60 px-1.5 py-0 text-xs font-semibold focus-visible:ring-1"
-              onBlur={(e) => {
-                (data as any).onRename?.(id, e.target.value);
-                setEditing(false);
-              }}
+              onBlur={(e) => commitRename(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  (data as any).onRename?.(id, (e.target as HTMLInputElement).value);
+                  commitRename((e.target as HTMLInputElement).value);
+                }
+                if (e.key === "Escape") {
+                  committedRef.current = true; // skip blur rename
                   setEditing(false);
                 }
               }}
@@ -68,7 +87,7 @@ export const ModuleGroupNode = memo(({ data, selected, id }: NodeProps) => {
             <span
               className="text-xs font-bold uppercase tracking-wider cursor-pointer"
               style={{ color }}
-              onDoubleClick={() => setEditing(true)}
+              onDoubleClick={startEditing}
             >
               {label}
             </span>
@@ -80,7 +99,7 @@ export const ModuleGroupNode = memo(({ data, selected, id }: NodeProps) => {
 
           <button
             className="ml-1 p-0.5 rounded hover:bg-background/40 transition-colors"
-            onClick={() => setEditing(true)}
+            onClick={startEditing}
           >
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </button>

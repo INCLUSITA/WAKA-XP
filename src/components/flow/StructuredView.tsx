@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Node, Edge } from "@xyflow/react";
 import {
-  Layers, Box, ChevronRight, ChevronDown, MousePointerClick, Package, ArrowRight, Check,
+  Layers, Box, ChevronRight, ChevronDown, MousePointerClick, Package, ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -143,100 +143,120 @@ export function StructuredView({
   };
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-5 py-3.5">
-        <Layers className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-bold text-foreground tracking-wide">Structure View</h2>
+    <div className="flex h-full flex-col bg-muted/30">
+      {/* Prominent header bar — visually distinct from canvas */}
+      <div className="flex items-center gap-3 border-b-2 border-primary/20 bg-card px-6 py-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <Layers className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-sm font-bold text-foreground tracking-wide">Structure View</h2>
+          <p className="text-[10px] text-muted-foreground">High-level flow architecture</p>
+        </div>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px] font-medium px-2">
+          <Badge variant="outline" className="text-[10px] font-semibold px-2.5 py-0.5 border-primary/30 text-primary">
             {modules.length} {modules.length === 1 ? "module" : "modules"}
           </Badge>
-          <Badge variant="outline" className="text-[10px] font-medium px-2">
+          <Badge variant="outline" className="text-[10px] font-medium px-2.5 py-0.5">
             {regularNodes.length} nodes
           </Badge>
+          <button
+            onClick={onSwitchToCanvas}
+            className="ml-2 flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
+          >
+            <MousePointerClick className="h-3 w-3" />
+            Canvas
+          </button>
         </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-5 space-y-4">
+        <div className="p-6 space-y-5">
           {/* Modules */}
-          {modules.map((mod) => {
-            const modNodes = grouped[mod.id] || [];
-            const outgoing = moduleConnections.filter((c) => c.from === mod.id);
-            const targets = outgoing.map((c) => modules.find((m) => m.id === c.to)?.label).filter(Boolean);
+          {modules.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 px-1">
+                Modules
+              </p>
+              {modules.map((mod) => {
+                const modNodes = grouped[mod.id] || [];
+                const outgoing = moduleConnections.filter((c) => c.from === mod.id);
+                const targets = outgoing.map((c) => modules.find((m) => m.id === c.to)?.label).filter(Boolean);
 
-            return (
-              <div key={mod.id}>
-                <button
-                  onClick={() => onFocusModule(mod.id)}
-                  className="w-full rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:shadow-lg group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-4 w-1 rounded-full"
-                      style={{ background: mod.color }}
-                    />
-                    <span className="text-sm font-bold tracking-wide" style={{ color: mod.color }}>
-                      {mod.label}
-                    </span>
-                    <Badge variant="secondary" className="ml-auto text-[10px] font-medium">
-                      {modNodes.length} {modNodes.length === 1 ? "node" : "nodes"}
-                    </Badge>
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                return (
+                  <button
+                    key={mod.id}
+                    onClick={() => onFocusModule(mod.id)}
+                    className="w-full rounded-xl border-2 bg-card p-4 text-left transition-all hover:shadow-lg group"
+                    style={{ borderColor: `${mod.color}40` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-8 w-1.5 rounded-full"
+                        style={{ background: mod.color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-bold tracking-wide block" style={{ color: mod.color }}>
+                          {mod.label}
+                        </span>
+                        {targets.length > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70 mt-0.5">
+                            <ArrowRight className="h-2.5 w-2.5" />
+                            {targets.join(" → ")}
+                          </span>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] font-medium">
+                        {modNodes.length} {modNodes.length === 1 ? "node" : "nodes"}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
 
-                  {modNodes.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
-                      {modNodes.slice(0, 8).map((n) => (
-                        <span
-                          key={n.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onFocusNode(n.id);
-                          }}
-                          className="cursor-pointer rounded-md bg-muted/80 px-2 py-1 text-[10px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1"
-                        >
+                    {modNodes.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
+                        {modNodes.slice(0, 8).map((n) => (
                           <span
-                            className="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0"
-                            style={{ background: NODE_TYPE_COLORS[n.type || ""] || "hsl(var(--muted-foreground))" }}
-                          />
-                          {NODE_TYPE_LABELS[n.type || ""] || n.type}
-                        </span>
-                      ))}
-                      {modNodes.length > 8 && (
-                        <span className="text-[10px] text-muted-foreground/60 self-center">
-                          +{modNodes.length - 8} more
-                        </span>
-                      )}
-                    </div>
-                  )}
+                            key={n.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onFocusNode(n.id);
+                            }}
+                            className="cursor-pointer rounded-md bg-muted/80 px-2 py-1 text-[10px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1"
+                          >
+                            <span
+                              className="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0"
+                              style={{ background: NODE_TYPE_COLORS[n.type || ""] || "hsl(var(--muted-foreground))" }}
+                            />
+                            {NODE_TYPE_LABELS[n.type || ""] || n.type}
+                          </span>
+                        ))}
+                        {modNodes.length > 8 && (
+                          <span className="text-[10px] text-muted-foreground/60 self-center">
+                            +{modNodes.length - 8} more
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                  {modNodes.length === 0 && (
-                    <p className="mt-2 pl-5 text-[10px] text-muted-foreground/50 italic">
-                      No nodes assigned yet — use Structure View or drag nodes in Canvas
-                    </p>
-                  )}
+                    {modNodes.length === 0 && (
+                      <p className="mt-2 pl-5 text-[10px] text-muted-foreground/50 italic">
+                        No nodes assigned yet
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-                  {targets.length > 0 && (
-                    <div className="mt-2 pl-5 flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                      <ArrowRight className="h-2.5 w-2.5" />
-                      <span>{targets.join(" → ")}</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-
-          {/* Divider between modules and unassigned */}
+          {/* Divider */}
           {modules.length > 0 && unassigned.length > 0 && (
             <div className="border-t border-border" />
           )}
 
-          {/* Unassigned nodes — grouped by type */}
+          {/* Unassigned nodes */}
           {unassigned.length > 0 && (
-            <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4">
+            <div className="rounded-xl border border-dashed border-border/60 bg-card/50 p-4">
               <div className="flex items-center gap-2.5 mb-3">
                 <Package className="h-4 w-4 text-muted-foreground/60" />
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -323,17 +343,17 @@ export function StructuredView({
 
           {/* Empty state */}
           {modules.length === 0 && unassigned.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-10 text-center">
-              <Box className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm font-semibold text-foreground">No structure yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
+            <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
+              <Box className="mx-auto h-10 w-10 text-muted-foreground/20 mb-4" />
+              <p className="text-base font-bold text-foreground">No structure yet</p>
+              <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
                 Create modules in Canvas view to organize your flow into logical sections
               </p>
               <button
                 onClick={onSwitchToCanvas}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                <MousePointerClick className="h-3.5 w-3.5" />
+                <MousePointerClick className="h-4 w-4" />
                 Switch to Canvas
               </button>
             </div>
