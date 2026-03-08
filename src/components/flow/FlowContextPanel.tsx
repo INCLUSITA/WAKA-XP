@@ -66,6 +66,8 @@ const SUGGESTED_ENTITIES: { name: string; entityType: string }[] = [
 export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelProps) {
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<ContextItem["category"]>("field");
+  const [newEntityName, setNewEntityName] = useState("");
+  const [newEntityType, setNewEntityType] = useState("custom");
   const [entitiesOpen, setEntitiesOpen] = useState(true);
   const [contextsOpen, setContextsOpen] = useState(true);
 
@@ -129,13 +131,13 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
         </button>
       </div>
 
-      {/* Add form */}
+      {/* Add variable form — only for non-entity items */}
       <div className="border-b border-border p-3 space-y-2">
         <div className="flex gap-2">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder={newCategory === "entity" ? "Entity name..." : "Variable name..."}
+            placeholder="Variable name..."
             className="h-7 text-xs flex-1"
             onKeyDown={(e) => e.key === "Enter" && addItem()}
           />
@@ -144,7 +146,7 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+              {Object.entries(CATEGORY_CONFIG).filter(([k]) => k !== "entity").map(([key, cfg]) => (
                 <SelectItem key={key} value={key} className="text-xs">
                   {cfg.label}
                 </SelectItem>
@@ -153,7 +155,7 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
           </Select>
         </div>
         <Button size="sm" onClick={addItem} disabled={!newName.trim()} className="w-full h-7 text-xs">
-          <Plus className="mr-1 h-3 w-3" /> {newCategory === "entity" ? "Add Entity" : "Add Context Item"}
+          <Plus className="mr-1 h-3 w-3" /> Add Variable
         </Button>
       </div>
 
@@ -191,35 +193,74 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
 
             <CollapsibleContent>
               <div className="mt-1 space-y-1.5">
-                {/* Entity empty state */}
+                {/* Inline entity creation */}
+                <div className="flex gap-1.5 px-1">
+                  <Input
+                    value={newEntityName}
+                    onChange={(e) => setNewEntityName(e.target.value)}
+                    placeholder="New entity name..."
+                    className="h-6 text-[11px] flex-1 border-xp-context/20 bg-xp-context/5 focus-visible:ring-xp-context/30"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newEntityName.trim()) {
+                        addEntity(newEntityName.trim(), newEntityType);
+                        setNewEntityName("");
+                      }
+                    }}
+                  />
+                  <Select value={newEntityType} onValueChange={setNewEntityType}>
+                    <SelectTrigger className="h-6 w-[90px] text-[10px] border-xp-context/20 bg-xp-context/5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ENTITY_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value} className="text-xs">
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (newEntityName.trim()) {
+                        addEntity(newEntityName.trim(), newEntityType);
+                        setNewEntityName("");
+                      }
+                    }}
+                    disabled={!newEntityName.trim()}
+                    className="h-6 w-6 p-0 text-xp-context hover:bg-xp-context/10"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {/* Quick-add suggestions */}
+                {unusedEntitySuggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 px-1">
+                    {unusedEntitySuggestions.map((s) => {
+                      const typeInfo = ENTITY_TYPE_MAP[s.entityType];
+                      const Icon = typeInfo?.icon || Hexagon;
+                      return (
+                        <button
+                          key={s.name}
+                          onClick={() => addEntity(s.name, s.entityType)}
+                          className="inline-flex items-center gap-1 rounded-md border border-dashed border-xp-context/20 px-1.5 py-0.5 text-[9px] text-xp-context/60 hover:border-xp-context/40 hover:text-xp-context hover:bg-xp-context/5 transition-colors"
+                        >
+                          <Icon className="h-2.5 w-2.5" />
+                          + {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Entity empty hint */}
                 {entityItems.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-xp-context/15 bg-xp-context/3 px-3 py-3 text-center">
-                    <Hexagon className="mx-auto h-4 w-4 text-xp-context/30" />
-                    <p className="mt-1 text-[11px] font-medium text-foreground/70">
-                      No entities yet
+                  <div className="rounded-md border border-dashed border-xp-context/10 bg-xp-context/3 px-2.5 py-2 text-center">
+                    <p className="text-[9px] text-muted-foreground/50 leading-relaxed">
+                      Entities are structured reusable concepts — like a customer, loan, or payment — shared across the experience.
                     </p>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-relaxed">
-                      Entities represent reusable structured concepts — like a customer, loan, or payment — shared across the experience.
-                    </p>
-                    {/* Quick-add entity suggestions */}
-                    {unusedEntitySuggestions.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1 mt-2">
-                        {unusedEntitySuggestions.map((s) => {
-                          const typeInfo = ENTITY_TYPE_MAP[s.entityType];
-                          const Icon = typeInfo?.icon || Hexagon;
-                          return (
-                            <button
-                              key={s.name}
-                              onClick={() => addEntity(s.name, s.entityType)}
-                              className="inline-flex items-center gap-1 rounded-md border border-dashed border-xp-context/20 px-2 py-0.5 text-[10px] text-xp-context/70 hover:border-xp-context/40 hover:text-xp-context hover:bg-xp-context/5 transition-colors"
-                            >
-                              <Icon className="h-2.5 w-2.5" />
-                              {s.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -284,36 +325,15 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
                   );
                 })}
 
-                {/* Quick-add suggestions when entities exist */}
-                {entityItems.length > 0 && unusedEntitySuggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-1 px-1">
-                    {unusedEntitySuggestions.map((s) => (
-                      <button
-                        key={s.name}
-                        onClick={() => addEntity(s.name, s.entityType)}
-                        className="rounded border border-dashed border-xp-context/15 px-1.5 py-0.5 text-[9px] text-xp-context/50 hover:border-xp-context/30 hover:text-xp-context transition-colors"
-                      >
-                        + {s.name}
-                      </button>
-                    ))}
+                {/* Shared entities hint — only when entities exist */}
+                {entityItems.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-1 py-1">
+                    <Sparkles className="h-2.5 w-2.5 text-xp-context/25" />
+                    <span className="text-[8px] text-xp-context/35 font-medium">
+                      Experience-level sync coming soon
+                    </span>
                   </div>
                 )}
-
-                {/* Shared entities placeholder */}
-                <div className="rounded-md border border-dashed border-xp-context/10 bg-xp-context/2 px-2.5 py-2">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-2.5 w-2.5 text-xp-context/30" />
-                    <span className="text-[9px] font-semibold text-xp-context/40 uppercase tracking-wider">
-                      Experience-level entities
-                    </span>
-                    <Badge variant="outline" className="ml-auto text-[7px] border-xp-context/10 text-xp-context/30 px-1 py-0">
-                      Soon
-                    </Badge>
-                  </div>
-                  <p className="text-[9px] text-muted-foreground/40 mt-1 leading-relaxed">
-                    Shared entities from the experience layer will sync here automatically.
-                  </p>
-                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
