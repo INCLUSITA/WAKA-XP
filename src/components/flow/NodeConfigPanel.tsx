@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle } from "lucide-react";
-import { NodeEffectsEditor, NodeEffect } from "./NodeEffectsEditor";
+import { NodeEffectsEditor, NodeEffect, AvailableEntity } from "./NodeEffectsEditor";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ interface NodeConfigPanelProps {
   onClose: () => void;
   onDelete: (id: string) => void;
   channel?: string;
+  availableEntities?: AvailableEntity[];
 }
 
 const nodeTypeLabels: Record<string, string> = {
@@ -301,7 +302,7 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     </div>
   );
 }
-export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
   const update = useCallback(
@@ -920,6 +921,7 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
             <NodeEffectsEditor
               effects={(data.xpEffects as NodeEffect[]) || []}
               onChange={(effects) => update("xpEffects", effects)}
+              availableEntities={availableEntities}
             />
           </>
         )}

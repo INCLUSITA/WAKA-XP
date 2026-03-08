@@ -658,6 +658,9 @@ function FlowEditorInner() {
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
             channel={channel}
+            availableEntities={contextItems
+              .filter((i) => i.category === "entity")
+              .map((i) => ({ name: i.name, entityType: i.entityType }))}
           />
         )}
 
