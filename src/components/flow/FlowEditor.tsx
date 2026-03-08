@@ -480,10 +480,20 @@ function FlowEditorInner() {
 
   const handleAddModuleAndFocus = useCallback(
     (label?: string) => {
-      const id = addModule(label);
+      // Get viewport center in flow coordinates for smart placement
+      const viewport = reactFlowInstance.getViewport();
+      const bounds = document.querySelector('.react-flow')?.getBoundingClientRect();
+      let center: { x: number; y: number } | undefined;
+      if (bounds) {
+        const cx = (bounds.width / 2 - viewport.x) / viewport.zoom;
+        const cy = (bounds.height / 2 - viewport.y) / viewport.zoom;
+        center = { x: cx, y: cy };
+      }
+      const id = addModule(label, center);
+      // Wait for render then smoothly zoom to the new module
       setTimeout(() => {
-        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.3, duration: 400 });
-      }, 150);
+        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.4, duration: 500 });
+      }, 200);
       return id;
     },
     [addModule, reactFlowInstance]
