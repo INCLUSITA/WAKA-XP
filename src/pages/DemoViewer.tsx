@@ -56,6 +56,38 @@ export default function DemoViewer() {
 
   // Check uploaded demos
   const uploadedDemo = getUploadedDemos().find((d) => d.id === id);
+
+  // If uploaded demo is a copy of a builtin, render the builtin component
+  if (uploadedDemo?.sourceId) {
+    const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
+    if (sourceBuiltin) {
+      const DemoComponent = sourceBuiltin.component;
+      return (
+        <div className="flex flex-col min-h-screen bg-slate-900">
+          <DemoStatusBar
+            status={uploadedDemo.status}
+            title={uploadedDemo.title}
+            sourceName={uploadedDemo.sourceName}
+          />
+          <div className="flex-1">
+            <Suspense
+              fallback={
+                <div className="flex min-h-[80vh] items-center justify-center text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <span>Cargando demo...</span>
+                  </div>
+                </div>
+              }
+            >
+              <DemoComponent />
+            </Suspense>
+          </div>
+        </div>
+      );
+    }
+  }
+
   const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
   const jsxSource = sessionSource || uploadedDemo?.jsxSource;
 
