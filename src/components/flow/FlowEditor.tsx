@@ -93,6 +93,7 @@ function FlowEditorInner() {
   const [showContext, setShowContext] = useState(false);
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const navigate = useNavigate();
+  const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);
 
   const { loadFlow, debouncedSave, saveStatus, isLoading } = useFlowPersistence({
