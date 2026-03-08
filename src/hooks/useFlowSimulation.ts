@@ -243,7 +243,12 @@ export function useFlowSimulation(
           const url = resolveTemplate(data.url || "", ctxRef.current);
           const method = data.method || "GET";
           const bodyTemplate = data.body || "";
-          const body = resolveTemplate(bodyTemplate, ctxRef.current);
+          let body = resolveTemplate(bodyTemplate, ctxRef.current);
+          // Sanitize resolved JSON: fix empty values like "key": , or "key": }
+          body = body
+            .replace(/:\s*,/g, ': null,')
+            .replace(/:\s*}/g, ': null}')
+            .replace(/""(\s*[,}])/g, '""$1');
           const headers = data.headers || {};
 
           // Merge default headers + node headers, then resolve templates
