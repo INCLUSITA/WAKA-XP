@@ -13,6 +13,7 @@ import {
   Edge,
   Panel,
   useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
@@ -73,7 +74,7 @@ const defaultEdgeOptions = {
   style: { strokeWidth: 2, stroke: "hsl(200, 30%, 65%)" },
 };
 
-export function FlowEditor() {
+function FlowEditorInner() {
   const [searchParams, setSearchParams] = useSearchParams();
   const flowIdParam = searchParams.get("id");
 
@@ -456,28 +457,49 @@ export function FlowEditor() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
+  const reactFlowInstance = useReactFlow();
+
   const handleFocusNode = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
-      if (node) {
-        setSelectedNode(node);
-      }
+      if (node) setSelectedNode(node);
     },
     [nodes]
   );
 
+  const handleAddModuleAndFocus = useCallback(
+    (label?: string) => {
+      const id = addModule(label);
+      setTimeout(() => {
+        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.3, duration: 400 });
+      }, 150);
+      return id;
+    },
+    [addModule, reactFlowInstance]
+  );
+
   const handleFocusModule = useCallback(
     (moduleId: string) => {
-      // Switch to canvas and center on module
       setViewMode("canvas");
-      // We'll just select nothing and let the user see it
-      const moduleNode = nodes.find((n) => n.id === moduleId);
-      if (moduleNode) {
-        // The fitView doesn't easily target a node without ReactFlow instance, 
-        // but switching to canvas is the main action
+      setTimeout(() => {
+        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
+      }, 100);
+    },
+    [reactFlowInstance]
+  );
+
+  const handleFocusNodeInCanvas = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) {
+        setSelectedNode(node);
+        setViewMode("canvas");
+        setTimeout(() => {
+          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 400 });
+        }, 100);
       }
     },
-    [nodes]
+    [nodes, reactFlowInstance]
   );
 
   return (
@@ -504,7 +526,7 @@ export function FlowEditor() {
         onViewModeChange={setViewMode}
         onToggleContext={() => setShowContext((v) => !v)}
         showContext={showContext}
-        onAddModule={addModule}
+        onAddModule={handleAddModuleAndFocus}
         moduleTemplates={MODULE_TEMPLATES}
       />
 
@@ -565,8 +587,9 @@ export function FlowEditor() {
             edges={edges}
             modules={modules}
             onFocusModule={handleFocusModule}
-            onFocusNode={handleFocusNode}
+            onFocusNode={handleFocusNodeInCanvas}
             onSwitchToCanvas={() => setViewMode("canvas")}
+            onAssignNode={assignNodeToModule}
           />
         )}
 
@@ -654,5 +677,13 @@ export function FlowEditor() {
         )}
       </div>
     </div>
+  );
+}
+
+export function FlowEditor() {
+  return (
+    <ReactFlowProvider>
+      <FlowEditorInner />
+    </ReactFlowProvider>
   );
 }

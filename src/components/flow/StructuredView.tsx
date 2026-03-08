@@ -1,11 +1,18 @@
-import { useMemo } from "react";
-import { Node, Edge, useReactFlow } from "@xyflow/react";
+import { useMemo, useState } from "react";
+import { Node, Edge } from "@xyflow/react";
 import {
-  Layers, Box, ChevronRight, MousePointerClick, Package,
+  Layers, Box, ChevronRight, ChevronDown, MousePointerClick, Package, ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FlowModule } from "@/hooks/useFlowModules";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StructuredViewProps {
   nodes: Node[];
@@ -14,6 +21,7 @@ interface StructuredViewProps {
   onFocusModule: (moduleId: string) => void;
   onFocusNode: (nodeId: string) => void;
   onSwitchToCanvas: () => void;
+  onAssignNode?: (nodeId: string, moduleId: string | null) => void;
 }
 
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -40,6 +48,14 @@ const NODE_TYPE_COLORS: Record<string, string> = {
   waitResponse: "hsl(var(--node-wait))",
   splitExpression: "hsl(var(--node-split))",
   webhook: "hsl(var(--node-webhook))",
+  saveResult: "hsl(45, 80%, 50%)",
+  updateContact: "hsl(200, 70%, 50%)",
+  sendEmail: "hsl(340, 70%, 50%)",
+  callAI: "hsl(270, 70%, 55%)",
+  enterFlow: "hsl(190, 70%, 45%)",
+  callZapier: "hsl(20, 90%, 55%)",
+  sendAirtime: "hsl(50, 80%, 50%)",
+  openTicket: "hsl(15, 80%, 50%)",
 };
 
 export function StructuredView({
@@ -49,8 +65,10 @@ export function StructuredView({
   onFocusModule,
   onFocusNode,
   onSwitchToCanvas,
+  onAssignNode,
 }: StructuredViewProps) {
   const regularNodes = nodes.filter((n) => n.type !== "moduleGroup");
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
 
   // Group nodes by parentId (module)
   const { grouped, unassigned } = useMemo(() => {
@@ -67,7 +85,18 @@ export function StructuredView({
     return { grouped, unassigned };
   }, [regularNodes]);
 
-  // Module connections (simplified)
+  // Group unassigned by type
+  const unassignedByType = useMemo(() => {
+    const byType: Record<string, Node[]> = {};
+    for (const n of unassigned) {
+      const t = n.type || "unknown";
+      if (!byType[t]) byType[t] = [];
+      byType[t].push(n);
+    }
+    return Object.entries(byType).sort((a, b) => b[1].length - a[1].length);
+  }, [unassigned]);
+
+  // Module connections
   const moduleConnections = useMemo(() => {
     const connections: { from: string; to: string }[] = [];
     const nodeToModule = new Map<string, string>();
@@ -86,6 +115,14 @@ export function StructuredView({
     }
     return connections;
   }, [regularNodes, edges]);
+
+  const toggleType = (type: string) => {
+    setExpandedTypes((prev) => {
+      const next = new Set(prev);
+      next.has(type) ? next.delete(type) : next.add(type);
+      return next;
+    });
+  };
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -126,7 +163,6 @@ export function StructuredView({
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 
-                  {/* Node summary */}
                   {modNodes.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {modNodes.slice(0, 6).map((n) => (
@@ -139,6 +175,10 @@ export function StructuredView({
                           }}
                           className="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                         >
+                          <span
+                            className="mr-1 inline-block h-1.5 w-1.5 rounded-full"
+                            style={{ background: NODE_TYPE_COLORS[n.type || ""] || "hsl(var(--muted-foreground))" }}
+                          />
                           {NODE_TYPE_LABELS[n.type || ""] || n.type}
                         </span>
                       ))}
@@ -150,10 +190,9 @@ export function StructuredView({
                     </div>
                   )}
 
-                  {/* Connections */}
                   {targets.length > 0 && (
                     <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <ChevronRight className="h-2.5 w-2.5" />
+                      <ArrowRight className="h-2.5 w-2.5" />
                       {targets.join(", ")}
                     </div>
                   )}
@@ -162,10 +201,10 @@ export function StructuredView({
             );
           })}
 
-          {/* Unassigned nodes */}
+          {/* Unassigned nodes — grouped by type */}
           {unassigned.length > 0 && (
             <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <Package className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Unassigned Nodes
@@ -174,23 +213,74 @@ export function StructuredView({
                   {unassigned.length}
                 </Badge>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {unassigned.map((n) => (
-                  <span
-                    key={n.id}
-                    onClick={() => {
-                      onFocusNode(n.id);
-                      onSwitchToCanvas();
-                    }}
-                    className="cursor-pointer rounded bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground border border-border hover:border-primary/30 hover:text-primary transition-colors"
-                  >
-                    <span
-                      className="mr-1 inline-block h-1.5 w-1.5 rounded-full"
-                      style={{ background: NODE_TYPE_COLORS[n.type || ""] || "hsl(var(--muted-foreground))" }}
-                    />
-                    {NODE_TYPE_LABELS[n.type || ""] || n.type}
-                  </span>
-                ))}
+
+              <div className="space-y-1">
+                {unassignedByType.map(([type, typeNodes]) => {
+                  const isExpanded = expandedTypes.has(type);
+                  const color = NODE_TYPE_COLORS[type] || "hsl(var(--muted-foreground))";
+                  const label = NODE_TYPE_LABELS[type] || type;
+
+                  return (
+                    <div key={type}>
+                      <button
+                        onClick={() => toggleType(type)}
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted/60 transition-colors"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                        )}
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ background: color }}
+                        />
+                        <span className="text-xs font-medium text-foreground">{label}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground font-medium">
+                          {typeNodes.length}
+                        </span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="ml-7 mt-1 mb-2 space-y-0.5">
+                          {typeNodes.map((n) => (
+                            <div
+                              key={n.id}
+                              className="flex items-center gap-2 rounded px-2 py-1 text-[11px] hover:bg-card transition-colors group/node"
+                            >
+                              <button
+                                onClick={() => {
+                                  onFocusNode(n.id);
+                                  onSwitchToCanvas();
+                                }}
+                                className="flex-1 text-left text-muted-foreground hover:text-primary transition-colors truncate"
+                              >
+                                {(n.data?.text as string)?.slice(0, 50) || (n.data?.label as string) || (n.data?.url as string)?.slice(0, 40) || `${label} node`}
+                              </button>
+                              {onAssignNode && modules.length > 0 && (
+                                <Select
+                                  onValueChange={(moduleId) => onAssignNode(n.id, moduleId)}
+                                >
+                                  <SelectTrigger className="h-5 w-20 border-none bg-transparent text-[10px] text-muted-foreground opacity-0 group-hover/node:opacity-100 transition-opacity focus:ring-0 [&>svg]:h-2.5 [&>svg]:w-2.5">
+                                    <SelectValue placeholder="Assign" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {modules.map((m) => (
+                                      <SelectItem key={m.id} value={m.id} className="text-xs">
+                                        <span className="mr-1 inline-block h-2 w-2 rounded-sm" style={{ background: m.color }} />
+                                        {m.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
