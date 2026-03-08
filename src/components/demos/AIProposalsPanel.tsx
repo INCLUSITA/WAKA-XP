@@ -13,7 +13,9 @@ import {
   Tag,
   Trash2,
   Zap,
+  Archive,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export type ProposalStatus = "proposed" | "accepted" | "rejected" | "applied";
 
@@ -27,11 +29,11 @@ export interface AIProposal {
   changeTags?: string[];
 }
 
-const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, { label: string; icon: typeof Clock; color: string; bg: string }> = {
-  proposed:  { label: "Proposed",  icon: Clock,        color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20" },
-  accepted:  { label: "Accepted",  icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20" },
-  rejected:  { label: "Rejected",  icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20" },
-  applied:   { label: "Approved",  icon: Zap,          color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, { label: string; icon: typeof Clock; color: string; bg: string; description: string }> = {
+  proposed:  { label: "Pending review",    icon: Clock,        color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",   description: "Awaiting your review" },
+  accepted:  { label: "Ready to approve",  icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20",     description: "Accepted — approve to store in sandbox workflow" },
+  rejected:  { label: "Rejected",          icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",       description: "Dismissed from review" },
+  applied:   { label: "Stored in sandbox", icon: Archive,      color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", description: "Saved in sandbox workflow — visual apply pending" },
 };
 
 const SUGGESTION_PROMPTS = [
@@ -110,8 +112,26 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
     setPromptValue("");
   };
 
+  const handleApprove = (id: string) => {
+    persist(proposals.map((p) => (p.id === id ? { ...p, status: "applied" as ProposalStatus } : p)));
+    toast({
+      title: "Proposal stored in sandbox",
+      description: "Saved in sandbox workflow. Visual application will be available when the AI editing engine is connected.",
+    });
+  };
+
   const updateStatus = (id: string, status: ProposalStatus) => {
+    if (status === "applied") {
+      handleApprove(id);
+      return;
+    }
     persist(proposals.map((p) => (p.id === id ? { ...p, status } : p)));
+    if (status === "accepted") {
+      toast({ title: "Proposal accepted", description: "Ready to approve for sandbox workflow." });
+    }
+    if (status === "rejected") {
+      toast({ title: "Proposal rejected", description: "Dismissed from review." });
+    }
   };
 
   const removeProposal = (id: string) => {
@@ -120,6 +140,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
 
   const proposedCount = proposals.filter((p) => p.status === "proposed").length;
   const acceptedCount = proposals.filter((p) => p.status === "accepted").length;
+  const storedCount = proposals.filter((p) => p.status === "applied").length;
 
   return (
     <div className="w-80 border-l border-white/10 bg-slate-900/95 backdrop-blur-sm flex flex-col h-full">
@@ -133,16 +154,19 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
           </span>
         </div>
         <p className="text-[11px] text-white/35 leading-relaxed">
-          Review and apply changes safely — stable demo is never modified.
+          Review and store changes safely — stable demo is never modified.
         </p>
         {/* Stats bar */}
         {proposals.length > 0 && (
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-2 flex-wrap">
             {proposedCount > 0 && (
               <span className="text-[10px] text-amber-400/70">{proposedCount} pending</span>
             )}
             {acceptedCount > 0 && (
-              <span className="text-[10px] text-blue-400/70">{acceptedCount} ready to apply</span>
+              <span className="text-[10px] text-blue-400/70">{acceptedCount} ready</span>
+            )}
+            {storedCount > 0 && (
+              <span className="text-[10px] text-emerald-400/70">{storedCount} stored</span>
             )}
           </div>
         )}
@@ -224,6 +248,9 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                   "{p.prompt}"
                 </p>
 
+                {/* Status description */}
+                <p className="text-[10px] text-white/25 mb-1.5 italic">{cfg.description}</p>
+
                 {/* Summary — expandable */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : p.id)}
@@ -250,7 +277,6 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5">
-                  {/* Proposed: Accept / Reject */}
                   {p.status === "proposed" && (
                     <>
                       <button
@@ -270,25 +296,27 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                     </>
                   )}
 
-                  {/* Accepted: Approve for Sandbox */}
                   {p.status === "accepted" && (
                     <button
                       onClick={() => updateStatus(p.id, "applied")}
                       className="flex items-center gap-1 rounded-md bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/25 transition"
-                      title="Approve for sandbox — visual application coming soon"
+                      title="Store in sandbox workflow — visual apply coming soon"
                     >
-                      <Play className="h-3 w-3" /> Approve for Sandbox
+                      <Archive className="h-3 w-3" /> Store in Sandbox
                     </button>
                   )}
 
-                  {/* Applied: queued indicator */}
                   {p.status === "applied" && (
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
-                      <Zap className="h-3 w-3" /> Approved · visual apply coming soon
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
+                        <Archive className="h-3 w-3" /> Stored in workflow
+                      </span>
+                      <span className="text-[9px] text-white/20 leading-tight">
+                        Visual apply available when AI engine connects
+                      </span>
+                    </div>
                   )}
 
-                  {/* Remove — always available except proposed */}
                   {p.status !== "proposed" && (
                     <button
                       onClick={() => removeProposal(p.id)}
@@ -310,11 +338,11 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
         <div className="flex items-center gap-1.5">
           <FlaskConical className="h-3 w-3 text-amber-400/50" />
           <p className="text-[9px] text-white/20 leading-relaxed">
-            All proposals target this sandbox only — review before promoting to stable.
+            Proposals are stored in sandbox workflow only — stable demo remains protected.
           </p>
         </div>
         <p className="text-[9px] text-white/15 leading-relaxed pl-[18px]">
-          Approved proposals are recorded for future visual application when the AI editing engine is connected.
+          Visual application will activate when the AI editing engine is connected.
         </p>
       </div>
     </div>
