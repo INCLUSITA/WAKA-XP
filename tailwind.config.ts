@@ -57,6 +57,12 @@ export default {
           bg: "hsl(var(--canvas-bg))",
           dot: "hsl(var(--canvas-dot))",
         },
+        xp: {
+          structure: "hsl(var(--xp-structure))",
+          context: "hsl(var(--xp-context))",
+          execution: "hsl(var(--xp-execution))",
+          surface: "hsl(var(--xp-surface))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

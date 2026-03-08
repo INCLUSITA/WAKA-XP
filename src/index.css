@@ -48,6 +48,11 @@
     --canvas-bg: 220 20% 95%;
     --canvas-dot: 220 10% 80%;
 
+    --xp-structure: 200 80% 50%;
+    --xp-context: 270 65% 55%;
+    --xp-execution: 160 84% 39%;
+    --xp-surface: 220 30% 96%;
+
     --chart-1: 160 84% 39%;
     --chart-2: 260 60% 55%;
     --chart-3: 35 95% 55%;
@@ -104,6 +109,11 @@
     --node-webhook: 35 95% 55%;
     --canvas-bg: 228 20% 8%;
     --canvas-dot: 228 10% 20%;
+
+    --xp-structure: 200 80% 55%;
+    --xp-context: 270 70% 60%;
+    --xp-execution: 160 84% 45%;
+    --xp-surface: 228 18% 11%;
 
     --chart-1: 160 84% 45%;
     --chart-2: 270 70% 60%;

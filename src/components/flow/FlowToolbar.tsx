@@ -2,7 +2,7 @@ import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
-  Layers, LayoutGrid, Database, Plus, Box, Radio,
+  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -101,23 +101,24 @@ export function FlowToolbar({
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-2 border-b border-border bg-card px-2 py-2">
-      <SidebarTrigger className="mr-1" />
+    <div className="flex items-center gap-1.5 border-b border-border bg-card px-2 py-1.5">
+      <SidebarTrigger className="mr-0.5" />
 
+      {/* Flow identity */}
       <Input
         value={flowName}
         onChange={(e) => onFlowNameChange(e.target.value)}
-        className="w-52 border-none bg-transparent text-base font-bold text-foreground focus-visible:ring-0"
+        className="w-48 border-none bg-transparent text-sm font-bold text-foreground focus-visible:ring-0"
         placeholder="Flow name"
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
 
-      {/* Experience link indicator */}
+      {/* Experience link */}
       {experienceName && (
         <button
           onClick={onOpenExperience}
-          className="flex items-center gap-1 rounded-md bg-accent/10 px-2 py-1 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+          className="flex items-center gap-1 rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
           title="Open linked Experience"
         >
           <Link2 className="h-3 w-3" />
@@ -125,13 +126,20 @@ export function FlowToolbar({
         </button>
       )}
 
-      <Separator orientation="vertical" className="mx-1 h-8" />
+      {/* XP badge — identity signal */}
+      <div className="flex items-center gap-1 rounded-md border border-xp-context/20 bg-xp-context/5 px-1.5 py-0.5 ml-0.5">
+        <Hexagon className="h-3 w-3 text-xp-context" />
+        <span className="text-[9px] font-bold text-xp-context uppercase tracking-widest">XP</span>
+      </div>
 
-      {/* View mode toggle */}
-      <div className="flex rounded-lg border border-border bg-muted/50 p-0.5">
+      <Separator orientation="vertical" className="mx-1 h-7" />
+
+      {/* ── XP Layer controls ── */}
+      <div className="flex items-center gap-1 rounded-lg border border-xp-structure/15 bg-xp-surface/50 p-0.5">
+        {/* View mode toggle */}
         <button
           onClick={() => onViewModeChange("canvas")}
-          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
             viewMode === "canvas"
               ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -142,57 +150,60 @@ export function FlowToolbar({
         </button>
         <button
           onClick={() => onViewModeChange("structure")}
-          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
             viewMode === "structure"
               ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Layers className="h-3 w-3" />
+          <Layers className="h-3 w-3 text-xp-structure" />
           Structure
+        </button>
+
+        <div className="w-px h-4 bg-border/50 mx-0.5" />
+
+        {/* Context toggle — XP contextual layer */}
+        <button
+          onClick={onToggleContext}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
+            showContext
+              ? "bg-xp-context/10 text-xp-context shadow-sm"
+              : "text-muted-foreground hover:text-xp-context"
+          }`}
+        >
+          <BrainCircuit className="h-3 w-3" />
+          Context
         </button>
       </div>
 
-      {/* Flow Context toggle */}
-      <Button
-        variant={showContext ? "default" : "outline"}
-        size="sm"
-        onClick={onToggleContext}
-        className={`text-xs ${showContext ? "" : "border-node-wait/30 text-node-wait hover:bg-node-wait/10"}`}
-      >
-        <Database className="mr-1 h-3.5 w-3.5" />
-        Context
-      </Button>
-
       {/* Channel selector */}
       <div className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 p-0.5">
-        <Radio className="h-3 w-3 text-primary ml-1.5" />
-        <span className="text-[10px] font-semibold text-primary uppercase tracking-wider ml-0.5 mr-1">Canal</span>
+        <Radio className="h-3 w-3 text-primary ml-1" />
         {["whatsapp", "sms", "telegram"].map((ch) => (
           <button
             key={ch}
             onClick={() => onChannelChange(ch)}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+            className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all ${
               channel === ch
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-card/50"
             }`}
           >
-            {ch === "whatsapp" ? "WhatsApp" : ch === "sms" ? "SMS" : "Telegram"}
+            {ch === "whatsapp" ? "WA" : ch === "sms" ? "SMS" : "TG"}
           </button>
         ))}
       </div>
 
-      <Separator orientation="vertical" className="mx-1 h-8" />
+      <Separator orientation="vertical" className="mx-1 h-7" />
 
-      {/* Add Node Dropdown — only in canvas */}
+      {/* ── Execution layer: nodes & modules (canvas only) ── */}
       {viewMode === "canvas" && (
         <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                <span>+ Add Node</span>
-                <ChevronDown className="h-3.5 w-3.5" />
+              <button className="flex items-center gap-1 rounded-lg bg-xp-execution px-2.5 py-1 text-[11px] font-semibold text-primary-foreground transition-colors hover:opacity-90">
+                <span>+ Node</span>
+                <ChevronDown className="h-3 w-3" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
@@ -228,14 +239,14 @@ export function FlowToolbar({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Add Module Dropdown */}
+          {/* Add Module */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs border-primary/30 text-primary hover:bg-primary/5">
-                <Box className="mr-1 h-3.5 w-3.5" />
+              <button className="flex items-center gap-1 rounded-lg border border-xp-structure/30 bg-xp-structure/5 px-2 py-1 text-[11px] font-medium text-xp-structure transition-colors hover:bg-xp-structure/10">
+                <Box className="h-3 w-3" />
                 + Module
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </Button>
+                <ChevronDown className="h-2.5 w-2.5" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Templates</DropdownMenuLabel>
@@ -253,53 +264,49 @@ export function FlowToolbar({
         </>
       )}
 
-      <Badge variant="outline" className="text-[8px] border-primary/30 text-primary ml-1">
-        {viewMode === "canvas" ? "Classic Builder" : "Structure"}
-      </Badge>
-
-      {/* Right side — editor-only actions */}
+      {/* Right side actions */}
       <div className="ml-auto flex gap-1">
         {onPromoteToCandidate && (
-          <Button variant="outline" size="sm" onClick={onPromoteToCandidate} className="border-amber-500/30 text-amber-600 hover:bg-amber-500/5 text-xs">
-            <Rocket className="mr-1 h-3.5 w-3.5" /> Promote
+          <Button variant="outline" size="sm" onClick={onPromoteToCandidate} className="border-amber-500/30 text-amber-600 hover:bg-amber-500/5 text-[11px] h-7">
+            <Rocket className="mr-1 h-3 w-3" /> Promote
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => navigate("/studio")} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
-          <Sparkles className="mr-1 h-3.5 w-3.5" /> XP Studio
+        <Button variant="outline" size="sm" onClick={() => navigate("/studio")} className="border-accent/30 text-accent hover:bg-accent/5 text-[11px] h-7">
+          <Sparkles className="mr-1 h-3 w-3" /> Studio
         </Button>
         {onSimulate && (
-          <Button variant="outline" size="sm" onClick={onSimulate} className="border-node-send/40 text-node-send hover:bg-node-send/10">
-            <Play className="mr-1 h-3.5 w-3.5" /> Simulate
+          <Button variant="outline" size="sm" onClick={onSimulate} className="border-node-send/40 text-node-send hover:bg-node-send/10 h-7 text-[11px]">
+            <Play className="mr-1 h-3 w-3" />
           </Button>
         )}
         {onTranslate && (
-          <Button variant="outline" size="sm" onClick={onTranslate} className="border-node-wait/40 text-node-wait hover:bg-node-wait/10">
-            <Languages className="mr-1 h-3.5 w-3.5" /> Translate
+          <Button variant="outline" size="sm" onClick={onTranslate} className="border-node-wait/40 text-node-wait hover:bg-node-wait/10 h-7 text-[11px]">
+            <Languages className="mr-1 h-3 w-3" />
           </Button>
         )}
         {onValidate && (
-          <Button variant="outline" size="sm" onClick={onValidate}>
-            <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Validate
+          <Button variant="outline" size="sm" onClick={onValidate} className="h-7 text-[11px]">
+            <ShieldCheck className="mr-1 h-3 w-3" />
           </Button>
         )}
         {onVersions && (
-          <Button variant="outline" size="sm" onClick={onVersions} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
-            <History className="mr-1 h-3.5 w-3.5" /> Versions
+          <Button variant="outline" size="sm" onClick={onVersions} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10 h-7 text-[11px]">
+            <History className="mr-1 h-3 w-3" />
           </Button>
         )}
         {onLoadSample && (
-          <Button variant="outline" size="sm" onClick={onLoadSample}>
-            <FileDown className="mr-1 h-3.5 w-3.5" /> Sample
+          <Button variant="outline" size="sm" onClick={onLoadSample} className="h-7 text-[11px]">
+            <FileDown className="mr-1 h-3 w-3" />
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={onImport}>
-          <Upload className="mr-1 h-3.5 w-3.5" /> Import
+        <Button variant="outline" size="sm" onClick={onImport} className="h-7 text-[11px]">
+          <Upload className="mr-1 h-3 w-3" />
         </Button>
-        <Button variant="default" size="sm" onClick={onExport}>
-          <Download className="mr-1 h-3.5 w-3.5" /> Export
+        <Button variant="default" size="sm" onClick={onExport} className="h-7 text-[11px]">
+          <Download className="mr-1 h-3 w-3" /> Export
         </Button>
-        <Button variant="ghost" size="sm" onClick={onClear}>
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+        <Button variant="ghost" size="sm" onClick={onClear} className="h-7">
+          <Trash2 className="h-3 w-3 text-destructive" />
         </Button>
       </div>
     </div>
