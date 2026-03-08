@@ -131,13 +131,13 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
         </button>
       </div>
 
-      {/* Add form */}
+      {/* Add variable form — only for non-entity items */}
       <div className="border-b border-border p-3 space-y-2">
         <div className="flex gap-2">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder={newCategory === "entity" ? "Entity name..." : "Variable name..."}
+            placeholder="Variable name..."
             className="h-7 text-xs flex-1"
             onKeyDown={(e) => e.key === "Enter" && addItem()}
           />
@@ -146,7 +146,7 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+              {Object.entries(CATEGORY_CONFIG).filter(([k]) => k !== "entity").map(([key, cfg]) => (
                 <SelectItem key={key} value={key} className="text-xs">
                   {cfg.label}
                 </SelectItem>
@@ -155,7 +155,7 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
           </Select>
         </div>
         <Button size="sm" onClick={addItem} disabled={!newName.trim()} className="w-full h-7 text-xs">
-          <Plus className="mr-1 h-3 w-3" /> {newCategory === "entity" ? "Add Entity" : "Add Context Item"}
+          <Plus className="mr-1 h-3 w-3" /> Add Variable
         </Button>
       </div>
 
