@@ -279,6 +279,7 @@ interface VersionHistoryPanelProps {
   getSnapshotData: () => Record<string, unknown>;
   onRestore: (data: Record<string, unknown>) => void;
   onDuplicate?: (data: Record<string, unknown>, sourceVersionId: string) => void;
+  onClose?: () => void;
 }
 
 export function VersionHistoryPanel({
@@ -286,6 +287,7 @@ export function VersionHistoryPanel({
   assetId,
   getSnapshotData,
   onRestore,
+  onClose,
 }: VersionHistoryPanelProps) {
   const {
     versions,
