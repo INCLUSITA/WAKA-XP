@@ -300,7 +300,7 @@ export default function Demos() {
                   sourceLabel={demo.sourceName}
                   onOpen={() => openDemo(demo.id, demo.jsxSource)}
                   onDuplicate={() => handleDuplicateUploaded(demo)}
-                  onDelete={() => handleDelete(demo.id)}
+                  onDelete={() => requestDelete(demo.id, demo.title, false)}
                   onPromote={() => handlePromote(demo.id)}
                 />
               ))}
