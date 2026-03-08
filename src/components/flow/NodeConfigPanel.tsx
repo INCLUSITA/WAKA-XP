@@ -394,13 +394,13 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
           if (qrCount > constraints.maxQuickReplies) warnings.push(`${qrCount} quick replies exceden el límite de ${constraints.maxQuickReplies}`);
           return (
             <>
-              {/* Channel inline warnings */}
+          {/* Channel inline warnings */}
               {warnings.length > 0 && (
                 <div className="space-y-1">
                   {warnings.map((w, i) => (
-                    <div key={i} className="flex items-center gap-1.5 rounded-md border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
-                      <AlertTriangle className="h-3 w-3 shrink-0" />
-                      {w} <span className="text-muted-foreground ml-1">({channel || "default"})</span>
+                    <div key={i} className="flex items-start gap-2 rounded-md border border-amber-500/15 bg-amber-500/5 px-2.5 py-2 text-[11px] text-foreground/80">
+                      <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
+                      <span>{w} <span className="text-muted-foreground">· {channel || "default"}</span></span>
                     </div>
                   ))}
                 </div>

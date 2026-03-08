@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation } from "@/hooks/useFlowSimulation";
@@ -14,30 +14,27 @@ interface WhatsAppSimulatorProps {
 
 type EntrypointStatus = "clear" | "ambiguous" | "none";
 
-function detectEntrypointStatus(nodes: Node[], edges: Edge[]): { status: EntrypointStatus; candidates: Node[]; reason: string } {
+function detectEntrypointStatus(nodes: Node[], edges: Edge[]): { status: EntrypointStatus; candidates: Node[]; reason: string; explanation: string } {
   const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
-  if (executableNodes.length === 0) return { status: "none", candidates: [], reason: "No hay nodos en el flujo" };
+  if (executableNodes.length === 0) return { status: "none", candidates: [], reason: "No hay nodos en el flujo", explanation: "Añade al menos un nodo para poder simular." };
 
-  // Check for explicit start
   const startNode = executableNodes.find((n) => n.type === "enterFlow" || (n.data as any)?.isStart === true);
-  if (startNode) return { status: "clear", candidates: [startNode], reason: `Inicio explícito: ${(startNode.data as any)?.label || startNode.type}` };
+  if (startNode) return { status: "clear", candidates: [startNode], reason: `Inicio: ${(startNode.data as any)?.label || startNode.type}`, explanation: "Se detectó un nodo de inicio explícito." };
 
   const targetIds = new Set(edges.map((e) => e.target));
 
-  // Check for entry module
   const entryModule = nodes.find((n) => n.type === "moduleGroup" && /entry|inicio|start/i.test((n.data as any)?.label || ""));
   if (entryModule) {
     const moduleNodeIds = new Set<string>((entryModule.data as any)?.nodeIds || []);
     const entryNode = executableNodes.find((n) => moduleNodeIds.has(n.id) && !targetIds.has(n.id));
-    if (entryNode) return { status: "clear", candidates: [entryNode], reason: `Primer nodo del módulo "${(entryModule.data as any)?.label}"` };
+    if (entryNode) return { status: "clear", candidates: [entryNode], reason: `Módulo "${(entryModule.data as any)?.label}"`, explanation: `Se inicia desde el primer nodo del módulo "${(entryModule.data as any)?.label}".` };
   }
 
-  // Root nodes (no incoming edges)
   const rootNodes = executableNodes.filter((n) => !targetIds.has(n.id));
-  if (rootNodes.length === 1) return { status: "clear", candidates: rootNodes, reason: "Único nodo sin conexiones de entrada" };
-  if (rootNodes.length > 1) return { status: "ambiguous", candidates: rootNodes, reason: `${rootNodes.length} nodos raíz detectados — selecciona el punto de inicio` };
+  if (rootNodes.length === 1) return { status: "clear", candidates: rootNodes, reason: "Único punto de entrada", explanation: "Solo hay un nodo sin conexiones de entrada — se usa como inicio." };
+  if (rootNodes.length > 1) return { status: "ambiguous", candidates: rootNodes, reason: `${rootNodes.length} posibles inicios`, explanation: "Se detectaron varios nodos sin conexiones de entrada. Selecciona por cuál empezar." };
   
-  return { status: "ambiguous", candidates: executableNodes.slice(0, 5), reason: "Todos los nodos tienen conexiones de entrada — no hay un punto de inicio claro" };
+  return { status: "ambiguous", candidates: executableNodes.slice(0, 5), reason: "Inicio ambiguo", explanation: "Todos los nodos tienen conexiones de entrada — no hay un punto de inicio claro. Selecciona uno manualmente." };
 }
 
 const nodeTypeLabelsShort: Record<string, string> = {
@@ -45,6 +42,22 @@ const nodeTypeLabelsShort: Record<string, string> = {
   saveResult: "Save", updateContact: "Update", sendEmail: "Email", callAI: "AI",
   enterFlow: "Enter Flow", openTicket: "Ticket", callZapier: "Zapier", sendAirtime: "Airtime",
 };
+
+function AttachmentBubble({ att }: { att: { url: string; name?: string; mime?: string } }) {
+  const isImage = att.mime?.startsWith("image");
+  return (
+    <div className="mt-1 rounded-md border border-border/30 bg-muted/30 overflow-hidden">
+      {isImage ? (
+        <img src={att.url} alt={att.name || "attachment"} className="w-full max-h-32 object-cover" />
+      ) : (
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[11px] text-muted-foreground truncate">{att.name || "archivo"}</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: WhatsAppSimulatorProps) {
   const [inputText, setInputText] = useState("");
@@ -85,6 +98,15 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
 
+  // Get attachments for current bot message node
+  const getNodeAttachments = (nodeId?: string): { url: string; name?: string; mime?: string }[] => {
+    if (!nodeId) return [];
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node || node.type !== "sendMsg") return [];
+    const atts = (node.data as any)?.attachments || [];
+    return atts.map((a: any) => typeof a === "string" ? { url: a } : a);
+  };
+
   return (
     <div className="absolute right-0 top-0 z-50 flex h-full w-96 flex-col border-l border-border bg-background shadow-2xl">
       <div className="flex items-center gap-3 bg-node-send px-4 py-3">
@@ -94,11 +116,11 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
         <div className="flex-1">
           <p className="text-sm font-semibold text-primary-foreground">Simulador WhatsApp</p>
           <p className="text-xs text-primary-foreground/70">
-            {isProcessing ? "procesando API…" : isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
+            {isProcessing ? "procesando…" : isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
           </p>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => { setSelectedEntrypoint(null); start(); }} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar">
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedEntrypoint(null); start(); }} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar simulación">
             <RotateCcw className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={onClose} className="text-primary-foreground hover:bg-primary-foreground/20">
@@ -107,12 +129,27 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
         </div>
       </div>
 
+      {/* Auto-start explanation banner */}
+      {entryInfo.status === "clear" && messages.length > 0 && messages.length <= 3 && (
+        <div className="flex items-center gap-2 border-b border-border bg-primary/5 px-3 py-2">
+          <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+          <p className="text-[11px] text-foreground/70">{entryInfo.explanation}</p>
+        </div>
+      )}
+
       {/* Entrypoint selector for ambiguous/no-entry flows */}
       {entryInfo.status !== "clear" && messages.length === 0 && (
-        <div className="border-b border-border bg-muted/50 px-4 py-3 space-y-2">
+        <div className="border-b border-border bg-muted/50 px-4 py-3 space-y-2.5">
           <div className="flex items-start gap-2">
-            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${entryInfo.status === "none" ? "text-destructive" : "text-amber-500"}`} />
-            <p className="text-xs text-foreground leading-relaxed">{entryInfo.reason}</p>
+            {entryInfo.status === "none" ? (
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-destructive" />
+            ) : (
+              <Info className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+            )}
+            <div>
+              <p className="text-xs font-medium text-foreground">{entryInfo.reason}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{entryInfo.explanation}</p>
+            </div>
           </div>
           {entryInfo.candidates.length > 0 && (
             <div className="space-y-1">
@@ -120,11 +157,11 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                 <button
                   key={n.id}
                   onClick={() => { setSelectedEntrypoint(n.id); start(); }}
-                  className={`w-full flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs transition-colors hover:bg-card ${
+                  className={`w-full flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs transition-colors hover:bg-card ${
                     selectedEntrypoint === n.id ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground"
                   }`}
                 >
-                  <Play className="h-3 w-3" />
+                  <Play className="h-3 w-3 shrink-0" />
                   <span className="font-medium">{nodeTypeLabelsShort[n.type || ""] || n.type}</span>
                   <span className="text-muted-foreground truncate flex-1 text-left">
                     {(n.data as any)?.text?.substring(0, 40) || (n.data as any)?.label || n.id.slice(0, 8)}
@@ -193,7 +230,7 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
           >
             <Paperclip className="h-4 w-4" />
           </Button>
-          <Input value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && waitingForInput) handleSend(inputText); }} placeholder={waitingForInput ? "Escribe tu respuesta…" : isProcessing ? "Procesando API…" : "Esperando al bot…"} disabled={!waitingForInput} className="flex-1 rounded-full border-border bg-background text-sm" />
+          <Input value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && waitingForInput) handleSend(inputText); }} placeholder={waitingForInput ? "Escribe tu respuesta…" : isProcessing ? "Procesando…" : "Esperando al bot…"} disabled={!waitingForInput} className="flex-1 rounded-full border-border bg-background text-sm" />
           <Button size="icon" onClick={() => handleSend(inputText)} disabled={!waitingForInput || !inputText.trim()} className="h-9 w-9 shrink-0 rounded-full bg-node-send hover:bg-node-send/90">
             <Send className="h-4 w-4 text-primary-foreground" />
           </Button>
