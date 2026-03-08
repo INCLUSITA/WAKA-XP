@@ -140,7 +140,7 @@ export const BLOCK_TYPE_CONFIGS: Record<StructuralBlockType, BlockTypeConfig> = 
     bgColor: "bg-emerald-500/10",
     borderColor: "border-emerald-500/25",
     category: "data",
-    defaultProperties: { name: "", value: "", category: "flow" },
+    defaultProperties: { name: "", value: "", category: "flow", label: "" },
     propertyFields: [
       { key: "name", label: "Result name", type: "text", placeholder: "@result.name", required: true },
       { key: "value", label: "Value expression", type: "text", placeholder: "@input.text" },
@@ -148,7 +148,9 @@ export const BLOCK_TYPE_CONFIGS: Record<StructuralBlockType, BlockTypeConfig> = 
         { value: "flow", label: "Flow result" },
         { value: "contact", label: "Contact field" },
         { value: "session", label: "Session var" },
+        { value: "global", label: "Global" },
       ]},
+      { key: "label", label: "Label / description", type: "text", placeholder: "User's preferred language" },
     ],
   },
   update_context: {
