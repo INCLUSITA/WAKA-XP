@@ -5,14 +5,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2 } from "lucide-react";
+import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { getChannelConstraints } from "@/lib/flowValidation";
 
 interface NodeConfigPanelProps {
   node: Node;
   onUpdate: (id: string, data: Record<string, unknown>) => void;
   onClose: () => void;
   onDelete: (id: string) => void;
+  channel?: string;
 }
 
 const nodeTypeLabels: Record<string, string> = {
@@ -52,11 +58,21 @@ const mimeIcon = (mime?: string) => {
   return <File className="h-3.5 w-3.5 text-muted-foreground" />;
 };
 
-function AttachmentsEditor({ attachments, onChange }: { attachments: (string | Attachment)[]; onChange: (v: Attachment[]) => void }) {
+function getCategoryFromMime(mime?: string): string {
+  if (!mime) return "document";
+  if (mime.startsWith("image")) return "image";
+  if (mime.startsWith("audio")) return "audio";
+  if (mime.startsWith("video")) return "video";
+  if (mime.includes("pdf")) return "pdf";
+  return "document";
+}
+
+function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (string | Attachment)[]; onChange: (v: Attachment[]) => void; channel?: string }) {
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const constraints = getChannelConstraints(channel);
 
   // Normalise legacy string[] to Attachment[]
   const items: Attachment[] = attachments.map((a) =>
@@ -66,6 +82,20 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check channel size limit
+    if (constraints.maxAttachmentSizeMB > 0 && file.size > constraints.maxAttachmentSizeMB * 1024 * 1024) {
+      alert(`El archivo excede el límite de ${constraints.maxAttachmentSizeMB}MB para el canal ${channel || "default"}`);
+      return;
+    }
+
+    // Check attachment type
+    const category = getCategoryFromMime(file.type);
+    if (constraints.allowedAttachmentTypes.length > 0 && !constraints.allowedAttachmentTypes.includes(category)) {
+      alert(`El tipo "${category}" no está soportado en el canal ${channel || "default"}`);
+      return;
+    }
+
     setUploading(true);
     try {
       const path = `attachments/${Date.now()}-${file.name}`;
@@ -85,27 +115,59 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
 
   const addUrl = () => {
     if (!urlDraft.trim()) return;
-    onChange([...items, { type: "url", url: urlDraft.trim(), name: urlDraft.trim() }]);
+    // Guess MIME from extension
+    const ext = urlDraft.split(".").pop()?.toLowerCase() || "";
+    const mimeMap: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", mp4: "video/mp4", mp3: "audio/mpeg", wav: "audio/wav", pdf: "application/pdf", doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+    const guessedMime = mimeMap[ext] || undefined;
+    const name = urlDraft.split("/").pop() || urlDraft.trim();
+    onChange([...items, { type: "url", url: urlDraft.trim(), name, mime: guessedMime }]);
     setUrlDraft("");
     setShowUrlInput(false);
   };
 
   const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
 
+  const noAttachmentSupport = constraints.maxAttachmentSizeMB === 0;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-foreground">Attachments</Label>
+        {items.length > 0 && (
+          <span className="text-[10px] text-muted-foreground">{items.length} archivo(s)</span>
+        )}
       </div>
 
+      {/* Channel warning: no attachment support */}
+      {noAttachmentSupport && (
+        <div className="flex items-center gap-1.5 rounded-md border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="h-3 w-3 shrink-0" />
+          El canal <strong className="mx-0.5">{channel || "SMS"}</strong> no soporta adjuntos
+        </div>
+      )}
+
+      {/* Empty state */}
+      {items.length === 0 && !noAttachmentSupport && (
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 py-4 text-center">
+          <File className="mx-auto h-6 w-6 text-muted-foreground/40" />
+          <p className="mt-1.5 text-xs text-muted-foreground">Sin adjuntos</p>
+          <p className="text-[10px] text-muted-foreground/60">Sube archivos o pega URLs</p>
+        </div>
+      )}
+
+      {/* Attachment list */}
       {items.length > 0 && (
         <div className="space-y-1.5">
           {items.map((att, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs">
+            <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs group">
               {mimeIcon(att.mime)}
-              <span className="flex-1 truncate text-foreground">{att.name || att.url}</span>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">{att.type}</span>
-              <button onClick={() => remove(i)} className="text-muted-foreground hover:text-destructive">
+              <div className="flex-1 min-w-0">
+                <span className="block truncate text-foreground">{att.name || att.url}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {getCategoryFromMime(att.mime)} · {att.type === "upload" ? "subido" : "URL"}
+                </span>
+              </div>
+              <button onClick={() => remove(i)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity">
                 <Trash2 className="h-3 w-3" />
               </button>
             </div>
@@ -113,6 +175,7 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
         </div>
       )}
 
+      {/* URL input */}
       {showUrlInput && (
         <div className="flex gap-1.5">
           <Input
@@ -132,34 +195,51 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
         </div>
       )}
 
-      <div className="flex gap-2">
+      {/* Action buttons */}
+      {!noAttachmentSupport && (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {uploading ? "Subiendo…" : "Subir archivo"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => setShowUrlInput(true)}
+            disabled={showUrlInput}
+          >
+            <Link className="h-3.5 w-3.5" />
+            Pegar URL
+          </Button>
+        </div>
+      )}
+
+      {/* Media Library placeholder */}
+      {!noAttachmentSupport && (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="flex-1 gap-1.5"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
+          className="w-full gap-1.5 text-muted-foreground border border-dashed border-border/50 hover:border-border"
+          disabled
+          title="Próximamente"
         >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          {uploading ? "Uploading…" : "Upload file"}
+          <Library className="h-3.5 w-3.5" />
+          Media Library
+          <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase">Soon</span>
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 gap-1.5"
-          onClick={() => setShowUrlInput(true)}
-          disabled={showUrlInput}
-        >
-          <Link className="h-3.5 w-3.5" />
-          Paste URL
-        </Button>
-      </div>
+      )}
 
       <input ref={fileRef} type="file" accept={ACCEPT_TYPES} className="hidden" onChange={handleUpload} />
     </div>
   );
 }
-
 export function NodeConfigPanel({ node, onUpdate, onClose, onDelete }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
