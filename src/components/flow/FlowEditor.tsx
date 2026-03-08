@@ -686,12 +686,14 @@ function FlowEditorInner() {
                 nodes: nodes as unknown as Record<string, unknown>[],
                 edges: edges as unknown as Record<string, unknown>[],
                 flowName,
+                contextItems,
               })}
               onRestore={(data) => {
-                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string };
+                const snap = data as { nodes?: any[]; edges?: any[]; flowName?: string; contextItems?: ContextItem[] };
                 if (snap.nodes) setNodes(snap.nodes);
                 if (snap.edges) setEdges(snap.edges);
                 if (snap.flowName) setFlowName(snap.flowName);
+                if (snap.contextItems) setContextItems(snap.contextItems);
               }}
             />
           </div>
