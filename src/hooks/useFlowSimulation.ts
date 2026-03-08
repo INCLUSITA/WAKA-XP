@@ -244,8 +244,7 @@ export function useFlowSimulation(
                 text,
                 quickReplies,
                 timestamp: new Date(),
-                imageUrl: nodeAttachments.find((a) => a.mime?.startsWith("image"))?.url,
-                attachments: nodeAttachments.filter((a) => !a.mime?.startsWith("image")),
+                attachments: nodeAttachments.length > 0 ? nodeAttachments : undefined,
               },
             ]);
           }
