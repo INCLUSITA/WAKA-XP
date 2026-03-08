@@ -124,16 +124,21 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
 
                 {/* Scope selector for context/entity types */}
                 {(effect.type === "update_context" || effect.type === "set_state") && (
-                  <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
-                    <SelectTrigger className="h-6 text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="flow">Flow scope</SelectItem>
-                      <SelectItem value="module">Module scope</SelectItem>
-                      <SelectItem value="experience">Experience scope</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-0.5">
+                    <Select value={effect.scope || "flow"} onValueChange={(v) => updateEffect(effect.id, { scope: v as NodeEffect["scope"] })}>
+                      <SelectTrigger className="h-6 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="module">Module — only this module</SelectItem>
+                        <SelectItem value="flow">Flow — only this flow</SelectItem>
+                        <SelectItem value="experience">Experience — shared across flows</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[9px] text-muted-foreground/70 pl-0.5">
+                      {SCOPE_HINTS[effect.scope || "flow"]}
+                    </p>
+                  </div>
                 )}
               </div>
             );
