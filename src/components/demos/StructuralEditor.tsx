@@ -24,6 +24,11 @@ export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPe
     }
   });
 
+  // Emit initial blocks on mount
+  useEffect(() => {
+    onBlocksChange?.(blocks);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [insertAtIndex, setInsertAtIndex] = useState<number | null>(null);
 
   const persist = useCallback((updated: StructuralBlock[]) => {
