@@ -1,5 +1,15 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Play, Upload, Trash2, X, Copy, Shield, FlaskConical, Sparkles, ChevronRight } from "lucide-react";
 import {
   BUILTIN_DEMOS,
@@ -128,6 +138,7 @@ export default function Demos() {
   const [formIcon, setFormIcon] = useState("🤖");
   const [formColor, setFormColor] = useState(DEMO_COLORS[0]);
   const [formTags, setFormTags] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isStable: boolean } | null>(null);
 
   const refreshUploaded = useCallback(() => setUploadedDemos(getUploadedDemos()), []);
 
@@ -192,10 +203,15 @@ export default function Demos() {
   };
 
   /* ─ Delete ─ */
-  const handleDelete = (id: string) => {
-    if (!confirm("¿Eliminar este demo?")) return;
-    deleteUploadedDemo(id);
+  const requestDelete = (id: string, title: string, isStable: boolean) => {
+    setDeleteTarget({ id, title, isStable });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteUploadedDemo(deleteTarget.id);
     refreshUploaded();
+    setDeleteTarget(null);
   };
 
   /* ─ Open demo ─ */
@@ -255,6 +271,7 @@ export default function Demos() {
                 sourceLabel={demo.sourceName}
                 onOpen={() => openDemo(demo.id, demo.jsxSource)}
                 onDuplicate={() => handleDuplicateUploaded(demo)}
+                onDelete={() => requestDelete(demo.id, demo.title, true)}
               />
             ))}
           </div>
@@ -283,7 +300,7 @@ export default function Demos() {
                   sourceLabel={demo.sourceName}
                   onOpen={() => openDemo(demo.id, demo.jsxSource)}
                   onDuplicate={() => handleDuplicateUploaded(demo)}
-                  onDelete={() => handleDelete(demo.id)}
+                  onDelete={() => requestDelete(demo.id, demo.title, false)}
                   onPromote={() => handlePromote(demo.id)}
                 />
               ))}
@@ -367,6 +384,31 @@ export default function Demos() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-slate-800 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget?.isStable ? "⚠️ Eliminar demo stable" : "Eliminar demo"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              {deleteTarget?.isStable
+                ? `Estás a punto de eliminar "${deleteTarget.title}", que es un demo stable. Esta acción es irreversible. ¿Estás seguro?`
+                : `¿Eliminar "${deleteTarget?.title}"? Esta acción no se puede deshacer.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-white/60 hover:bg-white/5">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={deleteTarget?.isStable ? "bg-red-600 hover:bg-red-500" : "bg-red-600 hover:bg-red-500"}
+            >
+              {deleteTarget?.isStable ? "Sí, eliminar stable" : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
