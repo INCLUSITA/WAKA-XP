@@ -1,15 +1,25 @@
 import { Suspense } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { BUILTIN_DEMOS, getUploadedDemos, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus } from "@/demos/registry";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { ArrowLeft, Shield, FlaskConical } from "lucide-react";
+import { ArrowLeft, Shield, FlaskConical, ChevronRight, Home, LayoutGrid } from "lucide-react";
 
 function DemoStatusBar({ status, title, sourceName }: { status: DemoStatus; title: string; sourceName?: string }) {
   const cfg = DEMO_STATUS_CONFIG[status];
   const isSandbox = status === "sandbox" || status === "draft";
   return (
-    <div className={`flex items-center gap-3 px-4 py-2 text-xs border-b ${isSandbox ? "bg-amber-950/30 border-amber-500/20" : "bg-emerald-950/20 border-emerald-500/15"}`}>
+    <div className={`flex items-center gap-2 px-4 py-2 text-xs border-b ${isSandbox ? "bg-amber-950/30 border-amber-500/20" : "bg-emerald-950/20 border-emerald-500/15"}`}>
+      {/* Breadcrumbs */}
+      <Link to="/" className="text-white/40 hover:text-white/70 transition"><Home className="h-3.5 w-3.5" /></Link>
+      <ChevronRight className="h-3 w-3 text-white/20" />
+      <Link to="/demos" className="text-white/40 hover:text-white/70 transition flex items-center gap-1">
+        <LayoutGrid className="h-3 w-3" />
+        <span>Demos</span>
+      </Link>
+      <ChevronRight className="h-3 w-3 text-white/20" />
+
+      {/* Status badge */}
       {isSandbox ? <FlaskConical className="h-3.5 w-3.5 text-amber-400" /> : <Shield className="h-3.5 w-3.5 text-emerald-400" />}
       <span className={`font-semibold ${cfg.color}`}>{cfg.icon} {cfg.label}</span>
       <span className="text-white/40">·</span>
