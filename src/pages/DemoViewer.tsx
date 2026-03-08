@@ -197,19 +197,6 @@ export default function DemoViewer() {
     } else if (currentJsx && !isPlaceholderJsx) {
       demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} />;
     }
-  } else if (uploadedDemo?.sourceId) {
-    const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
-    demoStatus = uploadedDemo.status;
-    demoTitle = uploadedDemo.title;
-    demoSourceName = uploadedDemo.sourceName;
-    if (sourceBuiltin) {
-      const DemoComponent = sourceBuiltin.component;
-      demoContent = (
-        <Suspense fallback={<LoadingFallback />}>
-          <DemoComponent />
-        </Suspense>
-      );
-    }
   }
 
   if (!demoContent) {
