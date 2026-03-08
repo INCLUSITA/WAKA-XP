@@ -459,11 +459,21 @@ export function FlowEditor() {
   const handleFocusNode = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
-      if (node) {
-        setSelectedNode(node);
-      }
+      if (node) setSelectedNode(node);
     },
     [nodes]
+  );
+
+  const handleAddModuleAndFocus = useCallback(
+    (label?: string) => {
+      const id = addModule(label);
+      // Auto-pan to the new module after it renders
+      setTimeout(() => {
+        reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.3, duration: 400 });
+      }, 150);
+      return id;
+    },
+    [addModule]
   );
 
   const reactFlowInstance = useReactFlow();
