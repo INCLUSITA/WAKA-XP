@@ -657,6 +657,7 @@ function FlowEditorInner() {
             onUpdate={updateNodeData}
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
+            channel={channel}
           />
         )}
 
