@@ -1,7 +1,8 @@
-import { Suspense, useState, useCallback, useRef } from "react";
+import { Suspense, useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { BUILTIN_DEMOS, getUploadedDemos, saveUploadedDemo, DEMO_STATUS_CONFIG } from "@/demos/registry";
+import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
+import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
@@ -65,33 +66,40 @@ export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showProposals, setShowProposals] = useState(false);
+  const { getDemo, saveDemo } = useUploadedDemos();
+  const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
+  const [loadingDemo, setLoadingDemo] = useState(true);
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
-  const uploadedDemo = !builtinDemo ? getUploadedDemos().find((d) => d.id === id) : undefined;
+
+  useEffect(() => {
+    if (builtinDemo || !id) {
+      setLoadingDemo(false);
+      return;
+    }
+    getDemo(id).then((d) => {
+      setUploadedDemo(d);
+      setLoadingDemo(false);
+    });
+  }, [id, builtinDemo, getDemo]);
+
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
 
-  // Get the base JSX source
-  const getBaseJsx = (): string | null => {
-    if (uploadedDemo?.jsxSource) return uploadedDemo.jsxSource;
-    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
-    if (sessionSource) return sessionSource;
-    return null;
-  };
+  const baseJsx = uploadedDemo?.jsxSource || null;
 
-  const baseJsx = getBaseJsx();
-
-  // --- Version history ---
-  const [versions, setVersions] = useState<SandboxVersion[]>(() => {
-    if (!baseJsx) return [];
-    return [{ id: "v-original", jsx: baseJsx, timestamp: new Date().toISOString(), label: "Original" }];
-  });
+  const [versions, setVersions] = useState<SandboxVersion[]>([]);
   const [versionIndex, setVersionIndex] = useState(0);
 
-  // Current JSX is whatever version we're viewing
+  // Init versions when demo loads
+  useEffect(() => {
+    if (baseJsx && versions.length === 0) {
+      setVersions([{ id: "v-original", jsx: baseJsx, timestamp: new Date().toISOString(), label: "Original" }]);
+    }
+  }, [baseJsx, versions.length]);
+
   const currentJsx = versions.length > 0 ? versions[versionIndex]?.jsx : baseJsx;
 
-  // Handle JSX update from AI apply — creates a new version
-  const handleJsxUpdate = useCallback((newJsx: string, label?: string) => {
+  const handleJsxUpdate = useCallback(async (newJsx: string, label?: string) => {
     const newVersion: SandboxVersion = {
       id: `v-${Date.now().toString(36)}`,
       jsx: newJsx,
@@ -100,47 +108,40 @@ export default function DemoViewer() {
     };
 
     setVersions((prev) => {
-      // If we're not at the latest, branch from current position
       const base = prev.slice(0, versionIndex + 1);
       return [...base, newVersion];
     });
     setVersionIndex((prev) => {
-      // Move to the new version
       const base = versions.slice(0, prev + 1);
-      return base.length; // index of the newly added version
+      return base.length;
     });
 
-    // Persist
+    // Persist to database
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
-      saveUploadedDemo(updated);
+      await saveDemo(updated);
+      setUploadedDemo(updated);
     }
-    if (id) {
-      sessionStorage.setItem(`demo-jsx-${id}`, newJsx);
-    }
-  }, [uploadedDemo, id, versionIndex, versions]);
+  }, [uploadedDemo, versionIndex, versions, saveDemo]);
 
   const handleVersionNavigate = useCallback((index: number) => {
     if (index < 0 || index >= versions.length) return;
     setVersionIndex(index);
   }, [versions.length]);
 
-  const handleVersionRestore = useCallback((index: number) => {
+  const handleVersionRestore = useCallback(async (index: number) => {
     const version = versions[index];
     if (!version) return;
-
-    // Persist this version as the current active one
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: version.jsx };
-      saveUploadedDemo(updated);
-    }
-    if (id) {
-      sessionStorage.setItem(`demo-jsx-${id}`, version.jsx);
+      await saveDemo(updated);
+      setUploadedDemo(updated);
     }
     toast({ title: "Version restored", description: `Restored: "${version.label}"` });
-  }, [versions, uploadedDemo, id]);
+  }, [versions, uploadedDemo, saveDemo]);
 
-  // Resolve what to render
+  if (loadingDemo) return <LoadingFallback />;
+
   let demoContent: React.ReactNode = null;
   let demoStatus: DemoStatus = "stable";
   let demoTitle = id || "Demo";
@@ -175,33 +176,13 @@ export default function DemoViewer() {
     }
   }
 
-  if (!demoContent && uploadedDemo) {
-    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
-    const jsxSource = sessionSource || uploadedDemo.jsxSource;
-    if (jsxSource) {
-      demoStatus = uploadedDemo.status;
-      demoTitle = uploadedDemo.title;
-      demoSourceName = uploadedDemo.sourceName;
-      demoContent = <RuntimeJSXRenderer jsxSource={jsxSource} />;
-    }
-  }
-
-  if (!demoContent && !builtinDemo && !uploadedDemo) {
-    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
-    if (sessionSource) {
-      demoContent = <RuntimeJSXRenderer jsxSource={sessionSource} />;
-    }
-  }
-
   if (!demoContent) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
         <div className="text-center">
           <p className="text-4xl mb-4">🚫</p>
           <p className="text-lg font-bold mb-2">Demo no encontrado</p>
-          <button onClick={() => navigate("/demos")} className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
-            Volver a la galería
-          </button>
+          <button onClick={() => navigate("/demos")} className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Volver a la galería</button>
         </div>
       </div>
     );
@@ -209,32 +190,14 @@ export default function DemoViewer() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-900">
-      <DemoStatusBar
-        status={demoStatus}
-        title={demoTitle}
-        sourceName={demoSourceName}
-        isSandboxDemo={isSandboxDemo}
-        showProposals={showProposals}
-        onToggleProposals={() => setShowProposals((v) => !v)}
-      />
-      {/* Version history bar — only for sandbox with versions */}
+      <DemoStatusBar status={demoStatus} title={demoTitle} sourceName={demoSourceName} isSandboxDemo={isSandboxDemo} showProposals={showProposals} onToggleProposals={() => setShowProposals((v) => !v)} />
       {isSandboxDemo && versions.length > 1 && (
-        <SandboxVersionBar
-          versions={versions}
-          currentIndex={versionIndex}
-          onNavigate={handleVersionNavigate}
-          onRestore={handleVersionRestore}
-        />
+        <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
       )}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-auto">{demoContent}</div>
         {isSandboxDemo && showProposals && (
-          <AIProposalsPanel
-            demoId={id || ""}
-            demoTitle={demoTitle}
-            currentJsx={currentJsx}
-            onJsxUpdate={handleJsxUpdate}
-          />
+          <AIProposalsPanel demoId={id || ""} demoTitle={demoTitle} currentJsx={currentJsx} onJsxUpdate={handleJsxUpdate} />
         )}
       </div>
     </div>
