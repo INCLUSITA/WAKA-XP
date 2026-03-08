@@ -74,7 +74,7 @@ const defaultEdgeOptions = {
   style: { strokeWidth: 2, stroke: "hsl(200, 30%, 65%)" },
 };
 
-export function FlowEditor() {
+function FlowEditorInner() {
   const [searchParams, setSearchParams] = useSearchParams();
   const flowIdParam = searchParams.get("id");
 
