@@ -117,11 +117,21 @@ function FlowEditorInner() {
   const moduleCallbacksRef = useRef({ toggleCollapse, renameModule, deleteModule });
   moduleCallbacksRef.current = { toggleCollapse, renameModule, deleteModule };
 
+  // Track which module node IDs have had callbacks injected
+  const injectedModuleIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
-    setNodes((nds) => {
-      const hasModules = nds.some((n) => n.type === "moduleGroup");
-      if (!hasModules) return nds;
-      return nds.map((n) =>
+    const moduleNodeIds = nodes.filter((n) => n.type === "moduleGroup").map((n) => n.id);
+    if (moduleNodeIds.length === 0) return;
+
+    // Only inject if there are new modules that haven't been injected yet
+    const needsInjection = moduleNodeIds.some((id) => !injectedModuleIdsRef.current.has(id));
+    if (!needsInjection) return;
+
+    injectedModuleIdsRef.current = new Set(moduleNodeIds);
+
+    setNodes((nds) =>
+      nds.map((n) =>
         n.type === "moduleGroup"
           ? {
               ...n,
@@ -133,9 +143,8 @@ function FlowEditorInner() {
               },
             }
           : n
-      );
-    });
-    // Only re-inject when nodes array identity changes (load, add, delete)
+      )
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, setNodes]);
 
