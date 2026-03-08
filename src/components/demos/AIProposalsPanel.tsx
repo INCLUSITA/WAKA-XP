@@ -277,7 +277,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     ]);
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Re-applied: ${proposal.prompt.slice(0, 60)}`);
       toast({ title: "✅ Re-applied to sandbox", description: `"${proposal.prompt.slice(0, 50)}…" — applied again.` });
     }
 
