@@ -6,12 +6,76 @@ export interface ValidationError {
   message: string;
 }
 
-export function validateFlow(nodes: Node[], edges: Edge[]): ValidationError[] {
+// Channel constraints — extensible per channel
+export interface ChannelConstraints {
+  maxTextLength: number;
+  maxQuickReplies: number;
+  maxAttachmentSizeMB: number;
+  allowedAttachmentTypes: string[];
+  maxButtons: number;
+}
+
+const CHANNEL_CONSTRAINTS: Record<string, ChannelConstraints> = {
+  whatsapp: {
+    maxTextLength: 4096,
+    maxQuickReplies: 3,
+    maxAttachmentSizeMB: 16,
+    allowedAttachmentTypes: ["image", "video", "audio", "pdf", "document"],
+    maxButtons: 3,
+  },
+  sms: {
+    maxTextLength: 160,
+    maxQuickReplies: 0,
+    maxAttachmentSizeMB: 0,
+    allowedAttachmentTypes: [],
+    maxButtons: 0,
+  },
+  telegram: {
+    maxTextLength: 4096,
+    maxQuickReplies: 10,
+    maxAttachmentSizeMB: 50,
+    allowedAttachmentTypes: ["image", "video", "audio", "pdf", "document"],
+    maxButtons: 10,
+  },
+  default: {
+    maxTextLength: 4096,
+    maxQuickReplies: 10,
+    maxAttachmentSizeMB: 25,
+    allowedAttachmentTypes: ["image", "video", "audio", "pdf", "document"],
+    maxButtons: 10,
+  },
+};
+
+export function getChannelConstraints(channel?: string): ChannelConstraints {
+  return CHANNEL_CONSTRAINTS[channel || "default"] || CHANNEL_CONSTRAINTS.default;
+}
+
+export function validateFlow(nodes: Node[], edges: Edge[], channel?: string): ValidationError[] {
   const errors: ValidationError[] = [];
   const connectedAsTarget = new Set(edges.map((e) => e.target));
   const connectedAsSource = new Set(edges.map((e) => e.source));
+  const constraints = getChannelConstraints(channel);
+
+  // Check for ambiguous entry point
+  const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
+  const rootNodes = executableNodes.filter((n) => !connectedAsTarget.has(n.id));
+  if (rootNodes.length > 1) {
+    errors.push({
+      nodeId: rootNodes[0].id,
+      type: "warning",
+      message: `${rootNodes.length} nodos raíz detectados — el punto de inicio puede ser ambiguo`,
+    });
+  }
+  if (rootNodes.length === 0 && executableNodes.length > 0) {
+    errors.push({
+      nodeId: executableNodes[0].id,
+      type: "warning",
+      message: "No se detectó un punto de entrada claro — todos los nodos tienen conexiones de entrada",
+    });
+  }
 
   for (const node of nodes) {
+    if (node.type === "moduleGroup") continue;
     const data = node.data as Record<string, any>;
     const isFirst = nodes.indexOf(node) === 0;
 
@@ -42,12 +106,42 @@ export function validateFlow(nodes: Node[], edges: Edge[]): ValidationError[] {
             message: "Mensaje vacío — configura el texto del mensaje",
           });
         }
+
+        // Channel: text length
+        if (data.text && data.text.length > constraints.maxTextLength) {
+          errors.push({
+            nodeId: node.id,
+            type: "warning",
+            message: `Texto excede ${constraints.maxTextLength} caracteres (${data.text.length}) para el canal ${channel || "default"}`,
+          });
+        }
+
+        const qr = data.quick_replies?.filter((r: string) => r.trim()) || [];
         const emptyReplies = (data.quick_replies || []).filter((r: string) => !r.trim());
         if (emptyReplies.length > 0) {
           errors.push({
             nodeId: node.id,
             type: "warning",
             message: `${emptyReplies.length} respuesta(s) rápida(s) vacía(s)`,
+          });
+        }
+
+        // Channel: max quick replies
+        if (qr.length > constraints.maxQuickReplies) {
+          errors.push({
+            nodeId: node.id,
+            type: "warning",
+            message: `${qr.length} respuestas rápidas exceden el límite de ${constraints.maxQuickReplies} para el canal ${channel || "default"}`,
+          });
+        }
+
+        // Channel: attachments not supported
+        const attachments = data.attachments || [];
+        if (attachments.length > 0 && constraints.maxAttachmentSizeMB === 0) {
+          errors.push({
+            nodeId: node.id,
+            type: "warning",
+            message: `El canal ${channel || "default"} no soporta adjuntos`,
           });
         }
         break;

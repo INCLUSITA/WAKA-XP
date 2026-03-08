@@ -146,9 +146,41 @@ export function useFlowSimulation(
 
   const findFirstNode = useCallback((): string | null => {
     if (nodes.length === 0) return null;
+
+    // 1. Explicit Start node (enterFlow or any node flagged as start)
+    const startNode = nodes.find(
+      (n) => n.type === "enterFlow" || (n.data as any)?.isStart === true
+    );
+    if (startNode) return startNode.id;
+
     const targetIds = new Set(edges.map((e) => e.target));
-    const entryNode = nodes.find((n) => !targetIds.has(n.id));
-    return entryNode?.id || nodes[0]?.id || null;
+    // Filter out module group nodes — they are structural, not executable
+    const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
+
+    // 2. If modules exist, look for an "Entry" module and prefer its first valid node
+    const entryModule = nodes.find(
+      (n) =>
+        n.type === "moduleGroup" &&
+        /entry|inicio|start/i.test((n.data as any)?.label || "")
+    );
+    if (entryModule) {
+      const moduleData = entryModule.data as any;
+      const moduleNodeIds = new Set<string>(moduleData?.nodeIds || []);
+      const entryModuleNode = executableNodes.find(
+        (n) => moduleNodeIds.has(n.id) && !targetIds.has(n.id)
+      );
+      if (entryModuleNode) return entryModuleNode.id;
+      // Fallback: first node inside the entry module
+      const firstInModule = executableNodes.find((n) => moduleNodeIds.has(n.id));
+      if (firstInModule) return firstInModule.id;
+    }
+
+    // 3. First executable node with no incoming edges
+    const entryNode = executableNodes.find((n) => !targetIds.has(n.id));
+    if (entryNode) return entryNode.id;
+
+    // 4. Fallback to first executable node
+    return executableNodes[0]?.id || nodes[0]?.id || null;
   }, [nodes, edges]);
 
   const getNextNodeId = useCallback(
