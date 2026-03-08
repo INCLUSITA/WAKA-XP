@@ -24,6 +24,7 @@ const principalItems = [
   { title: "Journeys", url: "/journeys", icon: Map },
   { title: "Experience Studio", url: "/studio", icon: Sparkles },
   { title: "Builder", url: "/editor", icon: Hammer },
+  { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
 ];
 
