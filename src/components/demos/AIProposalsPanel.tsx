@@ -31,7 +31,7 @@ const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, { label: string; icon: type
   proposed:  { label: "Proposed",  icon: Clock,        color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20" },
   accepted:  { label: "Accepted",  icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20" },
   rejected:  { label: "Rejected",  icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20" },
-  applied:   { label: "Applied",   icon: Zap,          color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+  applied:   { label: "Approved",  icon: Zap,          color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
 };
 
 const SUGGESTION_PROMPTS = [
