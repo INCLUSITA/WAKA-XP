@@ -375,16 +375,23 @@ export default function HomePage() {
           <motion.section initial="hidden" animate="visible">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">Production Pipeline</motion.h2>
             <motion.div variants={fadeUp} custom={1} className="flex gap-3 overflow-x-auto pb-2">
-              {pipelineStages.map((stage, i) => (
-                <div key={stage.label} className="flex items-center gap-3">
-                  <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03]">
-                    <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
-                    <p className="text-2xl font-bold text-foreground/80 mt-1">0</p>
+              {pipelineStages.map((stage, i) => {
+                let count = 0;
+                if (stage.label === "Candidate") count = candidateStats.candidate;
+                else if (stage.label === "Validated") count = candidateStats.validated;
+                else if (stage.label === "Live") count = candidateStats.live;
+                else if (stage.label === "Demo") count = allDemos.length;
+                return (
+                  <div key={stage.label} className="flex items-center gap-3">
+                    <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03] cursor-pointer" onClick={() => { if (stage.label === "Candidate" || stage.label === "Validated" || stage.label === "Live") navigate("/production"); }}>
+                      <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
+                      <p className="text-2xl font-bold text-foreground/80 mt-1">{count}</p>
+                    </div>
+                    {i < pipelineStages.length - 1 && <div className="w-6 h-px bg-gradient-to-r from-border/60 to-border/20" />}
                   </div>
-                  {i < pipelineStages.length - 1 && <div className="w-6 h-px bg-gradient-to-r from-border/60 to-border/20" />}
-                </div>
-              ))}
+                );
+              })}
             </motion.div>
           </motion.section>
 
