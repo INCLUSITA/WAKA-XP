@@ -96,6 +96,8 @@ export function FlowToolbar({
   showContext,
   onAddModule,
   moduleTemplates,
+  channel,
+  onChannelChange,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   return (
