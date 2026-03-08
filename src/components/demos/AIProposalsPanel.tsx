@@ -31,7 +31,7 @@ const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, { label: string; icon: type
   proposed:  { label: "Proposed",  icon: Clock,        color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20" },
   accepted:  { label: "Accepted",  icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20" },
   rejected:  { label: "Rejected",  icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20" },
-  applied:   { label: "Applied",   icon: Zap,          color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+  applied:   { label: "Approved",  icon: Zap,          color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
 };
 
 const SUGGESTION_PROMPTS = [
@@ -270,21 +270,21 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                     </>
                   )}
 
-                  {/* Accepted: Apply to Sandbox */}
+                  {/* Accepted: Approve for Sandbox */}
                   {p.status === "accepted" && (
                     <button
                       onClick={() => updateStatus(p.id, "applied")}
                       className="flex items-center gap-1 rounded-md bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/25 transition"
-                      title="Apply to sandbox — stable demo is not affected"
+                      title="Approve for sandbox — visual application coming soon"
                     >
-                      <Play className="h-3 w-3" /> Apply to Sandbox
+                      <Play className="h-3 w-3" /> Approve for Sandbox
                     </button>
                   )}
 
-                  {/* Applied: done indicator */}
+                  {/* Applied: queued indicator */}
                   {p.status === "applied" && (
                     <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
-                      <Zap className="h-3 w-3" /> Applied to sandbox
+                      <Zap className="h-3 w-3" /> Approved · visual apply coming soon
                     </span>
                   )}
 
@@ -306,13 +306,16 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
       </div>
 
       {/* Safe workflow hint */}
-      <div className="px-4 py-2.5 border-t border-white/5">
+      <div className="px-4 py-2.5 border-t border-white/5 space-y-1">
         <div className="flex items-center gap-1.5">
           <FlaskConical className="h-3 w-3 text-amber-400/50" />
           <p className="text-[9px] text-white/20 leading-relaxed">
             All proposals target this sandbox only — review before promoting to stable.
           </p>
         </div>
+        <p className="text-[9px] text-white/15 leading-relaxed pl-[18px]">
+          Approved proposals are recorded for future visual application when the AI editing engine is connected.
+        </p>
       </div>
     </div>
   );
