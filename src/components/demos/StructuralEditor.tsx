@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Layers, Plus, Sparkles, Download, ChevronDown } from "lucide-react";
 import type { StructuralBlock } from "@/types/structuralBlocks";
 import StructuralBlockCard from "./StructuralBlockCard";
@@ -7,9 +7,11 @@ import BlockPalette from "./BlockPalette";
 interface StructuralEditorProps {
   demoId: string;
   demoTitle: string;
+  pendingBlock?: StructuralBlock | null;
+  onPendingBlockConsumed?: () => void;
 }
 
-export default function StructuralEditor({ demoId, demoTitle }: StructuralEditorProps) {
+export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed }: StructuralEditorProps) {
   const storageKey = `structural-blocks-${demoId}`;
 
   const [blocks, setBlocks] = useState<StructuralBlock[]>(() => {
@@ -27,6 +29,14 @@ export default function StructuralEditor({ demoId, demoTitle }: StructuralEditor
     setBlocks(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
   }, [storageKey]);
+
+  // Handle blocks inserted from context menu
+  useEffect(() => {
+    if (pendingBlock) {
+      persist([...blocks, pendingBlock]);
+      onPendingBlockConsumed?.();
+    }
+  }, [pendingBlock]);
 
   const handleInsert = useCallback((block: StructuralBlock, atIndex?: number) => {
     const newBlocks = [...blocks];
