@@ -325,36 +325,15 @@ export function FlowContextPanel({ items, onChange, onClose }: FlowContextPanelP
                   );
                 })}
 
-                {/* Quick-add suggestions when entities exist */}
-                {entityItems.length > 0 && unusedEntitySuggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-1 px-1">
-                    {unusedEntitySuggestions.map((s) => (
-                      <button
-                        key={s.name}
-                        onClick={() => addEntity(s.name, s.entityType)}
-                        className="rounded border border-dashed border-xp-context/15 px-1.5 py-0.5 text-[9px] text-xp-context/50 hover:border-xp-context/30 hover:text-xp-context transition-colors"
-                      >
-                        + {s.name}
-                      </button>
-                    ))}
+                {/* Shared entities hint — only when entities exist */}
+                {entityItems.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-1 py-1">
+                    <Sparkles className="h-2.5 w-2.5 text-xp-context/25" />
+                    <span className="text-[8px] text-xp-context/35 font-medium">
+                      Experience-level sync coming soon
+                    </span>
                   </div>
                 )}
-
-                {/* Shared entities placeholder */}
-                <div className="rounded-md border border-dashed border-xp-context/10 bg-xp-context/2 px-2.5 py-2">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-2.5 w-2.5 text-xp-context/30" />
-                    <span className="text-[9px] font-semibold text-xp-context/40 uppercase tracking-wider">
-                      Experience-level entities
-                    </span>
-                    <Badge variant="outline" className="ml-auto text-[7px] border-xp-context/10 text-xp-context/30 px-1 py-0">
-                      Soon
-                    </Badge>
-                  </div>
-                  <p className="text-[9px] text-muted-foreground/40 mt-1 leading-relaxed">
-                    Shared entities from the experience layer will sync here automatically.
-                  </p>
-                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
