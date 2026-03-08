@@ -15,6 +15,8 @@ import {
   Loader2,
   AlertTriangle,
   Cpu,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,15 +44,16 @@ export interface AIProposal {
   aiAnalysis?: AIAnalysis | null;
   aiEngine?: string;
   analyzing?: boolean;
+  visuallyApplied?: boolean;
 }
 
 // --- Config ---
 
 const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, { label: string; icon: typeof Clock; color: string; bg: string; description: string }> = {
   proposed:  { label: "Pending review",     icon: Clock,        color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",     description: "Waka AI analyzed — awaiting your review" },
-  accepted:  { label: "Ready to approve",   icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20",       description: "Accepted — approve to store in sandbox workflow" },
+  accepted:  { label: "Ready to apply",     icon: CheckCircle2, color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20",       description: "Accepted — apply to visually update sandbox" },
   rejected:  { label: "Rejected",           icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",         description: "Dismissed from review" },
-  applied:   { label: "Stored in sandbox",  icon: Archive,      color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", description: "Saved in sandbox workflow — visual apply pending" },
+  applied:   { label: "Applied to sandbox", icon: Archive,      color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", description: "Visually applied to sandbox demo" },
 };
 
 const SUGGESTION_PROMPTS = [
@@ -69,29 +72,48 @@ const CHANGE_CATEGORIES: Record<string, { label: string; color: string }> = {
 };
 
 const CONFIDENCE_CONFIG: Record<string, { label: string; color: string }> = {
-  high:   { label: "High confidence",   color: "text-emerald-400" },
-  medium: { label: "Medium confidence",  color: "text-amber-400" },
-  low:    { label: "Low confidence",     color: "text-red-400" },
+  high:   { label: "High",   color: "text-emerald-400" },
+  medium: { label: "Medium", color: "text-amber-400" },
+  low:    { label: "Low",    color: "text-red-400" },
 };
 
-// --- AI analysis helper ---
+// --- AI helpers ---
 
 async function analyzeProposal(prompt: string, demoId: string, demoTitle: string): Promise<{ analysis: AIAnalysis; engine: string } | null> {
   try {
     const { data, error } = await supabase.functions.invoke("waka-ai-proposal", {
       body: { prompt, demoId, demoTitle },
     });
-
     if (error) {
       console.error("Waka AI error:", error);
       toast({ title: "Waka AI unavailable", description: error.message || "Could not analyze proposal.", variant: "destructive" });
       return null;
     }
-
     return { analysis: data.analysis, engine: data.engine || "waka-ai" };
   } catch (e) {
     console.error("Waka AI call failed:", e);
     toast({ title: "Waka AI error", description: "Failed to reach the AI engine.", variant: "destructive" });
+    return null;
+  }
+}
+
+async function applyProposals(
+  jsxSource: string,
+  proposals: { prompt: string; summary?: string }[]
+): Promise<{ modifiedJsx: string; appliedCount: number } | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("waka-ai-apply", {
+      body: { jsxSource, proposals },
+    });
+    if (error) {
+      console.error("Waka AI apply error:", error);
+      toast({ title: "Apply failed", description: error.message || "Could not apply changes.", variant: "destructive" });
+      return null;
+    }
+    return { modifiedJsx: data.modifiedJsx, appliedCount: data.appliedCount };
+  } catch (e) {
+    console.error("Waka AI apply call failed:", e);
+    toast({ title: "Apply error", description: "Failed to reach the AI engine.", variant: "destructive" });
     return null;
   }
 }
@@ -101,9 +123,11 @@ async function analyzeProposal(prompt: string, demoId: string, demoTitle: string
 interface AIProposalsPanelProps {
   demoId: string;
   demoTitle: string;
+  currentJsx?: string | null;
+  onJsxUpdate?: (newJsx: string) => void;
 }
 
-export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanelProps) {
+export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxUpdate }: AIProposalsPanelProps) {
   const storageKey = `ai-proposals-${demoId}`;
 
   const [proposals, setProposals] = useState<AIProposal[]>(() => {
@@ -117,6 +141,10 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
   const [promptValue, setPromptValue] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [applying, setApplying] = useState<string | null>(null); // id of proposal being applied
+  const [applyingAll, setApplyingAll] = useState(false);
+
+  const canApply = !!currentJsx && !!onJsxUpdate;
 
   const persist = (updated: AIProposal[]) => {
     setProposals(updated);
@@ -162,7 +190,6 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
           analyzing: false,
         };
       }
-      // Fallback — no AI
       return {
         ...p,
         summary: `Proposed change: "${text.length > 80 ? text.slice(0, 80) + "…" : text}"`,
@@ -174,18 +201,90 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
     setSubmitting(false);
   };
 
-  const handleApprove = (id: string) => {
-    persist(proposals.map((p) => (p.id === id ? { ...p, status: "applied" as ProposalStatus } : p)));
-    toast({
-      title: "Proposal stored in sandbox",
-      description: "Saved in sandbox workflow. Visual application will be available when the AI editing engine is connected.",
-    });
+  // --- Apply single proposal ---
+  const handleApplyOne = async (id: string) => {
+    if (!canApply) {
+      toast({ title: "Cannot apply", description: "This demo type does not support visual apply yet.", variant: "destructive" });
+      return;
+    }
+
+    const proposal = proposals.find((p) => p.id === id);
+    if (!proposal) return;
+
+    setApplying(id);
+
+    const result = await applyProposals(currentJsx!, [
+      { prompt: proposal.prompt, summary: proposal.aiAnalysis?.summary || proposal.summary },
+    ]);
+
+    if (result) {
+      onJsxUpdate!(result.modifiedJsx);
+      persist(proposals.map((p) =>
+        p.id === id ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
+      ));
+      toast({ title: "✅ Applied to sandbox", description: `"${proposal.prompt.slice(0, 50)}…" — demo updated visually.` });
+    }
+
+    setApplying(null);
+  };
+
+  // --- Apply all accepted/stored ---
+  const handleApplyAll = async () => {
+    if (!canApply) {
+      toast({ title: "Cannot apply", description: "This demo type does not support visual apply yet.", variant: "destructive" });
+      return;
+    }
+
+    const toApply = proposals.filter((p) =>
+      (p.status === "accepted" || (p.status === "applied" && !p.visuallyApplied))
+    );
+    if (toApply.length === 0) {
+      toast({ title: "Nothing to apply", description: "No accepted proposals pending visual apply." });
+      return;
+    }
+
+    setApplyingAll(true);
+
+    const result = await applyProposals(
+      currentJsx!,
+      toApply.map((p) => ({ prompt: p.prompt, summary: p.aiAnalysis?.summary || p.summary }))
+    );
+
+    if (result) {
+      onJsxUpdate!(result.modifiedJsx);
+      const appliedIds = new Set(toApply.map((p) => p.id));
+      persist(proposals.map((p) =>
+        appliedIds.has(p.id) ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
+      ));
+      toast({ title: "✅ All changes applied", description: `${result.appliedCount} proposal(s) applied to sandbox demo.` });
+    }
+
+    setApplyingAll(false);
+  };
+
+  // --- Re-apply from history ---
+  const handleReApply = async (id: string) => {
+    if (!canApply) return;
+    const proposal = proposals.find((p) => p.id === id);
+    if (!proposal) return;
+
+    setApplying(id);
+
+    const result = await applyProposals(currentJsx!, [
+      { prompt: proposal.prompt, summary: proposal.aiAnalysis?.summary || proposal.summary },
+    ]);
+
+    if (result) {
+      onJsxUpdate!(result.modifiedJsx);
+      toast({ title: "✅ Re-applied to sandbox", description: `"${proposal.prompt.slice(0, 50)}…" — applied again.` });
+    }
+
+    setApplying(null);
   };
 
   const updateStatus = (id: string, status: ProposalStatus) => {
-    if (status === "applied") { handleApprove(id); return; }
     persist(proposals.map((p) => (p.id === id ? { ...p, status } : p)));
-    if (status === "accepted") toast({ title: "Proposal accepted", description: "Ready to approve for sandbox workflow." });
+    if (status === "accepted") toast({ title: "Proposal accepted", description: "Ready to apply to sandbox." });
     if (status === "rejected") toast({ title: "Proposal rejected", description: "Dismissed from review." });
   };
 
@@ -193,7 +292,8 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
 
   const proposedCount = proposals.filter((p) => p.status === "proposed").length;
   const acceptedCount = proposals.filter((p) => p.status === "accepted").length;
-  const storedCount = proposals.filter((p) => p.status === "applied").length;
+  const appliedCount = proposals.filter((p) => p.status === "applied").length;
+  const applyableCount = proposals.filter((p) => p.status === "accepted").length;
 
   return (
     <div className="w-80 border-l border-white/10 bg-slate-900/95 backdrop-blur-sm flex flex-col h-full">
@@ -207,7 +307,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
           </span>
         </div>
         <p className="text-[11px] text-white/35 leading-relaxed">
-          AI-powered proposal analysis — review and store changes safely.
+          AI-powered proposal analysis & visual apply.
         </p>
 
         {/* Engine badge */}
@@ -221,7 +321,32 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
           <div className="flex gap-3 mt-2 flex-wrap">
             {proposedCount > 0 && <span className="text-[10px] text-amber-400/70">{proposedCount} pending</span>}
             {acceptedCount > 0 && <span className="text-[10px] text-blue-400/70">{acceptedCount} ready</span>}
-            {storedCount > 0 && <span className="text-[10px] text-emerald-400/70">{storedCount} stored</span>}
+            {appliedCount > 0 && <span className="text-[10px] text-emerald-400/70">{appliedCount} applied</span>}
+          </div>
+        )}
+
+        {/* Apply All button */}
+        {applyableCount > 0 && canApply && (
+          <button
+            onClick={handleApplyAll}
+            disabled={applyingAll}
+            className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600/80 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition"
+          >
+            {applyingAll ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Applying {applyableCount} change(s)…</>
+            ) : (
+              <><Play className="h-3.5 w-3.5" /> Apply all accepted ({applyableCount})</>
+            )}
+          </button>
+        )}
+
+        {/* No JSX warning */}
+        {!canApply && proposals.length > 0 && (
+          <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5">
+            <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+            <span className="text-[10px] text-amber-300/80 leading-tight">
+              Visual apply not available for built-in demos. Duplicate as sandbox with JSX to enable.
+            </span>
           </div>
         )}
       </div>
@@ -246,7 +371,6 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
           </button>
         </div>
 
-        {/* Quick suggestions */}
         {proposals.length === 0 && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {SUGGESTION_PROMPTS.map((s) => (
@@ -255,8 +379,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                 onClick={() => setPromptValue(s)}
                 className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] text-white/40 hover:text-white/60 hover:border-white/15 transition"
               >
-                <Lightbulb className="h-2.5 w-2.5 inline mr-1 -mt-px" />
-                {s}
+                <Lightbulb className="h-2.5 w-2.5 inline mr-1 -mt-px" />{s}
               </button>
             ))}
           </div>
@@ -281,6 +404,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
             const catInfo = p.category ? CHANGE_CATEGORIES[p.category] : null;
             const ai = p.aiAnalysis;
             const confInfo = ai?.confidence ? CONFIDENCE_CONFIG[ai.confidence] : null;
+            const isApplyingThis = applying === p.id;
 
             return (
               <div key={p.id} className={`rounded-xl border p-3 transition ${cfg.bg}`}>
@@ -299,11 +423,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                       {catInfo.label}
                     </span>
                   )}
-                  {confInfo && (
-                    <span className={`text-[9px] ${confInfo.color}`}>
-                      {confInfo.label}
-                    </span>
-                  )}
+                  {confInfo && <span className={`text-[9px] ${confInfo.color}`}>{confInfo.label}</span>}
                   <div className="flex items-center gap-1 ml-auto">
                     <StatusIcon className={`h-3 w-3 ${cfg.color}`} />
                     <span className={`text-[10px] font-semibold ${cfg.color}`}>{cfg.label}</span>
@@ -318,8 +438,16 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                   <p className="text-[11px] text-white/50 leading-relaxed mb-1.5">{ai.summary}</p>
                 )}
 
+                {/* Applied badge */}
+                {p.visuallyApplied && (
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                    <span className="text-[10px] text-emerald-400 font-semibold">Visually applied to sandbox</span>
+                  </div>
+                )}
+
                 {/* Status description */}
-                {!p.analyzing && (
+                {!p.analyzing && !p.visuallyApplied && (
                   <p className="text-[10px] text-white/25 mb-1.5 italic">{cfg.description}</p>
                 )}
 
@@ -344,22 +472,18 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
 
                 {isExpanded && (
                   <div className="mb-2 rounded-lg bg-white/[0.03] border border-white/5 p-2 space-y-2">
-                    {/* Impacts */}
                     {ai?.impacts && ai.impacts.length > 0 && (
                       <div>
                         <p className="text-[9px] text-white/30 font-semibold uppercase tracking-wider mb-1">Impacts</p>
                         <ul className="space-y-0.5">
                           {ai.impacts.map((impact, i) => (
                             <li key={i} className="text-[10px] text-white/40 leading-relaxed flex gap-1.5">
-                              <span className="text-violet-400/50 mt-0.5">•</span>
-                              {impact}
+                              <span className="text-violet-400/50 mt-0.5">•</span>{impact}
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
-
-                    {/* Tags */}
                     {p.changeTags && p.changeTags.length > 0 && (
                       <div className="flex gap-1 flex-wrap">
                         {p.changeTags.map((t) => (
@@ -369,15 +493,13 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                         ))}
                       </div>
                     )}
-
-                    {/* Fallback summary */}
                     {!ai && <p className="text-[10px] text-white/40 leading-relaxed">{p.summary}</p>}
                   </div>
                 )}
 
                 {/* Actions */}
                 {!p.analyzing && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {p.status === "proposed" && (
                       <>
                         <button
@@ -395,24 +517,40 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                       </>
                     )}
 
-                    {p.status === "accepted" && (
+                    {p.status === "accepted" && canApply && (
                       <button
-                        onClick={() => updateStatus(p.id, "applied")}
-                        className="flex items-center gap-1 rounded-md bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/25 transition"
+                        onClick={() => handleApplyOne(p.id)}
+                        disabled={isApplyingThis}
+                        className="flex items-center gap-1 rounded-md bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50 transition"
                       >
-                        <Archive className="h-3 w-3" /> Store in Sandbox
+                        {isApplyingThis ? (
+                          <><Loader2 className="h-3 w-3 animate-spin" /> Applying…</>
+                        ) : (
+                          <><Play className="h-3 w-3" /> Apply to Sandbox</>
+                        )}
                       </button>
                     )}
 
-                    {p.status === "applied" && (
-                      <div className="flex flex-col gap-1">
-                        <span className="flex items-center gap-1 text-[10px] text-emerald-400/60">
-                          <Archive className="h-3 w-3" /> Stored in workflow
-                        </span>
-                        <span className="text-[9px] text-white/20 leading-tight">
-                          Visual apply available when AI engine connects
-                        </span>
-                      </div>
+                    {p.status === "accepted" && !canApply && (
+                      <button disabled className="flex items-center gap-1 rounded-md bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-white/30 cursor-not-allowed">
+                        <AlertTriangle className="h-3 w-3" /> Apply unavailable
+                      </button>
+                    )}
+
+                    {/* Applied — re-apply option */}
+                    {p.status === "applied" && canApply && (
+                      <button
+                        onClick={() => handleReApply(p.id)}
+                        disabled={isApplyingThis}
+                        className="flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[10px] font-semibold text-violet-300/70 hover:bg-violet-500/20 disabled:opacity-50 transition"
+                        title="Re-apply this change on the current sandbox"
+                      >
+                        {isApplyingThis ? (
+                          <><Loader2 className="h-3 w-3 animate-spin" /> Re-applying…</>
+                        ) : (
+                          <><RotateCcw className="h-3 w-3" /> Re-apply</>
+                        )}
+                      </button>
                     )}
 
                     {p.status !== "proposed" && (
@@ -437,7 +575,7 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
         <div className="flex items-center gap-1.5">
           <FlaskConical className="h-3 w-3 text-amber-400/50" />
           <p className="text-[9px] text-white/20 leading-relaxed">
-            Proposals analyzed by Waka AI — stored in sandbox only.
+            Proposals analyzed & applied by Waka AI — sandbox only.
           </p>
         </div>
         <div className="flex items-center gap-1.5 pl-[18px]">

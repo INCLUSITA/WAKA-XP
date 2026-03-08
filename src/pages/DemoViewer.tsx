@@ -1,7 +1,7 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { BUILTIN_DEMOS, getUploadedDemos, DEMO_STATUS_CONFIG } from "@/demos/registry";
-import type { DemoStatus } from "@/demos/registry";
+import { BUILTIN_DEMOS, getUploadedDemos, saveUploadedDemo, DEMO_STATUS_CONFIG } from "@/demos/registry";
+import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
@@ -34,16 +34,12 @@ function DemoStatusBar({
   const isSandbox = status === "sandbox" || status === "draft";
   return (
     <div className={`flex items-center gap-2 px-4 py-2 text-xs border-b ${isSandbox ? "bg-amber-950/30 border-amber-500/20" : "bg-emerald-950/20 border-emerald-500/15"}`}>
-      {/* Breadcrumbs */}
       <Link to="/" className="text-white/40 hover:text-white/70 transition"><Home className="h-3.5 w-3.5" /></Link>
       <ChevronRight className="h-3 w-3 text-white/20" />
       <Link to="/demos" className="text-white/40 hover:text-white/70 transition flex items-center gap-1">
-        <LayoutGrid className="h-3 w-3" />
-        <span>Demos</span>
+        <LayoutGrid className="h-3 w-3" /><span>Demos</span>
       </Link>
       <ChevronRight className="h-3 w-3 text-white/20" />
-
-      {/* Status badge */}
       {isSandbox ? <FlaskConical className="h-3.5 w-3.5 text-amber-400" /> : <Shield className="h-3.5 w-3.5 text-emerald-400" />}
       <span className={`font-semibold ${cfg.color}`}>{cfg.icon} {cfg.label}</span>
       <span className="text-white/40">·</span>
@@ -54,8 +50,6 @@ function DemoStatusBar({
           <span className="text-white/30 truncate">Desde: {sourceName}</span>
         </>
       )}
-
-      {/* AI Proposals toggle — sandbox only */}
       {isSandboxDemo && (
         <button
           onClick={onToggleProposals}
@@ -66,7 +60,7 @@ function DemoStatusBar({
           }`}
         >
           <Sparkles className="h-3 w-3" />
-          AI Proposals
+          Waka AI
           {showProposals ? <PanelRightClose className="h-3 w-3" /> : <PanelRightOpen className="h-3 w-3" />}
         </button>
       )}
@@ -78,11 +72,39 @@ export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showProposals, setShowProposals] = useState(false);
+  const [liveJsx, setLiveJsx] = useState<string | null>(null);
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
   const uploadedDemo = !builtinDemo ? getUploadedDemos().find((d) => d.id === id) : undefined;
 
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
+
+  // Get the JSX source for this demo
+  const getBaseJsx = (): string | null => {
+    if (uploadedDemo?.jsxSource) return uploadedDemo.jsxSource;
+    const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
+    if (sessionSource) return sessionSource;
+    return null;
+  };
+
+  const baseJsx = getBaseJsx();
+  const currentJsx = liveJsx || baseJsx;
+
+  // Handle JSX update from AI apply
+  const handleJsxUpdate = useCallback((newJsx: string) => {
+    setLiveJsx(newJsx);
+
+    // Persist to localStorage if it's an uploaded demo
+    if (uploadedDemo) {
+      const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
+      saveUploadedDemo(updated);
+    }
+
+    // Also persist to sessionStorage for session-only demos
+    if (id) {
+      sessionStorage.setItem(`demo-jsx-${id}`, newJsx);
+    }
+  }, [uploadedDemo, id]);
 
   // Resolve what to render
   let demoContent: React.ReactNode = null;
@@ -99,6 +121,12 @@ export default function DemoViewer() {
         <DemoComponent />
       </Suspense>
     );
+  } else if (currentJsx && uploadedDemo) {
+    // Prefer live/updated JSX for sandbox demos
+    demoStatus = uploadedDemo.status;
+    demoTitle = uploadedDemo.title;
+    demoSourceName = uploadedDemo.sourceName;
+    demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} />;
   } else if (uploadedDemo?.sourceId) {
     const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
     demoStatus = uploadedDemo.status;
@@ -126,7 +154,6 @@ export default function DemoViewer() {
   }
 
   if (!demoContent && !builtinDemo && !uploadedDemo) {
-    // Check session-only source
     const sessionSource = sessionStorage.getItem(`demo-jsx-${id}`);
     if (sessionSource) {
       demoContent = <RuntimeJSXRenderer jsxSource={sessionSource} />;
@@ -160,7 +187,12 @@ export default function DemoViewer() {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-auto">{demoContent}</div>
         {isSandboxDemo && showProposals && (
-          <AIProposalsPanel demoId={id || ""} demoTitle={demoTitle} />
+          <AIProposalsPanel
+            demoId={id || ""}
+            demoTitle={demoTitle}
+            currentJsx={currentJsx}
+            onJsxUpdate={handleJsxUpdate}
+          />
         )}
       </div>
     </div>
