@@ -158,7 +158,7 @@ function AttachmentsEditor({ attachments, onChange }: { attachments: (string | A
   );
 }
 
-
+export function NodeConfigPanel({ node, onUpdate, onClose, onDelete }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
   const update = useCallback(
