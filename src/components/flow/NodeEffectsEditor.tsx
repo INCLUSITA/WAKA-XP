@@ -80,7 +80,8 @@ export function NodeEffectsEditor({ effects, onChange }: NodeEffectsEditorProps)
                 Side effects run alongside this node's main action
               </p>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                Save results, update context, or set state — without extra nodes
+                Save results, update context, or set state — without extra nodes.
+                Effects can target module, flow, or experience scope.
               </p>
             </div>
           )}
