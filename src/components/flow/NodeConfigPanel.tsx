@@ -913,6 +913,16 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel }: 
             </div>
           </>
         )}
+        {/* ─── XP NODE EFFECTS ─── */}
+        {node.type !== "moduleGroup" && (
+          <>
+            <Separator className="my-1" />
+            <NodeEffectsEditor
+              effects={(data.xpEffects as NodeEffect[]) || []}
+              onChange={(effects) => update("xpEffects", effects)}
+            />
+          </>
+        )}
       </div>
 
       {/* Footer */}
