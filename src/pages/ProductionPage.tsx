@@ -354,6 +354,7 @@ function CandidateDetail({
                 toast.success("Version restored");
                 onRefresh();
               }}
+              onClose={() => setShowVersions(false)}
             />
           </div>
         )}

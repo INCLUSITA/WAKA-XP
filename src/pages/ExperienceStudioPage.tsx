@@ -420,6 +420,7 @@ function ExperienceDetail({
                 toast.success("Experience version restored");
                 onRefresh();
               }}
+              onClose={() => setShowVersions(false)}
             />
           </div>
         )}
