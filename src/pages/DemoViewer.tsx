@@ -7,8 +7,10 @@ import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
+import DemoContextMenu from "@/components/demos/DemoContextMenu";
 import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
+import type { StructuralBlock } from "@/types/structuralBlocks";
 import { toast } from "@/hooks/use-toast";
 
 type SandboxPanel = "none" | "ai" | "structure";
@@ -51,7 +53,6 @@ function DemoStatusBar({
 
       {isSandboxDemo && (
         <div className="ml-auto flex items-center gap-2">
-          {/* Structure toggle */}
           <button
             onClick={() => onSetPanel(activePanel === "structure" ? "none" : "structure")}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all shadow-lg ${
@@ -64,7 +65,6 @@ function DemoStatusBar({
             Structure
           </button>
 
-          {/* Waka AI toggle */}
           <button
             onClick={() => onSetPanel(activePanel === "ai" ? "none" : "ai")}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
@@ -90,6 +90,12 @@ export default function DemoViewer() {
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // Ref to structural editor's insert handler
+  const [pendingContextBlock, setPendingContextBlock] = useState<StructuralBlock | null>(null);
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
 
@@ -159,6 +165,24 @@ export default function DemoViewer() {
     toast({ title: "Version restored", description: `Restored: "${version.label}"` });
   }, [versions, uploadedDemo, saveDemo]);
 
+  // Right-click handler for demo area
+  const handleDemoContextMenu = useCallback((e: React.MouseEvent) => {
+    if (!isSandboxDemo) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, [isSandboxDemo]);
+
+  const handleContextInsert = useCallback((block: StructuralBlock) => {
+    setPendingContextBlock(block);
+    // Open structure panel if not already open
+    setActivePanel("structure");
+    setContextMenu(null);
+    toast({
+      title: `✅ ${block.label} added`,
+      description: "Block inserted at the end of the structure.",
+    });
+  }, []);
+
   if (loadingDemo) return <LoadingFallback />;
 
   let demoContent: React.ReactNode = null;
@@ -180,11 +204,9 @@ export default function DemoViewer() {
     demoTitle = uploadedDemo.title;
     demoSourceName = uploadedDemo.sourceName;
 
-    // Check if JSX is a real component or just a placeholder comment from builtin duplication
     const isPlaceholderJsx = !currentJsx || currentJsx.trim().startsWith("/*");
     
     if (isPlaceholderJsx && uploadedDemo.sourceId) {
-      // Fall back to rendering the built-in component
       const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
       if (sourceBuiltin) {
         const DemoComponent = sourceBuiltin.component;
@@ -225,14 +247,36 @@ export default function DemoViewer() {
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
       )}
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-auto">{demoContent}</div>
+        {/* Demo content area — right-click to insert */}
+        <div
+          className="flex-1 overflow-auto"
+          onContextMenu={handleDemoContextMenu}
+        >
+          {demoContent}
+        </div>
+
         {isSandboxDemo && activePanel === "ai" && (
           <AIProposalsPanel demoId={id || ""} demoTitle={demoTitle} currentJsx={currentJsx} onJsxUpdate={handleJsxUpdate} />
         )}
         {isSandboxDemo && activePanel === "structure" && (
-          <StructuralEditor demoId={id || ""} demoTitle={demoTitle} />
+          <StructuralEditor
+            demoId={id || ""}
+            demoTitle={demoTitle}
+            pendingBlock={pendingContextBlock}
+            onPendingBlockConsumed={() => setPendingContextBlock(null)}
+          />
         )}
       </div>
+
+      {/* Context menu overlay */}
+      {contextMenu && (
+        <DemoContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onInsert={handleContextInsert}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }

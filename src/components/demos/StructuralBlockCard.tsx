@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, GripVertical, Trash2, Pencil, Check, X } from "lucide-react";
 import { BLOCK_TYPE_CONFIGS } from "@/types/structuralBlocks";
 import type { StructuralBlock, PropertyField } from "@/types/structuralBlocks";
+import MediaUploader from "./MediaUploader";
 
 interface StructuralBlockCardProps {
   block: StructuralBlock;
@@ -13,7 +14,34 @@ interface StructuralBlockCardProps {
   onMoveDown: (id: string) => void;
 }
 
-function PropertyInput({ field, value, onChange }: { field: PropertyField; value: any; onChange: (v: any) => void }) {
+function PropertyInput({
+  field, value, onChange, allProps, onChangeProps,
+}: {
+  field: PropertyField; value: any; onChange: (v: any) => void;
+  allProps?: Record<string, any>; onChangeProps?: (props: Record<string, any>) => void;
+}) {
+  // Special: media block URL field → use MediaUploader
+  if (field.key === "url" && allProps?.mediaType !== undefined && onChangeProps) {
+    return (
+      <MediaUploader
+        value={{
+          url: allProps.url || "",
+          fileName: allProps.fileName,
+          source: allProps.mediaSource || "upload",
+        }}
+        mediaType={allProps.mediaType || "image"}
+        onChange={(val) => {
+          onChangeProps({
+            ...allProps,
+            url: val.url,
+            fileName: val.fileName,
+            mediaSource: val.source,
+          });
+        }}
+      />
+    );
+  }
+
   if (field.type === "textarea") {
     return (
       <textarea
@@ -148,6 +176,8 @@ export default function StructuralBlockCard({
                 field={field}
                 value={editProps[field.key]}
                 onChange={(v) => setEditProps({ ...editProps, [field.key]: v })}
+                allProps={block.type === "media" ? editProps : undefined}
+                onChangeProps={block.type === "media" ? setEditProps : undefined}
               />
             </div>
           ))}
