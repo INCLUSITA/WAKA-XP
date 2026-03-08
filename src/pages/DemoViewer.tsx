@@ -46,15 +46,15 @@ function DemoStatusBar({
       {isSandboxDemo && (
         <button
           onClick={onToggleProposals}
-          className={`ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+          className={`ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
             showProposals
-              ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-              : "bg-white/5 text-white/40 border border-white/10 hover:bg-violet-500/10 hover:text-violet-300 hover:border-violet-500/20"
+              ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white border border-violet-400/40 shadow-violet-500/30"
+              : "bg-gradient-to-r from-violet-600/80 to-purple-600/80 text-white border border-violet-500/30 shadow-violet-500/20 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40 hover:scale-105"
           }`}
         >
-          <Sparkles className="h-3 w-3" />
+          <Sparkles className="h-4 w-4" />
           Waka AI
-          {showProposals ? <PanelRightClose className="h-3 w-3" /> : <PanelRightOpen className="h-3 w-3" />}
+          {showProposals ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
         </button>
       )}
     </div>
