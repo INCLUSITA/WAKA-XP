@@ -384,6 +384,31 @@ export default function Demos() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-slate-800 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget?.isStable ? "⚠️ Eliminar demo stable" : "Eliminar demo"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              {deleteTarget?.isStable
+                ? `Estás a punto de eliminar "${deleteTarget.title}", que es un demo stable. Esta acción es irreversible. ¿Estás seguro?`
+                : `¿Eliminar "${deleteTarget?.title}"? Esta acción no se puede deshacer.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-white/60 hover:bg-white/5">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={deleteTarget?.isStable ? "bg-red-600 hover:bg-red-500" : "bg-red-600 hover:bg-red-500"}
+            >
+              {deleteTarget?.isStable ? "Sí, eliminar stable" : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
