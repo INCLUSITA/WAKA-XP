@@ -1,7 +1,8 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
-  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket
+  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
+  Layers, LayoutGrid, Database, Plus, Box,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import {
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { SaveStatus } from "@/hooks/useFlowPersistence";
 
+export type EditorViewMode = "canvas" | "structure";
+
 interface FlowToolbarProps {
   flowName: string;
   onFlowNameChange: (name: string) => void;
@@ -36,6 +39,13 @@ interface FlowToolbarProps {
   saveStatus?: SaveStatus;
   experienceName?: string | null;
   onOpenExperience?: () => void;
+  // New: view mode & modules
+  viewMode: EditorViewMode;
+  onViewModeChange: (mode: EditorViewMode) => void;
+  onToggleContext: () => void;
+  showContext: boolean;
+  onAddModule: (label?: string) => void;
+  moduleTemplates: string[];
 }
 
 const actionNodes = [
@@ -79,6 +89,12 @@ export function FlowToolbar({
   saveStatus,
   experienceName,
   onOpenExperience,
+  viewMode,
+  onViewModeChange,
+  onToggleContext,
+  showContext,
+  onAddModule,
+  moduleTemplates,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   return (
@@ -108,48 +124,116 @@ export function FlowToolbar({
 
       <Separator orientation="vertical" className="mx-1 h-8" />
 
-      {/* Add Node Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-            <span>+ Add Node</span>
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64">
-          <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Actions</DropdownMenuLabel>
-          {actionNodes.map(({ type, label, icon: Icon, color }) => (
-            <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
-                <Icon className="h-3 w-3 text-white" />
-              </span>
-              <span className="text-sm">{label}</span>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Splits</DropdownMenuLabel>
-          {splitNodes.map(({ type, label, icon: Icon, color }) => (
-            <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
-                <Icon className="h-3 w-3 text-white" />
-              </span>
-              <span className="text-sm">{label}</span>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Wait</DropdownMenuLabel>
-          {waitNodes.map(({ type, label, icon: Icon, color }) => (
-            <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
-                <Icon className="h-3 w-3 text-white" />
-              </span>
-              <span className="text-sm">{label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* View mode toggle */}
+      <div className="flex rounded-lg border border-border bg-muted/50 p-0.5">
+        <button
+          onClick={() => onViewModeChange("canvas")}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+            viewMode === "canvas"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <LayoutGrid className="h-3 w-3" />
+          Canvas
+        </button>
+        <button
+          onClick={() => onViewModeChange("structure")}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+            viewMode === "structure"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Layers className="h-3 w-3" />
+          Structure
+        </button>
+      </div>
 
-      <Badge variant="outline" className="text-[8px] border-primary/30 text-primary ml-2">Classic Builder</Badge>
+      {/* Flow Context toggle */}
+      <Button
+        variant={showContext ? "default" : "outline"}
+        size="sm"
+        onClick={onToggleContext}
+        className={`text-xs ${showContext ? "" : "border-node-wait/30 text-node-wait hover:bg-node-wait/10"}`}
+      >
+        <Database className="mr-1 h-3.5 w-3.5" />
+        Context
+      </Button>
+
+      <Separator orientation="vertical" className="mx-1 h-8" />
+
+      {/* Add Node Dropdown — only in canvas */}
+      {viewMode === "canvas" && (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                <span>+ Add Node</span>
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Actions</DropdownMenuLabel>
+              {actionNodes.map(({ type, label, icon: Icon, color }) => (
+                <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
+                    <Icon className="h-3 w-3 text-white" />
+                  </span>
+                  <span className="text-sm">{label}</span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Splits</DropdownMenuLabel>
+              {splitNodes.map(({ type, label, icon: Icon, color }) => (
+                <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
+                    <Icon className="h-3 w-3 text-white" />
+                  </span>
+                  <span className="text-sm">{label}</span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Wait</DropdownMenuLabel>
+              {waitNodes.map(({ type, label, icon: Icon, color }) => (
+                <DropdownMenuItem key={type} onClick={() => onAddNode(type)} className="cursor-pointer gap-2 py-1.5">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded" style={{ background: color }}>
+                    <Icon className="h-3 w-3 text-white" />
+                  </span>
+                  <span className="text-sm">{label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Add Module Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs border-primary/30 text-primary hover:bg-primary/5">
+                <Box className="mr-1 h-3.5 w-3.5" />
+                + Module
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">Templates</DropdownMenuLabel>
+              {moduleTemplates.map((t) => (
+                <DropdownMenuItem key={t} onClick={() => onAddModule(t)} className="cursor-pointer text-sm">
+                  <Plus className="mr-2 h-3 w-3" /> {t}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onAddModule()} className="cursor-pointer text-sm">
+                <Plus className="mr-2 h-3 w-3" /> Custom Module
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      )}
+
+      <Badge variant="outline" className="text-[8px] border-primary/30 text-primary ml-1">
+        {viewMode === "canvas" ? "Classic Builder" : "Structure"}
+      </Badge>
 
       {/* Right side — editor-only actions */}
       <div className="ml-auto flex gap-1">

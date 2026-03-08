@@ -12,6 +12,7 @@ import {
   Node,
   Edge,
   Panel,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { v4 as uuidv4 } from "uuid";
@@ -31,16 +32,19 @@ import { EnterFlowNode } from "./EnterFlowNode";
 import { OpenTicketNode } from "./OpenTicketNode";
 import { CallZapierNode } from "./CallZapierNode";
 import { SendAirtimeNode } from "./SendAirtimeNode";
+import { ModuleGroupNode } from "./ModuleGroupNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
-import { FlowToolbar } from "./FlowToolbar";
+import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
 import { EdgeInfoPanel } from "./EdgeInfoPanel";
-import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
+import { StructuredView } from "./StructuredView";
+import { FlowContextPanel, ContextItem } from "./FlowContextPanel";
 import { useFlowPersistence } from "@/hooks/useFlowPersistence";
+import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 
 const nodeTypes = {
@@ -60,6 +64,7 @@ const nodeTypes = {
   splitResult: SplitNode,
   splitRandom: SplitNode,
   splitGroup: SplitNode,
+  moduleGroup: ModuleGroupNode,
 };
 
 const defaultEdgeOptions = {
@@ -83,6 +88,9 @@ export function FlowEditor() {
   const [showVersions, setShowVersions] = useState(false);
   const [experienceName, setExperienceName] = useState<string | null>(null);
   const [experienceId, setExperienceId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<EditorViewMode>("canvas");
+  const [showContext, setShowContext] = useState(false);
+  const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
 
@@ -93,6 +101,41 @@ export function FlowEditor() {
     },
   });
 
+  const {
+    modules,
+    addModule,
+    deleteModule,
+    renameModule,
+    toggleCollapse,
+    assignNodeToModule,
+    updateModuleCounts,
+    MODULE_TEMPLATES,
+  } = useFlowModules(nodes, setNodes);
+
+  // Inject callbacks into module group nodes
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.type === "moduleGroup"
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                onToggleCollapse: toggleCollapse,
+                onRename: renameModule,
+                onDelete: deleteModule,
+              },
+            }
+          : n
+      )
+    );
+  }, [toggleCollapse, renameModule, deleteModule, setNodes]);
+
+  // Keep module counts updated
+  useEffect(() => {
+    updateModuleCounts();
+  }, [nodes.length, updateModuleCounts]);
+
   // Load flow from DB on mount if ?id= is present
   useEffect(() => {
     if (flowIdParam && !initialLoadDone.current) {
@@ -102,7 +145,6 @@ export function FlowEditor() {
           setNodes(result.nodes);
           setEdges(result.edges);
           setFlowName(result.name);
-          // Fetch experience link
           const { data } = await supabase
             .from("flows")
             .select("experience_id")
@@ -125,13 +167,11 @@ export function FlowEditor() {
   // Auto-save on changes (skip initial load)
   const changeCount = useRef(0);
   useEffect(() => {
-    // Skip the first render and the load hydration
     if (!initialLoadDone.current && !flowIdParam) {
       // New flow — allow saving after first edit
     }
     changeCount.current++;
-    if (changeCount.current <= 2) return; // skip initial setState calls
-
+    if (changeCount.current <= 2) return;
     debouncedSave(nodes, edges, flowName);
   }, [nodes, edges, flowName, debouncedSave]);
 
@@ -141,6 +181,7 @@ export function FlowEditor() {
   );
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    if (node.type === "moduleGroup") return; // don't open config for modules
     setSelectedNode(node);
   }, []);
 
@@ -415,6 +456,30 @@ export function FlowEditor() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
+  const handleFocusNode = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) {
+        setSelectedNode(node);
+      }
+    },
+    [nodes]
+  );
+
+  const handleFocusModule = useCallback(
+    (moduleId: string) => {
+      // Switch to canvas and center on module
+      setViewMode("canvas");
+      // We'll just select nothing and let the user see it
+      const moduleNode = nodes.find((n) => n.id === moduleId);
+      if (moduleNode) {
+        // The fitView doesn't easily target a node without ReactFlow instance, 
+        // but switching to canvas is the main action
+      }
+    },
+    [nodes]
+  );
+
   return (
     <div className="relative flex h-screen flex-col">
       <FlowToolbar
@@ -435,6 +500,12 @@ export function FlowEditor() {
         onOpenExperience={() => {
           if (experienceId) navigate(`/studio?id=${experienceId}`);
         }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onToggleContext={() => setShowContext((v) => !v)}
+        showContext={showContext}
+        onAddModule={addModule}
+        moduleTemplates={MODULE_TEMPLATES}
       />
 
       <input
@@ -446,48 +517,69 @@ export function FlowEditor() {
       />
 
       <div className="relative flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          onPaneClick={onPaneClick}
-          nodeTypes={nodeTypes}
-          defaultEdgeOptions={defaultEdgeOptions}
-          fitView
-          className="bg-canvas-bg"
-        >
-          <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
-          <MiniMap
-            className="!border-border !bg-card !shadow-lg"
-            nodeColor={(n) => {
-              switch (n.type) {
-                case "sendMsg": return "hsl(160, 84%, 39%)";
-                case "waitResponse": return "hsl(220, 80%, 55%)";
-                case "splitExpression": return "hsl(260, 60%, 55%)";
-                case "webhook": return "hsl(30, 90%, 55%)";
-                default: return "hsl(220, 14%, 92%)";
-              }
-            }}
+        {viewMode === "canvas" ? (
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
+            fitView
+            className="bg-canvas-bg"
+          >
+            <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
+            <MiniMap
+              className="!border-border !bg-card !shadow-lg"
+              nodeColor={(n) => {
+                switch (n.type) {
+                  case "sendMsg": return "hsl(160, 84%, 39%)";
+                  case "waitResponse": return "hsl(220, 80%, 55%)";
+                  case "splitExpression": return "hsl(260, 60%, 55%)";
+                  case "webhook": return "hsl(30, 90%, 55%)";
+                  case "moduleGroup": return (n.data?.color as string) || "hsl(160, 84%, 39%)";
+                  default: return "hsl(220, 14%, 92%)";
+                }
+              }}
+            />
+            <Background variant={BackgroundVariant.Dots} gap={16} size={0.8} color="hsl(220, 10%, 85%)" />
+
+            {nodes.filter((n) => n.type !== "moduleGroup").length === 0 && !isLoading && (
+              <Panel position="top-center" className="mt-20">
+                <div className="rounded-2xl border border-dashed border-border bg-card/80 px-10 py-8 text-center shadow-lg backdrop-blur-sm">
+                  <p className="text-lg font-semibold text-foreground">¡Comienza a crear tu flujo!</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Usa los botones de arriba para añadir nodos y módulos, luego conéctalos arrastrando.
+                  </p>
+                </div>
+              </Panel>
+            )}
+          </ReactFlow>
+        ) : (
+          <StructuredView
+            nodes={nodes}
+            edges={edges}
+            modules={modules}
+            onFocusModule={handleFocusModule}
+            onFocusNode={handleFocusNode}
+            onSwitchToCanvas={() => setViewMode("canvas")}
           />
-          <Background variant={BackgroundVariant.Dots} gap={16} size={0.8} color="hsl(220, 10%, 85%)" />
+        )}
 
-          {nodes.length === 0 && !isLoading && (
-            <Panel position="top-center" className="mt-20">
-              <div className="rounded-2xl border border-dashed border-border bg-card/80 px-10 py-8 text-center shadow-lg backdrop-blur-sm">
-                <p className="text-lg font-semibold text-foreground">¡Comienza a crear tu flujo!</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Usa los botones de arriba para añadir nodos, luego conéctalos arrastrando.
-                </p>
-              </div>
-            </Panel>
-          )}
-        </ReactFlow>
+        {/* Flow Context Panel */}
+        {showContext && (
+          <FlowContextPanel
+            items={contextItems}
+            onChange={setContextItems}
+            onClose={() => setShowContext(false)}
+          />
+        )}
 
-        {selectedNode && (
+        {selectedNode && viewMode === "canvas" && (
           <NodeConfigPanel
             node={selectedNode}
             onUpdate={updateNodeData}
