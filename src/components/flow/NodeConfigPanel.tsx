@@ -22,6 +22,7 @@ interface NodeConfigPanelProps {
   onClose: () => void;
   onDelete: (id: string) => void;
   channel?: string;
+  availableEntities?: AvailableEntity[];
 }
 
 const nodeTypeLabels: Record<string, string> = {
