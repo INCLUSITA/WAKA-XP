@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
 import {
-  ArrowLeft, RotateCcw, Send, Phone, Video, MoreVertical, Smile,
-  Paperclip, Mic, Camera, Image, CheckCheck, Wifi, Battery, Signal,
-  Loader2, Play, Search,
+  ArrowLeft, RotateCcw, Send, Phone, Video as VideoIcon, MoreVertical, Smile,
+  Paperclip, Mic, Camera, Image as ImageIcon, CheckCheck, Wifi, Battery, Signal,
+  Loader2, Play, Search, FileText, Volume2, Film, File,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Json } from "@/integrations/supabase/types";
@@ -285,7 +285,7 @@ export default function PhoneSimulator() {
               </p>
             </div>
             <div className="flex items-center gap-4 text-white/80">
-              <Video className="h-5 w-5" />
+              <VideoIcon className="h-5 w-5" />
               <Phone className="h-5 w-5" />
               <MoreVertical className="h-5 w-5" />
             </div>
@@ -344,6 +344,78 @@ export default function PhoneSimulator() {
                       {msg.imageUrl && (
                         <div className="mb-1.5 -mx-1 -mt-0.5 overflow-hidden rounded-md">
                           <img src={msg.imageUrl} alt="Attachment" className="w-full max-h-48 object-cover" />
+                        </div>
+                      )}
+
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="mb-1.5 space-y-1">
+                          {msg.attachments.map((att, i) => {
+                            const mime = att.mime || "";
+                            const isImage = mime.startsWith("image");
+                            const isVideo = mime.startsWith("video");
+                            const isAudio = mime.startsWith("audio");
+                            const isPdf = mime === "application/pdf" || att.name?.toLowerCase().endsWith(".pdf");
+                            const fileName = att.name || "archivo";
+
+                            if (isImage) {
+                              return (
+                                <div key={i} className="rounded-md overflow-hidden">
+                                  <img src={att.url} alt={fileName} className="w-full max-h-48 object-cover" />
+                                  <div className="px-2 py-0.5 bg-gray-100 flex items-center gap-1">
+                                    <ImageIcon className="h-3 w-3 text-gray-400" />
+                                    <span className="text-[10px] text-gray-500 truncate">{fileName}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            if (isVideo) {
+                              return (
+                                <div key={i} className="rounded-md overflow-hidden border border-gray-200">
+                                  <div className="flex items-center justify-center h-24 bg-gray-50">
+                                    <div className="flex flex-col items-center gap-1">
+                                      <div className="h-8 w-8 rounded-full bg-[#075E54]/15 flex items-center justify-center">
+                                        <Play className="h-4 w-4 text-[#075E54]" />
+                                      </div>
+                                      <span className="text-[9px] text-gray-400">Video</span>
+                                    </div>
+                                  </div>
+                                  <div className="px-2 py-1 bg-gray-100 flex items-center gap-1">
+                                    <Film className="h-3 w-3 text-gray-400" />
+                                    <span className="text-[10px] text-gray-500 truncate">{fileName}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            if (isAudio) {
+                              return (
+                                <div key={i} className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2 flex items-center gap-2">
+                                  <div className="h-7 w-7 rounded-full bg-[#075E54]/15 flex items-center justify-center shrink-0">
+                                    <Volume2 className="h-3.5 w-3.5 text-[#075E54]" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-[11px] text-gray-700 truncate block">{fileName}</span>
+                                    <div className="h-1 rounded-full bg-gray-200 mt-1">
+                                      <div className="h-1 rounded-full bg-[#075E54]/40 w-1/3" />
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            // PDF / Document / generic
+                            const IconComp = isPdf ? FileText : File;
+                            const label = isPdf ? "PDF" : "Documento";
+                            return (
+                              <div key={i} className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2 flex items-center gap-2">
+                                <div className="h-7 w-7 rounded-md bg-[#075E54]/10 flex items-center justify-center shrink-0">
+                                  <IconComp className="h-3.5 w-3.5 text-[#075E54]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[11px] text-gray-700 truncate block">{fileName}</span>
+                                  <span className="text-[9px] text-gray-400">{label}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
 
@@ -464,7 +536,7 @@ export default function PhoneSimulator() {
                   className="flex flex-col items-center gap-1"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-500 shadow-md">
-                    <Image className="h-5 w-5 text-white" />
+                    <ImageIcon className="h-5 w-5 text-white" />
                   </div>
                   <span className="text-[10px] text-gray-500">Galería</span>
                 </button>
