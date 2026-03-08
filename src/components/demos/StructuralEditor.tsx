@@ -29,7 +29,8 @@ export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPe
   const persist = useCallback((updated: StructuralBlock[]) => {
     setBlocks(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
-  }, [storageKey]);
+    onBlocksChange?.(updated);
+  }, [storageKey, onBlocksChange]);
 
   // Handle blocks inserted from context menu
   useEffect(() => {
