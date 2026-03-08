@@ -175,23 +175,27 @@ export default function DemoViewer() {
         <DemoComponent />
       </Suspense>
     );
-  } else if (currentJsx && uploadedDemo) {
+  } else if (uploadedDemo) {
     demoStatus = uploadedDemo.status;
     demoTitle = uploadedDemo.title;
     demoSourceName = uploadedDemo.sourceName;
-    demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} />;
-  } else if (uploadedDemo?.sourceId) {
-    const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
-    demoStatus = uploadedDemo.status;
-    demoTitle = uploadedDemo.title;
-    demoSourceName = uploadedDemo.sourceName;
-    if (sourceBuiltin) {
-      const DemoComponent = sourceBuiltin.component;
-      demoContent = (
-        <Suspense fallback={<LoadingFallback />}>
-          <DemoComponent />
-        </Suspense>
-      );
+
+    // Check if JSX is a real component or just a placeholder comment from builtin duplication
+    const isPlaceholderJsx = !currentJsx || currentJsx.trim().startsWith("/*");
+    
+    if (isPlaceholderJsx && uploadedDemo.sourceId) {
+      // Fall back to rendering the built-in component
+      const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
+      if (sourceBuiltin) {
+        const DemoComponent = sourceBuiltin.component;
+        demoContent = (
+          <Suspense fallback={<LoadingFallback />}>
+            <DemoComponent />
+          </Suspense>
+        );
+      }
+    } else if (currentJsx && !isPlaceholderJsx) {
+      demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} />;
     }
   }
 
