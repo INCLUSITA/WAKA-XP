@@ -501,26 +501,29 @@ function FlowEditorInner() {
 
   const handleFocusModule = useCallback(
     (moduleId: string) => {
+      const wasStructure = viewMode !== "canvas";
       setViewMode("canvas");
+      // Longer delay when switching from structure view (ReactFlow needs to mount)
       setTimeout(() => {
-        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
-      }, 100);
+        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.4, duration: 500 });
+      }, wasStructure ? 300 : 100);
     },
-    [reactFlowInstance]
+    [reactFlowInstance, viewMode]
   );
 
   const handleFocusNodeInCanvas = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
       if (node) {
+        const wasStructure = viewMode !== "canvas";
         setSelectedNode(node);
         setViewMode("canvas");
         setTimeout(() => {
-          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 400 });
-        }, 100);
+          reactFlowInstance.fitView({ nodes: [{ id: nodeId }], padding: 0.5, duration: 500 });
+        }, wasStructure ? 300 : 100);
       }
     },
-    [nodes, reactFlowInstance]
+    [nodes, reactFlowInstance, viewMode]
   );
 
   return (
