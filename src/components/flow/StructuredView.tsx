@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Node, Edge } from "@xyflow/react";
 import {
   Layers, Box, ChevronRight, ChevronDown, MousePointerClick, Package, ArrowRight,
+  Hexagon, BrainCircuit,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -144,25 +145,25 @@ export function StructuredView({
 
   return (
     <div className="flex h-full flex-col bg-muted/30">
-      {/* Prominent header bar — visually distinct from canvas */}
-      <div className="flex items-center gap-3 border-b-2 border-primary/20 bg-card px-6 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-          <Layers className="h-4.5 w-4.5 text-primary" />
+      {/* Header — XP structural layer identity */}
+      <div className="flex items-center gap-3 border-b border-xp-structure/20 bg-xp-structure/5 px-6 py-3.5">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-xp-structure/10">
+          <Layers className="h-4 w-4 text-xp-structure" />
         </div>
         <div>
           <h2 className="text-sm font-bold text-foreground tracking-wide">Structure View</h2>
-          <p className="text-[10px] text-muted-foreground">High-level flow architecture</p>
+          <p className="text-[9px] text-xp-structure/70 font-medium">XP Structural Layer</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px] font-semibold px-2.5 py-0.5 border-primary/30 text-primary">
+          <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 border-xp-structure/30 text-xp-structure">
             {modules.length} {modules.length === 1 ? "module" : "modules"}
           </Badge>
-          <Badge variant="outline" className="text-[10px] font-medium px-2.5 py-0.5">
+          <Badge variant="outline" className="text-[10px] font-medium px-2 py-0.5">
             {regularNodes.length} nodes
           </Badge>
           <button
             onClick={onSwitchToCanvas}
-            className="ml-2 flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
+            className="ml-2 flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
           >
             <MousePointerClick className="h-3 w-3" />
             Canvas
@@ -171,13 +172,18 @@ export function StructuredView({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-5">
-          {/* Modules */}
+        <div className="p-5 space-y-4">
+
+          {/* ── Structural Layer: Modules ── */}
           {modules.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 px-1">
-                Modules
-              </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 px-1">
+                <div className="h-px flex-1 bg-xp-structure/15" />
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-xp-structure/60">
+                  Modules
+                </span>
+                <div className="h-px flex-1 bg-xp-structure/15" />
+              </div>
               {modules.map((mod) => {
                 const modNodes = grouped[mod.id] || [];
                 const outgoing = moduleConnections.filter((c) => c.from === mod.id);
@@ -187,12 +193,12 @@ export function StructuredView({
                   <button
                     key={mod.id}
                     onClick={() => onFocusModule(mod.id)}
-                    className="w-full rounded-xl border-2 bg-card p-4 text-left transition-all hover:shadow-lg group"
+                    className="w-full rounded-xl border-2 bg-card p-3.5 text-left transition-all hover:shadow-lg group"
                     style={{ borderColor: `${mod.color}40` }}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className="h-8 w-1.5 rounded-full"
+                        className="h-7 w-1.5 rounded-full"
                         style={{ background: mod.color }}
                       />
                       <div className="flex-1 min-w-0">
@@ -213,7 +219,7 @@ export function StructuredView({
                     </div>
 
                     {modNodes.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
+                      <div className="mt-2.5 flex flex-wrap gap-1.5 pl-5">
                         {modNodes.slice(0, 8).map((n) => (
                           <span
                             key={n.id}
@@ -221,7 +227,7 @@ export function StructuredView({
                               e.stopPropagation();
                               onFocusNode(n.id);
                             }}
-                            className="cursor-pointer rounded-md bg-muted/80 px-2 py-1 text-[10px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1"
+                            className="cursor-pointer rounded-md bg-muted/80 px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1"
                           >
                             <span
                               className="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0"
@@ -249,9 +255,33 @@ export function StructuredView({
             </div>
           )}
 
-          {/* Divider */}
+          {/* ── Contextual Layer: Entity surface placeholder ── */}
+          <div className="rounded-xl border border-dashed border-xp-context/20 bg-xp-context/3 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-5 w-5 items-center justify-center rounded bg-xp-context/10">
+                <BrainCircuit className="h-3 w-3 text-xp-context/60" />
+              </div>
+              <span className="text-[10px] font-bold text-xp-context/70 uppercase tracking-wider">
+                Context & Entities
+              </span>
+              <Badge variant="outline" className="ml-auto text-[8px] border-xp-context/20 text-xp-context/50 px-1.5 py-0">
+                XP Layer
+              </Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground/60 leading-relaxed pl-7">
+              Shared context variables and entities from the experience layer will be reflected here for structural visibility.
+            </p>
+          </div>
+
+          {/* Divider before unassigned */}
           {modules.length > 0 && unassigned.length > 0 && (
-            <div className="border-t border-border" />
+            <div className="flex items-center gap-2 px-1">
+              <div className="h-px flex-1 bg-border/50" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/40">
+                Execution
+              </span>
+              <div className="h-px flex-1 bg-border/50" />
+            </div>
           )}
 
           {/* Unassigned nodes */}
@@ -312,7 +342,7 @@ export function StructuredView({
                                 <Select
                                   onValueChange={(moduleId) => handleAssign(n.id, moduleId)}
                                 >
-                                  <SelectTrigger className="h-6 w-[80px] shrink-0 border border-primary/30 bg-primary/5 text-[10px] font-medium text-primary hover:bg-primary/10 transition-colors focus:ring-1 focus:ring-primary/30 rounded-md [&>svg]:h-2.5 [&>svg]:w-2.5">
+                                  <SelectTrigger className="h-6 w-[80px] shrink-0 border border-xp-structure/30 bg-xp-structure/5 text-[10px] font-medium text-xp-structure hover:bg-xp-structure/10 transition-colors focus:ring-1 focus:ring-xp-structure/30 rounded-md [&>svg]:h-2.5 [&>svg]:w-2.5">
                                     <SelectValue placeholder="Assign →" />
                                   </SelectTrigger>
                                   <SelectContent align="end">
@@ -343,15 +373,15 @@ export function StructuredView({
 
           {/* Empty state */}
           {modules.length === 0 && unassigned.length === 0 && (
-            <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
-              <Box className="mx-auto h-10 w-10 text-muted-foreground/20 mb-4" />
+            <div className="rounded-xl border-2 border-dashed border-border p-10 text-center">
+              <Box className="mx-auto h-8 w-8 text-muted-foreground/20 mb-3" />
               <p className="text-base font-bold text-foreground">No structure yet</p>
-              <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
+              <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
                 Create modules in Canvas view to organize your flow into logical sections
               </p>
               <button
                 onClick={onSwitchToCanvas}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <MousePointerClick className="h-4 w-4" />
                 Switch to Canvas
