@@ -270,14 +270,14 @@ export default function AIProposalsPanel({ demoId, demoTitle }: AIProposalsPanel
                     </>
                   )}
 
-                  {/* Accepted: Apply to Sandbox */}
+                  {/* Accepted: Approve for Sandbox */}
                   {p.status === "accepted" && (
                     <button
                       onClick={() => updateStatus(p.id, "applied")}
                       className="flex items-center gap-1 rounded-md bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/25 transition"
-                      title="Apply to sandbox — stable demo is not affected"
+                      title="Approve for sandbox — visual application coming soon"
                     >
-                      <Play className="h-3 w-3" /> Apply to Sandbox
+                      <Play className="h-3 w-3" /> Approve for Sandbox
                     </button>
                   )}
 
