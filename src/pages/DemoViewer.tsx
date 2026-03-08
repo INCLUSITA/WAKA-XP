@@ -270,6 +270,7 @@ export default function DemoViewer() {
             demoTitle={demoTitle}
             pendingBlock={pendingContextBlock}
             onPendingBlockConsumed={() => setPendingContextBlock(null)}
+            onBlocksChange={setLiveBlocks}
           />
         )}
       </div>
