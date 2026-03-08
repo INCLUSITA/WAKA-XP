@@ -333,13 +333,39 @@ export default function HomePage() {
                 </TabsContent>
 
                 <TabsContent value="candidates">
-                  <Card className="glass border-gradient rounded-xl p-8 text-center">
-                    <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
-                    <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
-                    <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
-                      Go to Production <ArrowRight className="ml-1 h-3 w-3" />
-                    </Button>
-                  </Card>
+                  {candidates.filter((c: any) => c.status !== "archived").length === 0 ? (
+                    <Card className="glass border-gradient rounded-xl p-8 text-center">
+                      <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                      <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
+                      <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
+                        Go to Production <ArrowRight className="ml-1 h-3 w-3" />
+                      </Button>
+                    </Card>
+                  ) : (
+                    <Card className="glass border-gradient rounded-xl overflow-hidden">
+                      <div className="divide-y divide-border/30">
+                        {candidates.filter((c: any) => c.status !== "archived").slice(0, 5).map((c: any) => (
+                          <div key={c.id} className="flex items-center justify-between px-4 py-3 hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => navigate(`/production?id=${c.id}`)}>
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-md bg-amber-500/10 p-1"><Rocket className="h-3 w-3 text-amber-600" /></div>
+                              <span className="text-sm font-medium text-foreground">{c.name}</span>
+                              <Badge variant="secondary" className="text-[10px] bg-amber-500/15 text-amber-600">{c.status}</Badge>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="text-[10px]">{c.environment}</Badge>
+                              <span className="text-xs text-muted-foreground/40">{format(new Date(c.updated_at), "dd MMM", { locale: es })}</span>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-border/30 p-2">
+                        <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-amber-600" onClick={() => navigate("/production")}>
+                          View all candidates <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </div>
+                    </Card>
+                  )}
                 </TabsContent>
               </Tabs>
             </motion.div>
