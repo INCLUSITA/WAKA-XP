@@ -113,29 +113,40 @@ function FlowEditorInner() {
     MODULE_TEMPLATES,
   } = useFlowModules(nodes, setNodes);
 
-  // Inject callbacks into module group nodes
+  // Inject callbacks into module group nodes — use ref to avoid re-triggering setNodes
+  const moduleCallbacksRef = useRef({ toggleCollapse, renameModule, deleteModule });
+  moduleCallbacksRef.current = { toggleCollapse, renameModule, deleteModule };
+
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((n) =>
+    setNodes((nds) => {
+      const hasModules = nds.some((n) => n.type === "moduleGroup");
+      if (!hasModules) return nds;
+      return nds.map((n) =>
         n.type === "moduleGroup"
           ? {
               ...n,
               data: {
                 ...n.data,
-                onToggleCollapse: toggleCollapse,
-                onRename: renameModule,
-                onDelete: deleteModule,
+                onToggleCollapse: moduleCallbacksRef.current.toggleCollapse,
+                onRename: moduleCallbacksRef.current.renameModule,
+                onDelete: moduleCallbacksRef.current.deleteModule,
               },
             }
           : n
-      )
-    );
-  }, [toggleCollapse, renameModule, deleteModule, setNodes]);
+      );
+    });
+    // Only re-inject when nodes array identity changes (load, add, delete)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, setNodes]);
 
-  // Keep module counts updated
+  // Keep module counts updated (only when node count or parentId changes)
+  const prevCountKey = useRef("");
   useEffect(() => {
+    const key = nodes.map((n) => `${n.id}:${n.parentId || ""}`).join(",");
+    if (key === prevCountKey.current) return;
+    prevCountKey.current = key;
     updateModuleCounts();
-  }, [nodes.length, updateModuleCounts]);
+  }, [nodes, updateModuleCounts]);
 
   // Load flow from DB on mount if ?id= is present
   useEffect(() => {
