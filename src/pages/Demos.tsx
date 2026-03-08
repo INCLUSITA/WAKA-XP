@@ -271,6 +271,7 @@ export default function Demos() {
                 sourceLabel={demo.sourceName}
                 onOpen={() => openDemo(demo.id, demo.jsxSource)}
                 onDuplicate={() => handleDuplicateUploaded(demo)}
+                onDelete={() => requestDelete(demo.id, demo.title, true)}
               />
             ))}
           </div>
