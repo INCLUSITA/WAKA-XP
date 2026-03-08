@@ -253,7 +253,7 @@ export default function AIProposalsPanel({ demoId, demoTitle, currentJsx, onJsxU
     );
 
     if (result) {
-      onJsxUpdate!(result.modifiedJsx);
+      onJsxUpdate!(result.modifiedJsx, `Batch apply: ${toApply.length} change(s)`);
       const appliedIds = new Set(toApply.map((p) => p.id));
       persist(proposals.map((p) =>
         appliedIds.has(p.id) ? { ...p, status: "applied" as ProposalStatus, visuallyApplied: true } : p
