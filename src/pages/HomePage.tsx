@@ -87,6 +87,8 @@ export default function HomePage() {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [loading, setLoading] = useState(true);
   const [experienceCount, setExperienceCount] = useState(0);
+  const [candidateStats, setCandidateStats] = useState<{ candidate: number; validated: number; live: number }>({ candidate: 0, validated: 0, live: 0 });
+  const [candidates, setCandidates] = useState<any[]>([]);
   const navigate = useNavigate();
   const uploadedDemos = getUploadedDemos();
   const allDemos = [...BUILTIN_DEMOS, ...uploadedDemos.map(d => ({ ...d, component: null as any }))];
@@ -94,12 +96,20 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [flowsRes, expRes] = await Promise.all([
+      const [flowsRes, expRes, candRes] = await Promise.all([
         supabase.from("flows").select("*").eq("tenant_id", tenantId).neq("status", "archived").order("updated_at", { ascending: false }).limit(10),
         supabase.from("experiences").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId),
+        supabase.from("production_candidates").select("*").eq("tenant_id", tenantId).order("updated_at", { ascending: false }),
       ]);
       setFlows(flowsRes.data || []);
       setExperienceCount(expRes.count || 0);
+      const allCandidates = candRes.data || [];
+      setCandidates(allCandidates);
+      setCandidateStats({
+        candidate: allCandidates.filter((c: any) => c.status === "candidate").length,
+        validated: allCandidates.filter((c: any) => c.status === "validated").length,
+        live: allCandidates.filter((c: any) => c.status === "live").length,
+      });
       setLoading(false);
     };
     fetchData();
@@ -323,13 +333,39 @@ export default function HomePage() {
                 </TabsContent>
 
                 <TabsContent value="candidates">
-                  <Card className="glass border-gradient rounded-xl p-8 text-center">
-                    <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
-                    <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
-                    <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
-                      Go to Production <ArrowRight className="ml-1 h-3 w-3" />
-                    </Button>
-                  </Card>
+                  {candidates.filter((c: any) => c.status !== "archived").length === 0 ? (
+                    <Card className="glass border-gradient rounded-xl p-8 text-center">
+                      <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                      <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
+                      <Button size="sm" variant="outline" className="mt-4 border-border/50" onClick={() => navigate("/production")}>
+                        Go to Production <ArrowRight className="ml-1 h-3 w-3" />
+                      </Button>
+                    </Card>
+                  ) : (
+                    <Card className="glass border-gradient rounded-xl overflow-hidden">
+                      <div className="divide-y divide-border/30">
+                        {candidates.filter((c: any) => c.status !== "archived").slice(0, 5).map((c: any) => (
+                          <div key={c.id} className="flex items-center justify-between px-4 py-3 hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => navigate(`/production?id=${c.id}`)}>
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-md bg-amber-500/10 p-1"><Rocket className="h-3 w-3 text-amber-600" /></div>
+                              <span className="text-sm font-medium text-foreground">{c.name}</span>
+                              <Badge variant="secondary" className="text-[10px] bg-amber-500/15 text-amber-600">{c.status}</Badge>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="text-[10px]">{c.environment}</Badge>
+                              <span className="text-xs text-muted-foreground/40">{format(new Date(c.updated_at), "dd MMM", { locale: es })}</span>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-border/30 p-2">
+                        <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-amber-600" onClick={() => navigate("/production")}>
+                          View all candidates <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </div>
+                    </Card>
+                  )}
                 </TabsContent>
               </Tabs>
             </motion.div>
@@ -339,16 +375,23 @@ export default function HomePage() {
           <motion.section initial="hidden" animate="visible">
             <motion.h2 variants={fadeUp} custom={0} className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.2em] mb-4">Production Pipeline</motion.h2>
             <motion.div variants={fadeUp} custom={1} className="flex gap-3 overflow-x-auto pb-2">
-              {pipelineStages.map((stage, i) => (
-                <div key={stage.label} className="flex items-center gap-3">
-                  <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03]">
-                    <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
-                    <p className="text-2xl font-bold text-foreground/80 mt-1">0</p>
+              {pipelineStages.map((stage, i) => {
+                let count = 0;
+                if (stage.label === "Candidate") count = candidateStats.candidate;
+                else if (stage.label === "Validated") count = candidateStats.validated;
+                else if (stage.label === "Live") count = candidateStats.live;
+                else if (stage.label === "Demo") count = allDemos.length;
+                return (
+                  <div key={stage.label} className="flex items-center gap-3">
+                    <div className="glass border-gradient rounded-xl px-5 py-4 text-center min-w-[130px] transition-all hover:scale-[1.03] cursor-pointer" onClick={() => { if (stage.label === "Candidate" || stage.label === "Validated" || stage.label === "Live") navigate("/production"); }}>
+                      <stage.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stage.label}</p>
+                      <p className="text-2xl font-bold text-foreground/80 mt-1">{count}</p>
+                    </div>
+                    {i < pipelineStages.length - 1 && <div className="w-6 h-px bg-gradient-to-r from-border/60 to-border/20" />}
                   </div>
-                  {i < pipelineStages.length - 1 && <div className="w-6 h-px bg-gradient-to-r from-border/60 to-border/20" />}
-                </div>
-              ))}
+                );
+              })}
             </motion.div>
           </motion.section>
 

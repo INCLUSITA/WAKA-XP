@@ -132,6 +132,18 @@ function ExperienceDetail({
             </span>
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={async () => {
+          const { data, error } = await supabase.from("production_candidates").insert({
+            name: `${experience.name} — Candidate`,
+            experience_id: experience.id,
+            tenant_id: experience.tenant_id,
+          }).select("id").single();
+          if (error) { toast.error("Error creating candidate"); return; }
+          toast.success("Production Candidate created");
+          navigate(`/production?id=${data.id}`);
+        }} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
+          <Rocket className="mr-1 h-3.5 w-3.5" /> Promote to Candidate
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setShowVersions((v) => !v)} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
           <History className="mr-1 h-3.5 w-3.5" /> Versions
         </Button>

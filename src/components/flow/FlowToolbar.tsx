@@ -1,7 +1,7 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
-  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2
+  Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ interface FlowToolbarProps {
   onSimulate?: () => void;
   onTranslate?: () => void;
   onVersions?: () => void;
+  onPromoteToCandidate?: () => void;
   saveStatus?: SaveStatus;
   experienceName?: string | null;
   onOpenExperience?: () => void;
@@ -74,6 +75,7 @@ export function FlowToolbar({
   onSimulate,
   onTranslate,
   onVersions,
+  onPromoteToCandidate,
   saveStatus,
   experienceName,
   onOpenExperience,
@@ -150,6 +152,11 @@ export function FlowToolbar({
 
       {/* Right side — editor-only actions */}
       <div className="ml-auto flex gap-1">
+        {onPromoteToCandidate && (
+          <Button variant="outline" size="sm" onClick={onPromoteToCandidate} className="border-amber-500/30 text-amber-600 hover:bg-amber-500/5 text-xs">
+            <Rocket className="mr-1 h-3.5 w-3.5" /> Promote
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={() => window.location.href = "/studio"} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
           <Sparkles className="mr-1 h-3.5 w-3.5" /> XP Studio
         </Button>
