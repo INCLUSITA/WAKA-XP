@@ -1,5 +1,5 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { MessageSquare, Paperclip, Image, FileText, Music, Video, File } from "lucide-react";
+import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles } from "lucide-react";
 
 function AttachmentIcon({ mime }: { mime?: string }) {
   const cls = "h-3 w-3 text-muted-foreground";
