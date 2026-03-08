@@ -176,6 +176,8 @@ export default function StructuralBlockCard({
                 field={field}
                 value={editProps[field.key]}
                 onChange={(v) => setEditProps({ ...editProps, [field.key]: v })}
+                allProps={block.type === "media" ? editProps : undefined}
+                onChangeProps={block.type === "media" ? setEditProps : undefined}
               />
             </div>
           ))}
