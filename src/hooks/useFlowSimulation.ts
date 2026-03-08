@@ -8,6 +8,7 @@ export interface ChatMessage {
   quickReplies?: string[];
   timestamp: Date;
   imageUrl?: string;
+  attachments?: { url: string; name?: string; mime?: string }[];
 }
 
 export interface SimulationContext {
