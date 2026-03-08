@@ -9,9 +9,10 @@ interface StructuralEditorProps {
   demoTitle: string;
   pendingBlock?: StructuralBlock | null;
   onPendingBlockConsumed?: () => void;
+  onBlocksChange?: (blocks: StructuralBlock[]) => void;
 }
 
-export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed }: StructuralEditorProps) {
+export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPendingBlockConsumed, onBlocksChange }: StructuralEditorProps) {
   const storageKey = `structural-blocks-${demoId}`;
 
   const [blocks, setBlocks] = useState<StructuralBlock[]>(() => {
@@ -23,12 +24,18 @@ export default function StructuralEditor({ demoId, demoTitle, pendingBlock, onPe
     }
   });
 
+  // Emit initial blocks on mount
+  useEffect(() => {
+    onBlocksChange?.(blocks);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [insertAtIndex, setInsertAtIndex] = useState<number | null>(null);
 
   const persist = useCallback((updated: StructuralBlock[]) => {
     setBlocks(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
-  }, [storageKey]);
+    onBlocksChange?.(updated);
+  }, [storageKey, onBlocksChange]);
 
   // Handle blocks inserted from context menu
   useEffect(() => {

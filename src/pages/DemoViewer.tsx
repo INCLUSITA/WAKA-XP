@@ -8,6 +8,7 @@ import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRi
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
+import StructuralBlocksPreview from "@/components/demos/StructuralBlocksPreview";
 import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
@@ -96,6 +97,12 @@ export default function DemoViewer() {
 
   // Ref to structural editor's insert handler
   const [pendingContextBlock, setPendingContextBlock] = useState<StructuralBlock | null>(null);
+  const [liveBlocks, setLiveBlocks] = useState<StructuralBlock[]>(() => {
+    try {
+      const raw = localStorage.getItem(`structural-blocks-${id}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
 
   const builtinDemo = BUILTIN_DEMOS.find((d) => d.id === id);
 
@@ -253,6 +260,10 @@ export default function DemoViewer() {
           onContextMenu={handleDemoContextMenu}
         >
           {demoContent}
+          {/* Live structural blocks preview */}
+          {isSandboxDemo && liveBlocks.length > 0 && (
+            <StructuralBlocksPreview blocks={liveBlocks} />
+          )}
         </div>
 
         {isSandboxDemo && activePanel === "ai" && (
@@ -264,6 +275,7 @@ export default function DemoViewer() {
             demoTitle={demoTitle}
             pendingBlock={pendingContextBlock}
             onPendingBlockConsumed={() => setPendingContextBlock(null)}
+            onBlocksChange={setLiveBlocks}
           />
         )}
       </div>
