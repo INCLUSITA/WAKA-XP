@@ -256,11 +256,11 @@ export default function DemoViewer() {
       <div className="flex flex-1 overflow-hidden">
         {/* Demo content area — right-click to insert */}
         <div
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-auto relative"
           onContextMenu={handleDemoContextMenu}
         >
           {demoContent}
-          {/* Live structural blocks preview */}
+          {/* Live structural blocks — overlaid directly on demo */}
           {isSandboxDemo && liveBlocks.length > 0 && (
             <StructuralBlocksPreview blocks={liveBlocks} />
           )}
