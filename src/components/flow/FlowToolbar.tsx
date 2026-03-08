@@ -80,6 +80,7 @@ export function FlowToolbar({
   experienceName,
   onOpenExperience,
 }: FlowToolbarProps) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-2 py-2">
       <SidebarTrigger className="mr-1" />
