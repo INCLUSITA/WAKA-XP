@@ -457,6 +457,8 @@ function FlowEditorInner() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
+  const reactFlowInstance = useReactFlow();
+
   const handleFocusNode = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
@@ -468,28 +470,22 @@ function FlowEditorInner() {
   const handleAddModuleAndFocus = useCallback(
     (label?: string) => {
       const id = addModule(label);
-      // Auto-pan to the new module after it renders
       setTimeout(() => {
         reactFlowInstance.fitView({ nodes: [{ id }], padding: 0.3, duration: 400 });
       }, 150);
       return id;
     },
-    [addModule]
+    [addModule, reactFlowInstance]
   );
-
-  const reactFlowInstance = useReactFlow();
 
   const handleFocusModule = useCallback(
     (moduleId: string) => {
       setViewMode("canvas");
       setTimeout(() => {
-        const moduleNode = nodes.find((n) => n.id === moduleId);
-        if (moduleNode) {
-          reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
-        }
+        reactFlowInstance.fitView({ nodes: [{ id: moduleId }], padding: 0.3, duration: 400 });
       }, 100);
     },
-    [nodes, reactFlowInstance]
+    [reactFlowInstance]
   );
 
   const handleFocusNodeInCanvas = useCallback(
