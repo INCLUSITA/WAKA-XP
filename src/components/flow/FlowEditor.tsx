@@ -333,11 +333,11 @@ function FlowEditorInner() {
   const [showValidation, setShowValidation] = useState(false);
 
   const handleValidate = useCallback(() => {
-    const errors = validateFlow(nodes, edges);
+    const errors = validateFlow(nodes, edges, channel);
     setValidationErrors(errors);
     setShowValidation(true);
     return errors;
-  }, [nodes, edges]);
+  }, [nodes, edges, channel]);
 
   const handleExport = useCallback(() => {
     const errors = validateFlow(nodes, edges);
