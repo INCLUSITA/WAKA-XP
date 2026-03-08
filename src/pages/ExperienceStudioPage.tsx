@@ -10,7 +10,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye, ArrowLeft,
-  Hammer, Smartphone, Rocket, History, Link2, Unlink,
+  Hammer, Smartphone, Rocket, History, Link2, Unlink, ExternalLink, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -36,11 +36,19 @@ interface Experience {
 
 type Flow = Tables<"flows">;
 
+interface CandidateBasic {
+  id: string;
+  name: string;
+  status: string;
+  environment: string;
+  updated_at: string;
+}
+
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   active: "bg-primary/15 text-primary",
   validated: "bg-chart-4/15 text-chart-4",
-  candidate: "bg-accent/15 text-accent",
+  candidate: "bg-amber-500/15 text-amber-600",
   live: "bg-primary/20 text-primary",
   archived: "bg-destructive/15 text-destructive",
 };
@@ -60,8 +68,10 @@ function ExperienceDetail({
   const navigate = useNavigate();
   const [linkedFlows, setLinkedFlows] = useState<Flow[]>([]);
   const [unlinkedFlows, setUnlinkedFlows] = useState<Flow[]>([]);
+  const [candidates, setCandidates] = useState<CandidateBasic[]>([]);
   const [showVersions, setShowVersions] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showPromoteDialog, setShowPromoteDialog] = useState(false);
 
   const fetchFlows = useCallback(async () => {
     const [linkedRes, unlinkedRes] = await Promise.all([
@@ -83,9 +93,20 @@ function ExperienceDetail({
     setUnlinkedFlows(unlinkedRes.data || []);
   }, [tenantId, experience.id]);
 
+  const fetchCandidates = useCallback(async () => {
+    const { data } = await supabase
+      .from("production_candidates")
+      .select("id, name, status, environment, updated_at")
+      .eq("experience_id", experience.id)
+      .neq("status", "archived")
+      .order("updated_at", { ascending: false });
+    setCandidates((data as CandidateBasic[]) || []);
+  }, [experience.id]);
+
   useEffect(() => {
     fetchFlows();
-  }, [fetchFlows]);
+    fetchCandidates();
+  }, [fetchFlows, fetchCandidates]);
 
   const linkFlow = async (flowId: string) => {
     const { error } = await supabase
@@ -113,6 +134,32 @@ function ExperienceDetail({
     fetchFlows();
   };
 
+  const handlePromote = async (selectedFlowId?: string) => {
+    const { data, error } = await supabase.from("production_candidates").insert({
+      name: `${experience.name} — Candidate`,
+      experience_id: experience.id,
+      flow_id: selectedFlowId || null,
+      tenant_id: experience.tenant_id,
+    }).select("id").single();
+    if (error) { toast.error("Error creating candidate"); return; }
+    toast.success("Production Candidate created");
+    fetchCandidates();
+    navigate(`/production?id=${data.id}`);
+  };
+
+  const onPromoteClick = () => {
+    if (linkedFlows.length === 0) {
+      // No flows — promote with experience only
+      handlePromote();
+    } else if (linkedFlows.length === 1) {
+      // Single flow — auto-select
+      handlePromote(linkedFlows[0].id);
+    } else {
+      // Multiple flows — show selection dialog
+      setShowPromoteDialog(true);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Detail header */}
@@ -132,16 +179,7 @@ function ExperienceDetail({
             </span>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={async () => {
-          const { data, error } = await supabase.from("production_candidates").insert({
-            name: `${experience.name} — Candidate`,
-            experience_id: experience.id,
-            tenant_id: experience.tenant_id,
-          }).select("id").single();
-          if (error) { toast.error("Error creating candidate"); return; }
-          toast.success("Production Candidate created");
-          navigate(`/production?id=${data.id}`);
-        }} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
+        <Button variant="outline" size="sm" onClick={onPromoteClick} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
           <Rocket className="mr-1 h-3.5 w-3.5" /> Promote to Candidate
         </Button>
         <Button variant="outline" size="sm" onClick={() => setShowVersions((v) => !v)} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
@@ -157,6 +195,7 @@ function ExperienceDetail({
               <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
               <TabsTrigger value="demos" className="text-xs">Demos</TabsTrigger>
               <TabsTrigger value="flows" className="text-xs">Flows ({linkedFlows.length})</TabsTrigger>
+              <TabsTrigger value="candidates" className="text-xs">Candidates ({candidates.length})</TabsTrigger>
               <TabsTrigger value="versions" className="text-xs">Versions</TabsTrigger>
             </TabsList>
 
@@ -165,8 +204,9 @@ function ExperienceDetail({
                 <Card className="glass border-gradient rounded-xl">
                   <CardContent className="p-4 text-center">
                     <Smartphone className="h-6 w-6 mx-auto text-accent mb-2" />
-                    <p className="text-2xl font-bold text-foreground">0</p>
+                    <p className="text-lg font-bold text-muted-foreground/40">—</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demos</p>
+                    <p className="text-[9px] text-muted-foreground/40 mt-0.5 italic">Not linked yet</p>
                   </CardContent>
                 </Card>
                 <Card className="glass border-gradient rounded-xl">
@@ -178,8 +218,8 @@ function ExperienceDetail({
                 </Card>
                 <Card className="glass border-gradient rounded-xl">
                   <CardContent className="p-4 text-center">
-                    <Rocket className="h-6 w-6 mx-auto text-chart-4 mb-2" />
-                    <p className="text-2xl font-bold text-foreground">0</p>
+                    <Rocket className="h-6 w-6 mx-auto text-amber-600 mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{candidates.length}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Candidates</p>
                   </CardContent>
                 </Card>
@@ -206,8 +246,8 @@ function ExperienceDetail({
             <TabsContent value="demos">
               <Card className="glass border-gradient rounded-xl p-8 text-center">
                 <Smartphone className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
-                <p className="text-sm text-muted-foreground/60">No demos linked to this experience yet.</p>
-                <p className="text-[10px] text-muted-foreground/40 mt-1">Demo linking coming in next iteration</p>
+                <p className="text-sm text-muted-foreground/60">Demo ↔ Experience linking coming next</p>
+                <p className="text-[10px] text-muted-foreground/40 mt-1">Demos exist independently for now. This relationship will be connected in a future iteration.</p>
               </Card>
             </TabsContent>
 
@@ -297,6 +337,48 @@ function ExperienceDetail({
               </Dialog>
             </TabsContent>
 
+            <TabsContent value="candidates">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Production Candidates</p>
+                  <Button size="sm" variant="outline" onClick={onPromoteClick} className="text-xs gap-1 border-amber-500/30 text-amber-600">
+                    <Rocket className="h-3 w-3" /> Create Candidate
+                  </Button>
+                </div>
+
+                {candidates.length === 0 ? (
+                  <Card className="glass border-gradient rounded-xl p-8 text-center">
+                    <Rocket className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground/60">No production candidates yet.</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1">Promote this experience to create a candidate</p>
+                  </Card>
+                ) : (
+                  <Card className="glass border-gradient rounded-xl overflow-hidden">
+                    <div className="divide-y divide-border/30">
+                      {candidates.map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-secondary/30 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/production?id=${c.id}`)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-md bg-amber-500/10 p-1"><Rocket className="h-3 w-3 text-amber-600" /></div>
+                            <span className="text-sm font-medium text-foreground">{c.name}</span>
+                            <Badge variant="secondary" className={`text-[10px] ${statusColors[c.status] || ""}`}>{c.status}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{c.environment}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground/40">{format(new Date(c.updated_at), "dd MMM yyyy")}</span>
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
             <TabsContent value="versions">
               <Card className="glass border-gradient rounded-xl overflow-hidden">
                 <div className="h-[500px]">
@@ -342,6 +424,41 @@ function ExperienceDetail({
           </div>
         )}
       </div>
+
+      {/* Promote flow selection dialog */}
+      <Dialog open={showPromoteDialog} onOpenChange={setShowPromoteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Flow for Candidate</DialogTitle>
+            <DialogDescription>This experience has {linkedFlows.length} linked flows. Select which flow to include in the production candidate.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 overflow-auto space-y-1 py-2">
+            {linkedFlows.map((flow) => (
+              <div
+                key={flow.id}
+                className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
+                onClick={() => {
+                  setShowPromoteDialog(false);
+                  handlePromote(flow.id);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Hammer className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-sm font-medium">{flow.name}</span>
+                  <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status]}`}>{flow.status}</Badge>
+                </div>
+                <span className="text-xs text-muted-foreground">{(flow.nodes as unknown as any[])?.length || 0} nodes</span>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPromoteDialog(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => { setShowPromoteDialog(false); handlePromote(); }} className="text-xs text-muted-foreground">
+              Skip — no flow
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -359,6 +476,7 @@ export default function ExperienceStudioPage() {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [flowCountMap, setFlowCountMap] = useState<Record<string, number>>({});
+  const [candidateCountMap, setCandidateCountMap] = useState<Record<string, number>>({});
   const navigate = useNavigate();
 
   const fetchExperiences = useCallback(async () => {
@@ -374,21 +492,25 @@ export default function ExperienceStudioPage() {
       console.error(error);
     } else {
       setExperiences((data as Experience[]) || []);
-      // Fetch flow counts per experience
       if (data && data.length > 0) {
         const ids = data.map((e) => e.id);
-        const { data: flows } = await supabase
-          .from("flows")
-          .select("id, experience_id")
-          .in("experience_id", ids);
-        if (flows) {
+        const [flowsRes, candRes] = await Promise.all([
+          supabase.from("flows").select("id, experience_id").in("experience_id", ids),
+          supabase.from("production_candidates").select("id, experience_id").in("experience_id", ids).neq("status", "archived"),
+        ]);
+        if (flowsRes.data) {
           const counts: Record<string, number> = {};
-          flows.forEach((f) => {
-            if (f.experience_id) {
-              counts[f.experience_id] = (counts[f.experience_id] || 0) + 1;
-            }
+          flowsRes.data.forEach((f) => {
+            if (f.experience_id) counts[f.experience_id] = (counts[f.experience_id] || 0) + 1;
           });
           setFlowCountMap(counts);
+        }
+        if (candRes.data) {
+          const counts: Record<string, number> = {};
+          candRes.data.forEach((c) => {
+            if (c.experience_id) counts[c.experience_id] = (counts[c.experience_id] || 0) + 1;
+          });
+          setCandidateCountMap(counts);
         }
       }
     }
@@ -501,52 +623,55 @@ export default function ExperienceStudioPage() {
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {activeExps.map((exp) => (
-                    <Card
-                      key={exp.id}
-                      className="group glass border-gradient rounded-xl transition-all hover:scale-[1.01] cursor-pointer"
-                      onClick={() => setSearchParams({ id: exp.id })}
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-sm line-clamp-1">{exp.name}</CardTitle>
-                          <div className="flex gap-1">
-                            <Badge variant="secondary" className={`text-[10px] ${statusColors[exp.status] || ""}`}>
-                              {exp.status}
-                            </Badge>
-                            <Badge variant="outline" className="text-[10px]">{exp.environment}</Badge>
+                  {activeExps.map((exp) => {
+                    const candCount = candidateCountMap[exp.id] || 0;
+                    return (
+                      <Card
+                        key={exp.id}
+                        className="group glass border-gradient rounded-xl transition-all hover:scale-[1.01] cursor-pointer"
+                        onClick={() => setSearchParams({ id: exp.id })}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-sm line-clamp-1">{exp.name}</CardTitle>
+                            <div className="flex gap-1">
+                              <Badge variant="secondary" className={`text-[10px] ${statusColors[exp.status] || ""}`}>
+                                {exp.status}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px]">{exp.environment}</Badge>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        {exp.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{exp.description}</p>
-                        )}
-                        <p className="text-[10px] text-muted-foreground/60">
-                          Updated {format(new Date(exp.updated_at), "dd MMM yyyy, HH:mm")}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground/50">
-                          <span className="flex items-center gap-1"><Smartphone className="h-3 w-3" /> 0 demos</span>
-                          <span className="flex items-center gap-1"><Hammer className="h-3 w-3" /> {flowCountMap[exp.id] || 0} flows</span>
-                          <span className="flex items-center gap-1"><Rocket className="h-3 w-3" /> 0 candidates</span>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="gap-1 pt-0" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" title="View" onClick={() => setSearchParams({ id: exp.id })}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" title="Edit" onClick={() => setSearchParams({ id: exp.id })}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => duplicateExperience(exp)} title="Duplicate">
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteExperience(exp.id)} title="Delete">
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent className="pb-2">
+                          {exp.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{exp.description}</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground/60">
+                            Updated {format(new Date(exp.updated_at), "dd MMM yyyy, HH:mm")}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground/50">
+                            <span className="flex items-center gap-1 text-muted-foreground/30 italic"><Smartphone className="h-3 w-3" /> —</span>
+                            <span className="flex items-center gap-1"><Hammer className="h-3 w-3" /> {flowCountMap[exp.id] || 0} flows</span>
+                            <span className="flex items-center gap-1"><Rocket className="h-3 w-3" /> {candCount} candidates</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="gap-1 pt-0" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="sm" title="View" onClick={() => setSearchParams({ id: exp.id })}>
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" title="Edit" onClick={() => setSearchParams({ id: exp.id })}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => duplicateExperience(exp)} title="Duplicate">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => deleteExperience(exp.id)} title="Delete">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>

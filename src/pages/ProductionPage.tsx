@@ -14,13 +14,13 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import {
   Plus, Rocket, Loader2, Eye, Copy, Trash2, Archive, ArrowLeft,
   Hammer, Sparkles, History, MoreVertical, Search, ChevronRight,
-  Link2, ExternalLink,
+  Link2, ExternalLink, CheckCircle2, ArrowUpRight, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -36,7 +36,6 @@ interface ProductionCandidate {
   tenant_id: string;
   created_at: string;
   updated_at: string;
-  // joined
   experience_name?: string;
   flow_name?: string;
 }
@@ -54,6 +53,65 @@ const envColors: Record<string, string> = {
   production: "border-primary/30 text-primary",
 };
 
+// Status transition config
+const statusTransitions: Record<string, { next?: { status: string; label: string; icon: typeof CheckCircle2 }; prev?: { status: string; label: string } }> = {
+  candidate: {
+    next: { status: "validated", label: "Mark as Validated", icon: CheckCircle2 },
+  },
+  validated: {
+    next: { status: "live", label: "Promote to Live", icon: ArrowUpRight },
+    prev: { status: "candidate", label: "Back to Candidate" },
+  },
+  live: {
+    next: { status: "archived", label: "Archive", icon: Archive },
+    prev: { status: "validated", label: "Back to Validated" },
+  },
+  archived: {
+    prev: { status: "candidate", label: "Reactivate as Candidate" },
+  },
+};
+
+// ── Status Transition Buttons ──
+function StatusTransitionActions({
+  candidate,
+  onTransition,
+  compact = false,
+}: {
+  candidate: ProductionCandidate;
+  onTransition: (id: string, newStatus: string) => void;
+  compact?: boolean;
+}) {
+  const transitions = statusTransitions[candidate.status];
+  if (!transitions) return null;
+
+  return (
+    <div className={`flex items-center ${compact ? "gap-1" : "gap-2"}`}>
+      {transitions.prev && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`${compact ? "h-6 text-[10px] px-2" : "text-xs"} text-muted-foreground`}
+          onClick={(e) => { e.stopPropagation(); onTransition(candidate.id, transitions.prev!.status); }}
+        >
+          <Undo2 className="h-3 w-3 mr-1" />
+          {transitions.prev.label}
+        </Button>
+      )}
+      {transitions.next && (
+        <Button
+          variant={compact ? "outline" : "default"}
+          size="sm"
+          className={`${compact ? "h-6 text-[10px] px-2 border-amber-500/30 text-amber-600" : "text-xs"}`}
+          onClick={(e) => { e.stopPropagation(); onTransition(candidate.id, transitions.next!.status); }}
+        >
+          <transitions.next.icon className="h-3 w-3 mr-1" />
+          {transitions.next.label}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // ── Candidate Detail ──
 
 function CandidateDetail({
@@ -67,6 +125,13 @@ function CandidateDetail({
 }) {
   const navigate = useNavigate();
   const [showVersions, setShowVersions] = useState(false);
+
+  const handleTransition = async (id: string, newStatus: string) => {
+    const { error } = await supabase.from("production_candidates").update({ status: newStatus }).eq("id", id);
+    if (error) { toast.error("Error updating status"); return; }
+    toast.success(`Status changed to ${newStatus}`);
+    onRefresh();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -88,6 +153,7 @@ function CandidateDetail({
             </span>
           </div>
         </div>
+        <StatusTransitionActions candidate={candidate} onTransition={handleTransition} />
         <Button variant="outline" size="sm" onClick={() => setShowVersions((v) => !v)} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
           <History className="mr-1 h-3.5 w-3.5" /> Versions
         </Button>
@@ -104,6 +170,30 @@ function CandidateDetail({
             </TabsList>
 
             <TabsContent value="overview">
+              {/* Status transitions card */}
+              <Card className="glass border-gradient rounded-xl mb-6">
+                <CardContent className="p-4">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Status Pipeline</p>
+                  <div className="flex items-center gap-2">
+                    {["candidate", "validated", "live", "archived"].map((s, i) => (
+                      <div key={s} className="flex items-center gap-2">
+                        <div className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                          candidate.status === s
+                            ? `${statusColors[s]} ring-1 ring-offset-1 ring-offset-background`
+                            : "bg-muted/50 text-muted-foreground/40"
+                        }`}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </div>
+                        {i < 3 && <ChevronRight className="h-3 w-3 text-muted-foreground/30" />}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <StatusTransitionActions candidate={candidate} onTransition={handleTransition} />
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
                 <Card className="glass border-gradient rounded-xl">
                   <CardContent className="p-4">
@@ -257,6 +347,8 @@ function CandidateDetail({
                 description: candidate.description,
                 status: candidate.status,
                 environment: candidate.environment,
+                experience_id: candidate.experience_id,
+                flow_id: candidate.flow_id,
               })}
               onRestore={() => {
                 toast.success("Version restored");
@@ -303,7 +395,6 @@ export default function ProductionPage() {
 
     const items = (data || []) as ProductionCandidate[];
 
-    // Resolve experience and flow names
     const expIds = [...new Set(items.filter(c => c.experience_id).map(c => c.experience_id!))];
     const flowIds = [...new Set(items.filter(c => c.flow_id).map(c => c.flow_id!))];
 
@@ -369,11 +460,15 @@ export default function ProductionPage() {
     fetchCandidates();
   };
 
-  const archiveCandidate = async (id: string) => {
-    const { error } = await supabase.from("production_candidates").update({ status: "archived" }).eq("id", id);
-    if (error) { toast.error("Error archiving"); return; }
-    toast.success("Candidate archived");
+  const transitionStatus = async (id: string, newStatus: string) => {
+    const { error } = await supabase.from("production_candidates").update({ status: newStatus }).eq("id", id);
+    if (error) { toast.error("Error updating status"); return; }
+    toast.success(`Status changed to ${newStatus}`);
     fetchCandidates();
+  };
+
+  const archiveCandidate = async (id: string) => {
+    await transitionStatus(id, "archived");
   };
 
   const deleteCandidate = async (id: string) => {
@@ -392,6 +487,9 @@ export default function ProductionPage() {
   const activeCandidates = filtered.filter(c => c.status !== "archived");
   const archivedCandidates = filtered.filter(c => c.status === "archived");
 
+  // Summary stats
+  const needsAttention = candidates.filter(c => c.status === "candidate").length;
+
   return (
     <div className="flex flex-col h-screen">
       <div className="flex items-center gap-3 border-b border-border/50 bg-card/40 backdrop-blur-md px-5 py-3.5">
@@ -400,6 +498,11 @@ export default function ProductionPage() {
           <h1 className="text-lg font-bold text-foreground tracking-wide">Production</h1>
           <p className="text-[11px] text-muted-foreground">Manage production candidates, validation and readiness</p>
         </div>
+        {needsAttention > 0 && (
+          <Badge variant="secondary" className="bg-amber-500/15 text-amber-600 text-[10px]">
+            {needsAttention} awaiting validation
+          </Badge>
+        )}
         <WorkspaceContextBar compact />
         <Button size="sm" className="glow-primary font-medium ml-2" onClick={() => setShowCreate(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" /> New Candidate
@@ -492,25 +595,29 @@ export default function ProductionPage() {
                         </p>
                       </CardContent>
                       <CardFooter className="gap-1 pt-0" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" title="Open" onClick={() => setSearchParams({ id: c.id })}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => duplicateCandidate(c)} title="Duplicate">
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm"><MoreVertical className="h-3.5 w-3.5" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => archiveCandidate(c.id)}>
-                              <Archive className="mr-2 h-3.5 w-3.5" /> Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => deleteCandidate(c.id)} className="text-destructive">
-                              <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <StatusTransitionActions candidate={c} onTransition={transitionStatus} compact />
+                        <div className="ml-auto flex gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => duplicateCandidate(c)} title="Duplicate">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreVertical className="h-3.5 w-3.5" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSearchParams({ id: c.id })}>
+                                <Eye className="mr-2 h-3.5 w-3.5" /> Open Detail
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => archiveCandidate(c.id)}>
+                                <Archive className="mr-2 h-3.5 w-3.5" /> Archive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => deleteCandidate(c.id)} className="text-destructive">
+                                <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </CardFooter>
                     </Card>
                   ))}
@@ -526,9 +633,14 @@ export default function ProductionPage() {
                   {archivedCandidates.map((c) => (
                     <Card key={c.id} className="opacity-60 glass border-gradient rounded-xl cursor-pointer" onClick={() => setSearchParams({ id: c.id })}>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{c.name}</CardTitle>
-                        <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground w-fit">archived</Badge>
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-sm">{c.name}</CardTitle>
+                          <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground">archived</Badge>
+                        </div>
                       </CardHeader>
+                      <CardFooter className="pt-0" onClick={e => e.stopPropagation()}>
+                        <StatusTransitionActions candidate={c} onTransition={transitionStatus} compact />
+                      </CardFooter>
                     </Card>
                   ))}
                 </div>

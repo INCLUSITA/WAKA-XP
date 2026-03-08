@@ -7,7 +7,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Copy, Archive, Trash2, Loader2, Sparkles, Link2 } from "lucide-react";
+import { Plus, Pencil, Copy, Archive, Trash2, Loader2, Sparkles, Link2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,6 +34,7 @@ export default function FlowDashboard() {
   const { tenantId } = useWorkspace();
   const [flows, setFlows] = useState<Flow[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [candidateCountMap, setCandidateCountMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -58,6 +59,22 @@ export default function FlowDashboard() {
       console.error(flowsRes.error);
     } else {
       setFlows(flowsRes.data || []);
+      // Fetch candidate counts per flow
+      const flowIds = (flowsRes.data || []).map(f => f.id);
+      if (flowIds.length > 0) {
+        const { data: candData } = await supabase
+          .from("production_candidates")
+          .select("id, flow_id")
+          .in("flow_id", flowIds)
+          .neq("status", "archived");
+        if (candData) {
+          const counts: Record<string, number> = {};
+          candData.forEach(c => {
+            if (c.flow_id) counts[c.flow_id] = (counts[c.flow_id] || 0) + 1;
+          });
+          setCandidateCountMap(counts);
+        }
+      }
     }
     setExperiences((expRes.data as Experience[]) || []);
     setLoading(false);
@@ -180,12 +197,20 @@ export default function FlowDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {flows.map((flow) => {
               const expName = getExperienceName(flow.experience_id);
+              const candCount = candidateCountMap[flow.id] || 0;
               return (
                 <Card key={flow.id} className="group relative transition-shadow hover:shadow-md">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
-                      <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>{flow.status}</Badge>
+                      <div className="flex gap-1 items-center">
+                        {candCount > 0 && (
+                          <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-600 px-1.5">
+                            <Rocket className="h-2.5 w-2.5 mr-0.5" /> {candCount}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>{flow.status}</Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pb-2 space-y-2">

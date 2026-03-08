@@ -80,6 +80,7 @@ export function FlowToolbar({
   experienceName,
   onOpenExperience,
 }: FlowToolbarProps) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-2 py-2">
       <SidebarTrigger className="mr-1" />
@@ -157,7 +158,7 @@ export function FlowToolbar({
             <Rocket className="mr-1 h-3.5 w-3.5" /> Promote
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => window.location.href = "/studio"} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
+        <Button variant="outline" size="sm" onClick={() => navigate("/studio")} className="border-accent/30 text-accent hover:bg-accent/5 text-xs">
           <Sparkles className="mr-1 h-3.5 w-3.5" /> XP Studio
         </Button>
         {onSimulate && (
