@@ -494,7 +494,7 @@ export default function WakaFlowPreview() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isGenerating}
-                className="pr-12 min-h-[56px] max-h-[140px] resize-none rounded-xl bg-secondary/40 border-border/50 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-primary/30"
+                className="pr-12 min-h-[56px] max-h-[140px] resize-none rounded-xl bg-secondary/40 border-border/50 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary/30"
                 rows={2}
               />
               <Button
