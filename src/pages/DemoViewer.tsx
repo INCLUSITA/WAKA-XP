@@ -266,7 +266,7 @@ export default function DemoViewer() {
       {isSandboxDemo && versions.length > 1 && (
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
       )}
-      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
         {/* Demo content area — right-click to insert */}
         <div
           className="flex-1 overflow-auto"
