@@ -93,6 +93,7 @@ export default function DemoViewer() {
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
+  const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
