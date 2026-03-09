@@ -89,6 +89,7 @@ export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activePanel, setActivePanel] = useState<SandboxPanel>("none");
+  const [showTour, setShowTour] = useState(false);
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
