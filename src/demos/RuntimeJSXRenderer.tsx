@@ -3,6 +3,30 @@ import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
   jsxSource: string;
+  demoId?: string;
+}
+
+// A localStorage-backed useState that persists data across sessions
+function createUsePersistentState(demoId: string) {
+  return function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const storageKey = `demo-data-${demoId}-${key}`;
+    const [value, setValue] = useState<T>(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        return stored ? JSON.parse(stored) : defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    });
+
+    useEffect(() => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(value));
+      } catch { /* ignore */ }
+    }, [value, storageKey]);
+
+    return [value, setValue];
+  };
 }
 
 export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProps) {
