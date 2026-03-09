@@ -32,7 +32,7 @@ function createUsePersistentState(demoId: string) {
   };
 }
 
-export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: RuntimeJSXRendererProps) {
+export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scenarioNotes, onSaveNotes, readOnly = false }: RuntimeJSXRendererProps) {
   const usePersistentState = useMemo(() => createUsePersistentState(demoId), [demoId]);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
