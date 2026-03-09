@@ -209,19 +209,20 @@ export default function HomePage() {
               )}
 
               <motion.div variants={fadeUp} custom={3}>
-                <Card className="group cursor-pointer glass border-gradient rounded-xl transition-all duration-300 hover:scale-[1.01] opacity-80 hover:opacity-100" onClick={() => navigate("/studio")}>
+                <Card className="group cursor-pointer glass rounded-xl transition-all duration-300 hover:scale-[1.01] border border-primary/20 bg-primary/[0.02]" onClick={() => navigate("/wakaflow")}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2">
-                      <div className="rounded-md bg-primary/10 p-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /></div>
-                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Experience Studio</span>
-                      <Badge variant="outline" className="text-[8px] ml-auto border-accent/30 text-accent">XP Studio</Badge>
+                      <div className="rounded-md bg-primary/10 p-1.5"><Layers className="h-3.5 w-3.5 text-primary" /></div>
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">WakaFlow</span>
+                      <Badge variant="outline" className="text-[8px] ml-auto border-primary/30 text-primary">Preview</Badge>
                     </div>
-                    <CardTitle className="text-sm text-foreground mt-1">
-                      {experienceCount > 0 ? `${experienceCount} experience${experienceCount > 1 ? "s" : ""}` : "No experiences yet"}
-                    </CardTitle>
+                    <CardTitle className="text-sm text-foreground mt-1">Model-first preview</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-xs text-muted-foreground/60">Open Experience Studio</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground/60">Explore the new journey design path</p>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
