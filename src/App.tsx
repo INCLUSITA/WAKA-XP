@@ -27,6 +27,7 @@ import IntegrationsPage from "./pages/IntegrationsPage";
 import WhatsAppTestPage from "./pages/WhatsAppTestPage";
 import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
+import ShareDemo from "./pages/ShareDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public share — no sidebar, no nav */}
+            <Route path="/share/:id" element={<ShareDemo />} />
             <Route element={<AppLayout />}>
               {/* Principal */}
               <Route path="/" element={<HomePage />} />
