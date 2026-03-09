@@ -10,8 +10,9 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MessageSquare, Send, Phone, Loader2, CheckCircle2, XCircle,
-  Clock, AlertTriangle, Plus, X, Info,
+  Clock, AlertTriangle, Plus, X, Info, Copy,
 } from "lucide-react";
+import { InboundMessages } from "@/components/whatsapp/InboundMessages";
 
 type SendStatus = "idle" | "sending" | "sent" | "accepted" | "failed";
 
