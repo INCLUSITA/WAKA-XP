@@ -94,7 +94,7 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       console.error("JSX Runtime Error:", err);
       setError(err.message || "Error al compilar el JSX");
     }
-  }, [jsxSource]);
+  }, [jsxSource, scenarioNotes, onSaveNotes, readOnly]);
 
   if (error) {
     return (
