@@ -71,11 +71,13 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: Ru
       const factory = new Function(
         "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
         "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
+        "usePersistentState",
         moduleCode
       );
       const Comp = factory(
         React, useState, useEffect, useRef, useCallback, useMemo,
-        useReducer, useContext, createContext, memo, forwardRef, Fragment
+        useReducer, useContext, createContext, memo, forwardRef, Fragment,
+        usePersistentState
       );
 
       if (Comp) {
