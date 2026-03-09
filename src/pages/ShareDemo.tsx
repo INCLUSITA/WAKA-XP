@@ -14,8 +14,9 @@ const LoadingFallback = () => (
   </div>
 );
 
-export default function ShareDemo() {
-  const { id } = useParams<{ id: string }>();
+export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string } = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = overrideDemoId || paramId;
   const demo = BUILTIN_DEMOS.find((d) => d.id === id);
 
   // For uploaded demos (non-builtin), load from DB
