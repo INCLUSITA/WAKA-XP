@@ -30,11 +30,24 @@ import WhatsAppTestPage from "./pages/WhatsAppTestPage";
 import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import ShareDemo from "./pages/ShareDemo";
+import DemoDomainRoot, { isDemoDomain } from "./components/DemoDomainGuard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // If served from the demo subdomain, show only the demo
+  if (isDemoDomain()) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <DemoDomainRoot />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <WorkspaceProvider>
@@ -81,6 +94,7 @@ const App = () => (
       </WorkspaceProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
