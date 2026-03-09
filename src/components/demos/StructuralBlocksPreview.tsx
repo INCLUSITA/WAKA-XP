@@ -192,6 +192,7 @@ function SystemChip({ block, index }: { block: StructuralBlock; index: number })
   const chip = chipContent[block.type] || {
     icon: <Database className="h-2.5 w-2.5" />,
     label: config.label,
+    detail: undefined as string | undefined,
     accent: "text-white/40 border-white/10 bg-white/5",
   };
 
