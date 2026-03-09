@@ -116,11 +116,30 @@ export default function DemoViewer() {
     }
     getDemo(id).then((d) => {
       setUploadedDemo(d);
-      // Load scenario notes from DB
+      // Load scenario notes from DB, with localStorage migration fallback
       if (d) {
         import("@/integrations/supabase/client").then(({ supabase }) => {
-          (supabase as any).from("uploaded_demos").select("scenario_notes").eq("id", id).maybeSingle().then(({ data }: any) => {
-            if (data?.scenario_notes) setScenarioNotes(data.scenario_notes);
+          (supabase as any).from("uploaded_demos").select("scenario_notes").eq("id", id).maybeSingle().then(async ({ data }: any) => {
+            const dbNotes = data?.scenario_notes;
+            const hasDbNotes = dbNotes && Object.keys(dbNotes).length > 0;
+
+            if (hasDbNotes) {
+              setScenarioNotes(dbNotes);
+            } else {
+              // Migrate from localStorage if available
+              try {
+                const raw = localStorage.getItem('moov_demo_scenario_notes');
+                if (raw) {
+                  const localNotes = JSON.parse(raw);
+                  if (localNotes && Object.keys(localNotes).length > 0) {
+                    setScenarioNotes(localNotes);
+                    // Persist to DB
+                    await (supabase as any).from("uploaded_demos").update({ scenario_notes: localNotes }).eq("id", id);
+                    console.log("[DemoViewer] Migrated scenario notes from localStorage to DB");
+                  }
+                }
+              } catch (_) { /* ignore */ }
+            }
           });
         });
       }
