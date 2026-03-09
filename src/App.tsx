@@ -24,6 +24,7 @@ import ProductionPage from "./pages/ProductionPage";
 import LibraryPage from "./pages/LibraryPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
+import WhatsAppTestPage from "./pages/WhatsAppTestPage";
 import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import NotFound from "./pages/NotFound";
