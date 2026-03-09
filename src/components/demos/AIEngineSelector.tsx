@@ -65,11 +65,16 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    // Use setTimeout to avoid the opening click being caught
+    const timer = setTimeout(() => document.addEventListener("mousedown", handleClick), 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClick);
+    };
   }, [open]);
 
   const activeEngine = ENGINES.find((e) => e.id === selection.engineId) || ENGINES[0];
