@@ -55,6 +55,7 @@ const App = () => (
               <Route path="/import" element={<ImportPage />} />
               {/* Infrastructure */}
               <Route path="/integrations" element={<IntegrationsPage />} />
+              <Route path="/whatsapp" element={<WhatsAppTestPage />} />
               <Route path="/tenants" element={<TenantsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               {/* Advanced Tools */}

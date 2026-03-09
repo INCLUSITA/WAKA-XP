@@ -37,6 +37,7 @@ const assetsItems = [
 
 const infraItems = [
   { title: "Integrations", url: "/integrations", icon: Plug },
+  { title: "WhatsApp Test", url: "/whatsapp", icon: MessageSquare },
   { title: "Tenants", url: "/tenants", icon: Building2 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
