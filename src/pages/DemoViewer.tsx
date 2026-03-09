@@ -4,7 +4,7 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2 } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
@@ -13,6 +13,7 @@ import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
 import { toast } from "@/hooks/use-toast";
+import GuidedTourOverlay from "@/components/demos/GuidedTourOverlay";
 
 type SandboxPanel = "none" | "ai" | "structure";
 
@@ -88,6 +89,7 @@ export default function DemoViewer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activePanel, setActivePanel] = useState<SandboxPanel>("none");
+  const [showTour, setShowTour] = useState(false);
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
@@ -118,6 +120,17 @@ export default function DemoViewer() {
   }, [id, builtinDemo, getDemo]);
 
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
+
+  // Auto-show guided tour for sandbox demos on first visit
+  useEffect(() => {
+    if (isSandboxDemo && id) {
+      const tourKey = `tour-seen-${id}`;
+      if (!sessionStorage.getItem(tourKey)) {
+        setShowTour(true);
+        sessionStorage.setItem(tourKey, "1");
+      }
+    }
+  }, [isSandboxDemo, id]);
 
   const baseJsx = uploadedDemo?.jsxSource || null;
 
@@ -253,7 +266,7 @@ export default function DemoViewer() {
       {isSandboxDemo && versions.length > 1 && (
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
       )}
-      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
         {/* Demo content area — right-click to insert */}
         <div
           className="flex-1 overflow-auto"
@@ -277,6 +290,22 @@ export default function DemoViewer() {
             onPendingBlockConsumed={() => setPendingContextBlock(null)}
             onBlocksChange={setLiveBlocks}
           />
+        )}
+
+        {/* Guided tour overlay — sandbox only */}
+        {isSandboxDemo && showTour && (
+          <GuidedTourOverlay onDismiss={() => setShowTour(false)} />
+        )}
+
+        {/* Tour re-trigger button */}
+        {isSandboxDemo && !showTour && (
+          <button
+            onClick={() => setShowTour(true)}
+            className="absolute bottom-4 left-4 z-50 flex items-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/25 transition-all"
+          >
+            <MousePointer2 className="h-3.5 w-3.5" />
+            Guide
+          </button>
         )}
       </div>
 
