@@ -237,7 +237,7 @@ export default function DemoViewer() {
         );
       }
     } else if (currentJsx && !isPlaceholderJsx) {
-      demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} />;
+      demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} demoId={id} />;
     }
   }
 
