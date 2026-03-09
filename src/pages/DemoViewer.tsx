@@ -291,6 +291,22 @@ export default function DemoViewer() {
             onBlocksChange={setLiveBlocks}
           />
         )}
+
+        {/* Guided tour overlay — sandbox only */}
+        {isSandboxDemo && showTour && (
+          <GuidedTourOverlay onDismiss={() => setShowTour(false)} />
+        )}
+
+        {/* Tour re-trigger button */}
+        {isSandboxDemo && !showTour && (
+          <button
+            onClick={() => setShowTour(true)}
+            className="absolute bottom-4 left-4 z-50 flex items-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/25 transition-all"
+          >
+            <MousePointer2 className="h-3.5 w-3.5" />
+            Guide
+          </button>
+        )}
       </div>
 
       {/* Context menu overlay */}
