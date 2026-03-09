@@ -260,7 +260,7 @@ export default function WakaFlowPreview() {
     } finally {
       setIsGenerating(false);
     }
-  }, [input, isGenerating, currentJsx, pushVersion, addMessage, uploadedImages]);
+  }, [input, isGenerating, currentJsx, pushVersion, addMessage, uploadedImages, engineSelection]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
