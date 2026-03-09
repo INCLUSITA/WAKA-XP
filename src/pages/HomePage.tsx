@@ -17,7 +17,7 @@ import {
   Map, LayoutGrid, Rocket, ArrowRight, Search,
   MessageSquare, Phone, Bot, Globe, Instagram, Send,
   Plug, ChevronRight, Zap, Shield,
-  Radio, Wifi, WifiOff, AlertCircle,
+  Radio, Wifi, WifiOff, AlertCircle, Layers,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
