@@ -143,8 +143,8 @@ export default function WakaFlowPreview() {
     updateVariant((v) => ({ ...v, versionIndex: idx }));
   }, [updateVariant]);
 
-  const pushVersion = useCallback((jsx: string, label: string) => {
-    const newV: ArtifactVersion = { id: `v${Date.now()}`, jsx, label, timestamp: new Date().toISOString() };
+  const pushVersion = useCallback((jsx: string, label: string, engine?: EngineId) => {
+    const newV: ArtifactVersion = { id: `v${Date.now()}`, jsx, label, timestamp: new Date().toISOString(), engine };
     updateVariant((v) => {
       const next = [...v.versions.slice(0, v.versionIndex + 1), newV];
       return { ...v, versions: next, versionIndex: next.length - 1 };
