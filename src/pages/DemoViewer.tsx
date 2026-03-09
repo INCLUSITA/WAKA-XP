@@ -93,6 +93,7 @@ export default function DemoViewer() {
   const { getDemo, saveDemo } = useUploadedDemos();
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
+  const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -115,9 +116,25 @@ export default function DemoViewer() {
     }
     getDemo(id).then((d) => {
       setUploadedDemo(d);
+      // Load scenario notes from DB
+      if (d) {
+        import("@/integrations/supabase/client").then(({ supabase }) => {
+          (supabase as any).from("uploaded_demos").select("scenario_notes").eq("id", id).maybeSingle().then(({ data }: any) => {
+            if (data?.scenario_notes) setScenarioNotes(data.scenario_notes);
+          });
+        });
+      }
       setLoadingDemo(false);
     });
   }, [id, builtinDemo, getDemo]);
+
+  const handleSaveNotes = useCallback(async (notes: Record<string, string>) => {
+    setScenarioNotes(notes);
+    if (id) {
+      const { supabase } = await import("@/integrations/supabase/client");
+      await (supabase as any).from("uploaded_demos").update({ scenario_notes: notes }).eq("id", id);
+    }
+  }, [id]);
 
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
 
@@ -237,7 +254,7 @@ export default function DemoViewer() {
         );
       }
     } else if (currentJsx && !isPlaceholderJsx) {
-      demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} demoId={id} />;
+      demoContent = <RuntimeJSXRenderer jsxSource={currentJsx} demoId={id} scenarioNotes={scenarioNotes} onSaveNotes={handleSaveNotes} />;
     }
   }
 

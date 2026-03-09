@@ -1,0 +1,1 @@
+ALTER TABLE public.uploaded_demos ADD COLUMN IF NOT EXISTS scenario_notes jsonb NOT NULL DEFAULT '{}'::jsonb;

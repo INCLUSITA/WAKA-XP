@@ -4,6 +4,9 @@ import { transform } from "sucrase";
 interface RuntimeJSXRendererProps {
   jsxSource: string;
   demoId?: string;
+  scenarioNotes?: Record<string, string>;
+  onSaveNotes?: (notes: Record<string, string>) => void;
+  readOnly?: boolean;
 }
 
 // A localStorage-backed useState that persists data across sessions
@@ -29,7 +32,7 @@ function createUsePersistentState(demoId: string) {
   };
 }
 
-export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: RuntimeJSXRendererProps) {
+export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scenarioNotes, onSaveNotes, readOnly = false }: RuntimeJSXRendererProps) {
   const usePersistentState = useMemo(() => createUsePersistentState(demoId), [demoId]);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +71,17 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: Ru
       `;
 
       // Execute with React in scope - provide all common hooks and utilities
+      const saveNoteCallback = readOnly ? null : onSaveNotes || null;
       const factory = new Function(
         "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
         "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
-        "usePersistentState",
+        "usePersistentState", "__scenarioNotes", "__saveNote",
         moduleCode
       );
       const Comp = factory(
         React, useState, useEffect, useRef, useCallback, useMemo,
         useReducer, useContext, createContext, memo, forwardRef, Fragment,
-        usePersistentState
+        usePersistentState, scenarioNotes || {}, saveNoteCallback
       );
 
       if (Comp) {
@@ -90,7 +94,7 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: Ru
       console.error("JSX Runtime Error:", err);
       setError(err.message || "Error al compilar el JSX");
     }
-  }, [jsxSource]);
+  }, [jsxSource, scenarioNotes, onSaveNotes, readOnly]);
 
   if (error) {
     return (

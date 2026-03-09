@@ -1,6 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { BUILTIN_DEMOS } from "@/demos/registry";
+import { supabase } from "@/integrations/supabase/client";
+import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import wakaLogo from "@/assets/waka-logo.png";
 
 const LoadingFallback = () => (
@@ -16,39 +18,86 @@ export default function ShareDemo() {
   const { id } = useParams<{ id: string }>();
   const demo = BUILTIN_DEMOS.find((d) => d.id === id);
 
-  if (!demo) {
+  // For uploaded demos (non-builtin), load from DB
+  const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string> } | null>(null);
+  const [loading, setLoading] = useState(!demo);
+
+  useEffect(() => {
+    if (demo || !id) return;
+    (supabase as any)
+      .from("uploaded_demos")
+      .select("title, jsx_source, scenario_notes")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data) {
+          setUploadedData({
+            jsx: data.jsx_source,
+            title: data.title,
+            notes: data.scenario_notes || {},
+          });
+        }
+        setLoading(false);
+      });
+  }, [id, demo]);
+
+  if (loading) return <LoadingFallback />;
+
+  // Builtin demo
+  if (demo) {
+    const DemoComponent = demo.component;
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-        <p className="text-lg">Demo not found.</p>
+      <div className="flex flex-col min-h-screen bg-slate-900">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10 bg-slate-900/80 backdrop-blur">
+          <img src={wakaLogo} alt="WAKA XP" className="h-7 w-7 rounded-lg object-contain" />
+          <span className="text-sm font-bold text-white tracking-wide">WAKA XP</span>
+          <span className="text-white/20 mx-1">·</span>
+          <span className="text-sm text-white/50 truncate">{demo.title}</span>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <Suspense fallback={<LoadingFallback />}>
+            <DemoComponent />
+          </Suspense>
+        </div>
+        <div className="flex items-center justify-center gap-2 py-2 border-t border-white/10 bg-slate-900/80">
+          <span className="text-[11px] text-white/30">Powered by</span>
+          <img src={wakaLogo} alt="" className="h-4 w-4 rounded object-contain opacity-40" />
+          <span className="text-[11px] font-semibold text-white/40">WAKA XP</span>
+        </div>
       </div>
     );
   }
 
-  const DemoComponent = demo.component;
+  // Uploaded demo with notes from DB (read-only)
+  if (uploadedData?.jsx) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-900">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10 bg-slate-900/80 backdrop-blur">
+          <img src={wakaLogo} alt="WAKA XP" className="h-7 w-7 rounded-lg object-contain" />
+          <span className="text-sm font-bold text-white tracking-wide">WAKA XP</span>
+          <span className="text-white/20 mx-1">·</span>
+          <span className="text-sm text-white/50 truncate">{uploadedData.title}</span>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <RuntimeJSXRenderer
+            jsxSource={uploadedData.jsx}
+            demoId={id}
+            scenarioNotes={uploadedData.notes}
+            readOnly
+          />
+        </div>
+        <div className="flex items-center justify-center gap-2 py-2 border-t border-white/10 bg-slate-900/80">
+          <span className="text-[11px] text-white/30">Powered by</span>
+          <img src={wakaLogo} alt="" className="h-4 w-4 rounded object-contain opacity-40" />
+          <span className="text-[11px] font-semibold text-white/40">WAKA XP</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900">
-      {/* Minimal header */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10 bg-slate-900/80 backdrop-blur">
-        <img src={wakaLogo} alt="WAKA XP" className="h-7 w-7 rounded-lg object-contain" />
-        <span className="text-sm font-bold text-white tracking-wide">WAKA XP</span>
-        <span className="text-white/20 mx-1">·</span>
-        <span className="text-sm text-white/50 truncate">{demo.title}</span>
-      </div>
-
-      {/* Demo full area */}
-      <div className="flex-1 overflow-auto">
-        <Suspense fallback={<LoadingFallback />}>
-          <DemoComponent />
-        </Suspense>
-      </div>
-
-      {/* Minimal footer */}
-      <div className="flex items-center justify-center gap-2 py-2 border-t border-white/10 bg-slate-900/80">
-        <span className="text-[11px] text-white/30">Powered by</span>
-        <img src={wakaLogo} alt="" className="h-4 w-4 rounded object-contain opacity-40" />
-        <span className="text-[11px] font-semibold text-white/40">WAKA XP</span>
-      </div>
+    <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
+      <p className="text-lg">Demo not found.</p>
     </div>
   );
 }

@@ -423,6 +423,7 @@ export type Database = {
           icon: string
           id: string
           jsx_source: string
+          scenario_notes: Json
           source_id: string | null
           source_name: string | null
           status: string
@@ -438,6 +439,7 @@ export type Database = {
           icon?: string
           id: string
           jsx_source: string
+          scenario_notes?: Json
           source_id?: string | null
           source_name?: string | null
           status?: string
@@ -453,6 +455,7 @@ export type Database = {
           icon?: string
           id?: string
           jsx_source?: string
+          scenario_notes?: Json
           source_id?: string | null
           source_name?: string | null
           status?: string
