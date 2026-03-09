@@ -375,20 +375,26 @@ export default function WakaFlowPreview() {
           )}
         </div>
 
-        {/* Right: view toggle */}
-        <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5 shrink-0">
-          <button
-            onClick={() => setViewMode("preview")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "preview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Eye className="h-3 w-3" /> Preview
-          </button>
-          <button
-            onClick={() => setViewMode("code")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "code" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Code className="h-3 w-3" /> Code
-          </button>
+        {/* Right: engine selector + view toggle */}
+        <div className="flex items-center gap-2 shrink-0">
+          <AIEngineSelector selection={engineSelection} onSelect={setEngineSelection} />
+
+          <div className="w-px h-5 bg-border/30" />
+
+          <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("preview")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "preview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Eye className="h-3 w-3" /> Preview
+            </button>
+            <button
+              onClick={() => setViewMode("code")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "code" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Code className="h-3 w-3" /> Code
+            </button>
+          </div>
         </div>
       </div>
 
