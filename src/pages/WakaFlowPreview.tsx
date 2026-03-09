@@ -579,8 +579,14 @@ export default function WakaFlowPreview() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-foreground truncate">{ver.label}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
                           {new Date(ver.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {ver.engine && (
+                            <>
+                              <span className="text-muted-foreground/20">·</span>
+                              <EngineBadge engineId={ver.engine} />
+                            </>
+                          )}
                         </p>
                       </div>
                       {i === versionIndex && (
