@@ -3,9 +3,34 @@ import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
   jsxSource: string;
+  demoId?: string;
 }
 
-export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProps) {
+// A localStorage-backed useState that persists data across sessions
+function createUsePersistentState(demoId: string) {
+  return function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const storageKey = `demo-data-${demoId}-${key}`;
+    const [value, setValue] = useState<T>(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        return stored ? JSON.parse(stored) : defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    });
+
+    useEffect(() => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(value));
+      } catch { /* ignore */ }
+    }, [value, storageKey]);
+
+    return [value, setValue];
+  };
+}
+
+export default function RuntimeJSXRenderer({ jsxSource, demoId = "default" }: RuntimeJSXRendererProps) {
+  const usePersistentState = useMemo(() => createUsePersistentState(demoId), [demoId]);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,11 +71,13 @@ export default function RuntimeJSXRenderer({ jsxSource }: RuntimeJSXRendererProp
       const factory = new Function(
         "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
         "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
+        "usePersistentState",
         moduleCode
       );
       const Comp = factory(
         React, useState, useEffect, useRef, useCallback, useMemo,
-        useReducer, useContext, createContext, memo, forwardRef, Fragment
+        useReducer, useContext, createContext, memo, forwardRef, Fragment,
+        usePersistentState
       );
 
       if (Comp) {
