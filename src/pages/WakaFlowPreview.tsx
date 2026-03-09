@@ -349,6 +349,9 @@ export default function WakaFlowPreview() {
             <span className="text-[10px] text-foreground/70 truncate max-w-[120px]">
               {versions[versionIndex]?.label}
             </span>
+            {versions[versionIndex]?.engine && (
+              <EngineBadge engineId={versions[versionIndex].engine!} />
+            )}
           </div>
           {versions.length > 1 && (
             <>
