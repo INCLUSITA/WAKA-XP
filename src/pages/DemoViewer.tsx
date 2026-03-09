@@ -13,6 +13,7 @@ import SandboxVersionBar from "@/components/demos/SandboxVersionBar";
 import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
 import { toast } from "@/hooks/use-toast";
+import GuidedTourOverlay from "@/components/demos/GuidedTourOverlay";
 
 type SandboxPanel = "none" | "ai" | "structure";
 
