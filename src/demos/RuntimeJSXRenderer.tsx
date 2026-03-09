@@ -4,6 +4,9 @@ import { transform } from "sucrase";
 interface RuntimeJSXRendererProps {
   jsxSource: string;
   demoId?: string;
+  scenarioNotes?: Record<string, string>;
+  onSaveNotes?: (notes: Record<string, string>) => void;
+  readOnly?: boolean;
 }
 
 // A localStorage-backed useState that persists data across sessions
