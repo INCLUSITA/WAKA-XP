@@ -224,7 +224,7 @@ export default function DemoViewer() {
     demoTitle = uploadedDemo.title;
     demoSourceName = uploadedDemo.sourceName;
 
-    const isPlaceholderJsx = !currentJsx || currentJsx.trim().startsWith("/*");
+    const isPlaceholderJsx = !currentJsx || (currentJsx.trim().startsWith("/*") && currentJsx.trim().length < 200);
     
     if (isPlaceholderJsx && uploadedDemo.sourceId) {
       const sourceBuiltin = BUILTIN_DEMOS.find((d) => d.id === uploadedDemo.sourceId);
