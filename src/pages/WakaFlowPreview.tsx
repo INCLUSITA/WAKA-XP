@@ -29,6 +29,7 @@ interface ArtifactVersion {
   jsx: string;
   label: string;
   timestamp: string;
+  engine?: EngineId;
 }
 
 interface Variant {
