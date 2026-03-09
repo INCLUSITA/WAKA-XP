@@ -71,16 +71,17 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       `;
 
       // Execute with React in scope - provide all common hooks and utilities
+      const saveNoteCallback = readOnly ? null : onSaveNotes || null;
       const factory = new Function(
         "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
         "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
-        "usePersistentState",
+        "usePersistentState", "__scenarioNotes", "__saveNote",
         moduleCode
       );
       const Comp = factory(
         React, useState, useEffect, useRef, useCallback, useMemo,
         useReducer, useContext, createContext, memo, forwardRef, Fragment,
-        usePersistentState
+        usePersistentState, scenarioNotes || {}, saveNoteCallback
       );
 
       if (Comp) {
