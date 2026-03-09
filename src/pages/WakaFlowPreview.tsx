@@ -114,14 +114,6 @@ export default function WakaFlowPreview() {
       label,
       timestamp: new Date().toISOString(),
     };
-    setVersions((prev) => [...prev, newVersion]);
-    setVersionIndex((prev) => prev + versions.length); // jump to end
-    // Fix: compute correct index
-    setVersions((prev) => {
-      setVersionIndex(prev.length); // will be set after push
-      return prev;
-    });
-    // Simpler approach: just append and jump
     setVersions((prev) => {
       const next = [...prev, newVersion];
       setVersionIndex(next.length - 1);
