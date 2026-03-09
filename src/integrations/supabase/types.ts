@@ -540,6 +540,42 @@ export type Database = {
           },
         ]
       }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          direction: string
+          from_phone: string | null
+          id: string
+          message_type: string | null
+          payload: Json | null
+          to_phone: string | null
+          wa_message_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          direction?: string
+          from_phone?: string | null
+          id?: string
+          message_type?: string | null
+          payload?: Json | null
+          to_phone?: string | null
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          direction?: string
+          from_phone?: string | null
+          id?: string
+          message_type?: string | null
+          payload?: Json | null
+          to_phone?: string | null
+          wa_message_id?: string | null
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
           created_at: string
