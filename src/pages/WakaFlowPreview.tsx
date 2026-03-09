@@ -250,7 +250,7 @@ export default function WakaFlowPreview() {
       const modifiedJsx = data.modifiedJsx;
       if (!modifiedJsx) throw new Error("No JSX returned");
 
-      pushVersion(modifiedJsx, prompt.slice(0, 50));
+      pushVersion(modifiedJsx, prompt.slice(0, 50), engineSelection.engineId);
       addMessage("assistant", `Done — applied "${prompt.slice(0, 60)}${prompt.length > 60 ? "…" : ""}". The demo has been updated.`);
     } catch (err: any) {
       console.error("AI apply error:", err);
