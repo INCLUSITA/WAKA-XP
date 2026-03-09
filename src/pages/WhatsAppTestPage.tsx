@@ -10,8 +10,9 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MessageSquare, Send, Phone, Loader2, CheckCircle2, XCircle,
-  Clock, AlertTriangle, Plus, X, Info,
+  Clock, AlertTriangle, Plus, X, Info, Copy,
 } from "lucide-react";
+import { InboundMessages } from "@/components/whatsapp/InboundMessages";
 
 type SendStatus = "idle" | "sending" | "sent" | "accepted" | "failed";
 
@@ -121,6 +122,33 @@ export default function WhatsAppTestPage() {
 
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Webhook URL */}
+          <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+            <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div className="space-y-1 flex-1">
+              <p className="font-medium text-foreground">Webhook URL for 360dialog</p>
+              <div className="flex items-center gap-2">
+                <code className="text-[11px] text-muted-foreground font-mono bg-muted px-2 py-1 rounded break-all">
+                  {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`}
+                </code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 shrink-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`);
+                    toast({ title: "Copied!" });
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Set this URL in 360dialog Hub → your number → Webhook settings.
+              </p>
+            </div>
+          </div>
+
           {/* 24h window notice */}
           <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm">
             <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
@@ -289,6 +317,8 @@ export default function WhatsAppTestPage() {
               </CardContent>
             </Card>
           )}
+          {/* Inbound messages */}
+          <InboundMessages />
         </div>
       </div>
     </div>
