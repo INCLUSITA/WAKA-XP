@@ -94,6 +94,7 @@ const App = () => {
       </WorkspaceProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
