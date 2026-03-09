@@ -42,9 +42,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public share — no sidebar, no nav */}
+            {/* Public routes */}
             <Route path="/share/:id" element={<ShareDemo />} />
-            <Route element={<AppLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected routes */}
+            <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
               {/* Principal */}
               <Route path="/" element={<HomePage />} />
               <Route path="/journeys" element={<JourneysPage />} />
