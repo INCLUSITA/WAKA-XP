@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import { BUILTIN_DEMOS, type UploadedDemo } from "@/demos/registry";
+import AIEngineSelector, { EngineBadge, type EngineSelection, type EngineId } from "@/components/demos/AIEngineSelector";
 
 /* ── Types ──────────────────────────────────────── */
 interface ChatMessage {
@@ -28,6 +29,7 @@ interface ArtifactVersion {
   jsx: string;
   label: string;
   timestamp: string;
+  engine?: EngineId;
 }
 
 interface Variant {
@@ -112,6 +114,7 @@ export default function WakaFlowPreview() {
   const [showDemoPicker, setShowDemoPicker] = useState(false);
   const [showVersionList, setShowVersionList] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<{ name: string; url: string }[]>([]);
+  const [engineSelection, setEngineSelection] = useState<EngineSelection>({ engineId: "waka-ai" });
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -140,8 +143,8 @@ export default function WakaFlowPreview() {
     updateVariant((v) => ({ ...v, versionIndex: idx }));
   }, [updateVariant]);
 
-  const pushVersion = useCallback((jsx: string, label: string) => {
-    const newV: ArtifactVersion = { id: `v${Date.now()}`, jsx, label, timestamp: new Date().toISOString() };
+  const pushVersion = useCallback((jsx: string, label: string, engine?: EngineId) => {
+    const newV: ArtifactVersion = { id: `v${Date.now()}`, jsx, label, timestamp: new Date().toISOString(), engine };
     updateVariant((v) => {
       const next = [...v.versions.slice(0, v.versionIndex + 1), newV];
       return { ...v, versions: next, versionIndex: next.length - 1 };
@@ -247,7 +250,7 @@ export default function WakaFlowPreview() {
       const modifiedJsx = data.modifiedJsx;
       if (!modifiedJsx) throw new Error("No JSX returned");
 
-      pushVersion(modifiedJsx, prompt.slice(0, 50));
+      pushVersion(modifiedJsx, prompt.slice(0, 50), engineSelection.engineId);
       addMessage("assistant", `Done — applied "${prompt.slice(0, 60)}${prompt.length > 60 ? "…" : ""}". The demo has been updated.`);
     } catch (err: any) {
       console.error("AI apply error:", err);
@@ -257,7 +260,7 @@ export default function WakaFlowPreview() {
     } finally {
       setIsGenerating(false);
     }
-  }, [input, isGenerating, currentJsx, pushVersion, addMessage, uploadedImages]);
+  }, [input, isGenerating, currentJsx, pushVersion, addMessage, uploadedImages, engineSelection]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -346,6 +349,9 @@ export default function WakaFlowPreview() {
             <span className="text-[10px] text-foreground/70 truncate max-w-[120px]">
               {versions[versionIndex]?.label}
             </span>
+            {versions[versionIndex]?.engine && (
+              <EngineBadge engineId={versions[versionIndex].engine!} />
+            )}
           </div>
           {versions.length > 1 && (
             <>
@@ -372,20 +378,26 @@ export default function WakaFlowPreview() {
           )}
         </div>
 
-        {/* Right: view toggle */}
-        <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5 shrink-0">
-          <button
-            onClick={() => setViewMode("preview")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "preview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Eye className="h-3 w-3" /> Preview
-          </button>
-          <button
-            onClick={() => setViewMode("code")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "code" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Code className="h-3 w-3" /> Code
-          </button>
+        {/* Right: engine selector + view toggle */}
+        <div className="flex items-center gap-2 shrink-0">
+          <AIEngineSelector selection={engineSelection} onSelect={setEngineSelection} />
+
+          <div className="w-px h-5 bg-border/30" />
+
+          <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("preview")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "preview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Eye className="h-3 w-3" /> Preview
+            </button>
+            <button
+              onClick={() => setViewMode("code")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "code" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Code className="h-3 w-3" /> Code
+            </button>
+          </div>
         </div>
       </div>
 
@@ -570,8 +582,14 @@ export default function WakaFlowPreview() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-foreground truncate">{ver.label}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
                           {new Date(ver.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {ver.engine && (
+                            <>
+                              <span className="text-muted-foreground/20">·</span>
+                              <EngineBadge engineId={ver.engine} />
+                            </>
+                          )}
                         </p>
                       </div>
                       {i === versionIndex && (
