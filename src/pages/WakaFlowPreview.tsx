@@ -1,320 +1,338 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft, ChevronRight, Plus, Eye, Code, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ArrowRight, Layers, Hammer, Sparkles, Eye, GitCompareArrows,
-  AlertTriangle, CheckCircle2, Info, Download, Shield,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { mapWakaFlowToTextIt, type WakaFlowModel, type MapperResult } from "@/lib/wakaflowMapper";
-import { downloadJson } from "@/lib/flowExport";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 
-const SAMPLE_MODEL: WakaFlowModel = {
-  journey: "Moov Africa – Airtime Purchase",
-  version: "0.1-preview",
-  steps: [
-    { id: "greet", label: "Greeting", type: "message", summary: "Welcome the user, present menu" },
-    { id: "select", label: "Select Product", type: "input", summary: "User picks airtime amount" },
-    { id: "confirm", label: "Confirm", type: "decision", summary: "Validate selection, ask confirmation" },
-    { id: "execute", label: "Execute", type: "action", summary: "Call API, send airtime" },
-    { id: "receipt", label: "Receipt", type: "message", summary: "Send confirmation receipt" },
-  ],
-};
+/* ── Types ──────────────────────────────────────── */
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: string;
+}
 
-const typeColors: Record<string, string> = {
-  message: "bg-primary/10 text-primary border-primary/20",
-  input: "bg-accent/60 text-accent-foreground border-accent",
-  decision: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  action: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-};
+interface ArtifactVersion {
+  id: string;
+  jsx: string;
+  label: string;
+  timestamp: string;
+}
 
-const statusConfig = {
-  clean: { label: "Clean", icon: CheckCircle2, className: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20" },
-  mapped_with_warnings: { label: "Mapped with warnings", icon: AlertTriangle, className: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
-  partial: { label: "Partial mapping", icon: AlertTriangle, className: "text-orange-600 bg-orange-500/10 border-orange-500/20" },
-};
-
-export default function WakaFlowPreview() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("model");
-
-  const mapperResult: MapperResult = useMemo(() => mapWakaFlowToTextIt(SAMPLE_MODEL), []);
-
-  const stCfg = statusConfig[mapperResult.status];
+/* ── Default starter JSX ────────────────────────── */
+const STARTER_JSX = `export default function Demo() {
+  const [count, setCount] = useState(0);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="space-y-2"
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+      color: "#e2e8f0",
+      fontFamily: "system-ui, sans-serif",
+      gap: 24,
+    }}>
+      <div style={{ fontSize: 48 }}>✨</div>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Your Demo</h1>
+      <p style={{ color: "#94a3b8", fontSize: 14, maxWidth: 400, textAlign: "center", lineHeight: 1.6 }}>
+        Describe what you want to build and the AI will generate it for you.
+        Then iterate conversationally to refine it.
+      </p>
+      <button
+        onClick={() => setCount(c => c + 1)}
+        style={{
+          padding: "10px 28px",
+          borderRadius: 8,
+          border: "none",
+          background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+          color: "#fff",
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: "pointer",
+        }}
       >
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Layers className="h-5 w-5 text-primary" />
+        Clicked {count} times
+      </button>
+    </div>
+  );
+}`;
+
+/* ── Component ──────────────────────────────────── */
+export default function WakaFlowPreview() {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome",
+      role: "system",
+      content: "Welcome to the Demo Builder. Describe what you want to create and I'll generate a live demo for you.",
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [versions, setVersions] = useState<ArtifactVersion[]>([
+    { id: "v0", jsx: STARTER_JSX, label: "Starter", timestamp: new Date().toISOString() },
+  ]);
+  const [versionIndex, setVersionIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
+  const [copied, setCopied] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const currentJsx = versions[versionIndex]?.jsx || STARTER_JSX;
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const addMessage = useCallback((role: ChatMessage["role"], content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: `msg-${Date.now()}`, role, content, timestamp: new Date().toISOString() },
+    ]);
+  }, []);
+
+  const handleSend = useCallback(async () => {
+    const prompt = input.trim();
+    if (!prompt || isGenerating) return;
+
+    setInput("");
+    addMessage("user", prompt);
+    setIsGenerating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("waka-ai-apply", {
+        body: {
+          jsxSource: currentJsx,
+          proposals: [{ prompt, summary: prompt.slice(0, 80) }],
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const modifiedJsx = data.modifiedJsx;
+      if (!modifiedJsx) throw new Error("No JSX returned");
+
+      // Add new version
+      const newVersion: ArtifactVersion = {
+        id: `v${Date.now()}`,
+        jsx: modifiedJsx,
+        label: prompt.slice(0, 50),
+        timestamp: new Date().toISOString(),
+      };
+
+      setVersions((prev) => {
+        const next = [...prev.slice(0, versionIndex + 1), newVersion];
+        setVersionIndex(next.length - 1);
+        return next;
+      });
+
+      addMessage("assistant", `Done — applied "${prompt.slice(0, 60)}${prompt.length > 60 ? "…" : ""}". The demo has been updated.`);
+    } catch (err: any) {
+      console.error("AI apply error:", err);
+      const msg = err?.message || "Something went wrong";
+      addMessage("assistant", `⚠️ ${msg}`);
+      toast.error("Failed to apply changes", { description: msg });
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [input, isGenerating, currentJsx, versionIndex, addMessage]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentJsx);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const canGoBack = versionIndex > 0;
+  const canGoForward = versionIndex < versions.length - 1;
+
+  return (
+    <div className="h-[calc(100vh-2.5rem)] flex flex-col bg-background">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-foreground tracking-tight">WakaFlow</h1>
-              <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-semibold border-primary/30 text-primary">
-                Preview
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">Model-first journey design — the next evolution of WAKA XP</p>
-          </div>
-          <Badge variant="outline" className={`text-[10px] gap-1.5 ${stCfg.className}`}>
-            <stCfg.icon className="h-3 w-3" />
-            {stCfg.label}
+          <span className="text-sm font-semibold text-foreground tracking-tight">Demo Builder</span>
+          <Badge variant="outline" className="text-[9px] uppercase tracking-widest font-semibold border-primary/30 text-primary">
+            AI
           </Badge>
         </div>
-      </motion.div>
 
-      {/* Philosophy banner */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.35 }}>
-        <Card className="border-dashed border-primary/20 bg-primary/[0.03]">
-          <CardContent className="py-4 px-5 flex items-start gap-4">
-            <GitCompareArrows className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="space-y-1 text-sm">
-              <p className="font-medium text-foreground">From flow-first to model-first</p>
-              <p className="text-muted-foreground leading-relaxed">
-                WakaFlow lets you define <em>what</em> a journey does before deciding <em>how</em> each step is wired.
-                Your existing flows and simulator remain fully available — WakaFlow adds a higher-level lens on top.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+        {/* Version nav */}
+        {versions.length > 1 && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setVersionIndex((i) => i - 1)}
+              disabled={!canGoBack}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 transition"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-[11px] text-muted-foreground font-mono min-w-[3ch] text-center">
+              v{versionIndex + 1}/{versions.length}
+            </span>
+            <button
+              onClick={() => setVersionIndex((i) => i + 1)}
+              disabled={!canGoForward}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 transition"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-[10px] text-muted-foreground truncate max-w-[140px] ml-1">
+              {versions[versionIndex]?.label}
+            </span>
+            {versionIndex < versions.length - 1 && (
+              <button
+                onClick={() => {
+                  const restored = versions[versionIndex];
+                  const newV: ArtifactVersion = {
+                    id: `v${Date.now()}`,
+                    jsx: restored.jsx,
+                    label: `Restored: ${restored.label}`,
+                    timestamp: new Date().toISOString(),
+                  };
+                  setVersions((prev) => [...prev, newV]);
+                  setVersionIndex(versions.length);
+                  toast.success("Version restored");
+                }}
+                className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary hover:bg-primary/20 transition ml-1"
+              >
+                <RotateCcw className="h-2.5 w-2.5" /> Restore
+              </button>
+            )}
+          </div>
+        )}
 
-      {/* Main content */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25, duration: 0.35 }}
-      >
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full max-w-lg">
-            <TabsTrigger value="model" className="flex-1 gap-1.5">
-              <Layers className="h-3.5 w-3.5" />
-              Model View
-            </TabsTrigger>
-            <TabsTrigger value="mapper" className="flex-1 gap-1.5">
-              <GitCompareArrows className="h-3.5 w-3.5" />
-              TextIt Mapper
-              {mapperResult.warnings.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[9px] bg-amber-500/15 text-amber-600 px-1.5">
-                  {mapperResult.warnings.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="compare" className="flex-1 gap-1.5">
-              <Shield className="h-3.5 w-3.5" />
-              Compare Paths
-            </TabsTrigger>
-          </TabsList>
+        {/* View toggle */}
+        <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5">
+          <button
+            onClick={() => setViewMode("preview")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "preview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Eye className="h-3 w-3" /> Preview
+          </button>
+          <button
+            onClick={() => setViewMode("code")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${viewMode === "code" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Code className="h-3 w-3" /> Code
+          </button>
+        </div>
+      </div>
 
-          {/* Model View */}
-          <TabsContent value="model" className="mt-4 space-y-3">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base">{SAMPLE_MODEL.journey}</CardTitle>
-                    <CardDescription className="text-xs mt-0.5">
-                      WakaFlow model v{SAMPLE_MODEL.version} · {SAMPLE_MODEL.steps.length} steps
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">Sample</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {SAMPLE_MODEL.steps.map((step, i) => {
-                  const stepWarnings = mapperResult.warnings.filter((w) => w.stepId === step.id);
-                  return (
-                    <div key={step.id} className="flex items-start gap-3 group">
-                      {/* Step connector */}
-                      <div className="flex flex-col items-center pt-1">
-                        <div className={`h-7 w-7 rounded-full border flex items-center justify-center text-xs font-bold ${typeColors[step.type] || "bg-muted text-muted-foreground border-border"}`}>
-                          {i + 1}
-                        </div>
-                        {i < SAMPLE_MODEL.steps.length - 1 && (
-                          <div className="w-px h-6 bg-border/60 mt-1" />
-                        )}
-                      </div>
-                      {/* Step content */}
-                      <div className="flex-1 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">{step.label}</span>
-                          <Badge variant="outline" className="text-[10px] capitalize">{step.type}</Badge>
-                          {stepWarnings.length > 0 && (
-                            <AlertTriangle className="h-3 w-3 text-amber-500" />
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{step.summary}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Mapper Status */}
-          <TabsContent value="mapper" className="mt-4 space-y-4">
-            {/* Mapper summary card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      WakaFlow → TextIt Mapping
-                      <Badge variant="outline" className={`text-[10px] gap-1 ${stCfg.className}`}>
-                        <stCfg.icon className="h-3 w-3" />
-                        {stCfg.label}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription className="text-xs mt-0.5">
-                      {mapperResult.mapped} of {mapperResult.total} steps mapped · {mapperResult.warnings.length} warning{mapperResult.warnings.length !== 1 ? "s" : ""}
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs gap-1.5"
-                    onClick={() => downloadJson(mapperResult.export, `wakaflow-${SAMPLE_MODEL.journey.replace(/\s+/g, "-").toLowerCase()}.json`)}
+      {/* Main split pane */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left: Chat */}
+        <div className="w-[380px] min-w-[320px] flex flex-col border-r border-border/40 bg-background">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <AnimatePresence initial={false}>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : msg.role === "system"
+                        ? "bg-secondary/60 text-muted-foreground rounded-bl-md italic"
+                        : "bg-secondary text-foreground rounded-bl-md"
+                    }`}
                   >
-                    <Download className="h-3 w-3" />
-                    Export JSON
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Step mapping results */}
-                <div className="space-y-1.5">
-                  {SAMPLE_MODEL.steps.map((step) => {
-                    const warns = mapperResult.warnings.filter((w) => w.stepId === step.id);
-                    const isMapped = warns.length === 0 || warns.every((w) => w.level === "info");
-                    return (
-                      <div key={step.id} className="flex items-center gap-3 text-xs px-3 py-2 rounded-lg bg-secondary/30">
-                        {isMapped ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                        ) : (
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                        )}
-                        <span className="font-medium text-foreground flex-1">{step.label}</span>
-                        <Badge variant="outline" className="text-[9px] capitalize">{step.type}</Badge>
-                        {isMapped ? (
-                          <span className="text-emerald-600 text-[10px]">Mapped</span>
-                        ) : (
-                          <span className="text-amber-600 text-[10px]">With warnings</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                    {msg.content}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-            {/* Warnings */}
-            {mapperResult.warnings.length > 0 && (
-              <Card className="border-amber-500/20 bg-amber-500/[0.02]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    Warnings
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    These steps mapped with notes — the current export path remains fully available.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {mapperResult.warnings.map((w, i) => (
-                    <div key={i} className="flex items-start gap-2.5 text-xs">
-                      {w.level === "info" ? (
-                        <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                      ) : (
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                      )}
-                      <div>
-                        <span className="font-medium text-foreground">{w.stepLabel}:</span>{" "}
-                        <span className="text-muted-foreground">{w.message}</span>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+            {isGenerating && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                <div className="bg-secondary text-muted-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Generating…
+                </div>
+              </motion.div>
             )}
 
-            {/* Safety note */}
-            <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-secondary/20 px-4 py-3">
-              <Shield className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="font-medium text-foreground">Your current export path is safe.</span>{" "}
-                The existing Builder → TextIt export works independently. WakaFlow mapping is an additive path — use whichever fits your workflow.
-              </p>
-            </div>
-          </TabsContent>
+            <div ref={chatEndRef} />
+          </div>
 
-          {/* Compare Paths */}
-          <TabsContent value="compare" className="mt-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              {/* Current path */}
-              <Card className="border-border/60">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Hammer className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-sm">Current Path</CardTitle>
-                  </div>
-                  <CardDescription className="text-xs">Flow editor + JSX fragments</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />Wire nodes visually in the Builder</div>
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />Test in the Simulator</div>
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />Export as TextIt JSON</div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 text-xs"
-                    onClick={() => navigate("/editor")}
-                  >
-                    Open Builder <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* WakaFlow path */}
-              <Card className="border-primary/30 bg-primary/[0.02]">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-sm">WakaFlow Path</CardTitle>
-                    <Badge variant="outline" className="text-[9px] uppercase tracking-widest border-primary/30 text-primary">New</Badge>
-                  </div>
-                  <CardDescription className="text-xs">Model-first journey design</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />Define journey steps as a model</div>
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />Preview the experience structure</div>
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />Map to TextIt with clear warnings</div>
-                  <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />Generate executable flows from the model</div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                    onClick={() => setActiveTab("mapper")}
-                  >
-                    <Eye className="h-3 w-3 mr-1" /> View Mapper Status
-                  </Button>
-                </CardContent>
-              </Card>
+          {/* Input */}
+          <div className="p-3 border-t border-border/40">
+            <div className="relative">
+              <Textarea
+                ref={textareaRef}
+                placeholder="Describe what to build or change…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isGenerating}
+                className="pr-12 min-h-[56px] max-h-[140px] resize-none rounded-xl bg-secondary/40 border-border/50 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-primary/30"
+                rows={2}
+              />
+              <Button
+                size="icon"
+                onClick={handleSend}
+                disabled={!input.trim() || isGenerating}
+                className="absolute right-2 bottom-2 h-8 w-8 rounded-lg"
+              >
+                {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              </Button>
             </div>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+            <p className="text-[10px] text-muted-foreground/50 mt-1.5 px-1">
+              Shift+Enter for new line · Enter to send
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Artifact */}
+        <div className="flex-1 flex flex-col bg-muted/20 overflow-hidden">
+          {viewMode === "preview" ? (
+            <div className="flex-1 overflow-auto">
+              <RuntimeJSXRenderer
+                jsxSource={currentJsx}
+                demoId="demo-builder"
+              />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-auto relative">
+              <button
+                onClick={handleCopyCode}
+                className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition border border-border/50"
+              >
+                {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <pre className="p-5 text-[12px] leading-relaxed text-foreground/80 font-mono whitespace-pre-wrap break-words">
+                {currentJsx}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

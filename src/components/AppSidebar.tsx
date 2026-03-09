@@ -23,7 +23,7 @@ const principalItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Journeys", url: "/journeys", icon: Map },
   { title: "Experience Studio", url: "/studio", icon: Sparkles },
-  { title: "WakaFlow", url: "/wakaflow", icon: Layers },
+  { title: "Demo Builder", url: "/wakaflow", icon: Sparkles },
   { title: "Builder", url: "/editor", icon: Hammer },
   { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
