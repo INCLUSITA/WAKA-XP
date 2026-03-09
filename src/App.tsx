@@ -29,6 +29,7 @@ import IntegrationsPage from "./pages/IntegrationsPage";
 import WhatsAppTestPage from "./pages/WhatsAppTestPage";
 import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
+import WakaFlowPreview from "./pages/WakaFlowPreview";
 import ShareDemo from "./pages/ShareDemo";
 import DemoDomainRoot, { isDemoDomain } from "./components/DemoDomainGuard";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,7 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/journeys" element={<JourneysPage />} />
               <Route path="/studio" element={<ExperienceStudioPage />} />
+              <Route path="/wakaflow" element={<WakaFlowPreview />} />
               <Route path="/simulator" element={<PhoneSimulator />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
