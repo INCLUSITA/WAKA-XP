@@ -121,6 +121,17 @@ export default function DemoViewer() {
 
   const isSandboxDemo = uploadedDemo ? (uploadedDemo.status === "sandbox" || uploadedDemo.status === "draft") : false;
 
+  // Auto-show guided tour for sandbox demos on first visit
+  useEffect(() => {
+    if (isSandboxDemo && id) {
+      const tourKey = `tour-seen-${id}`;
+      if (!sessionStorage.getItem(tourKey)) {
+        setShowTour(true);
+        sessionStorage.setItem(tourKey, "1");
+      }
+    }
+  }, [isSandboxDemo, id]);
+
   const baseJsx = uploadedDemo?.jsxSource || null;
 
   const [versions, setVersions] = useState<SandboxVersion[]>([]);
