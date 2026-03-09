@@ -317,6 +317,8 @@ export default function WhatsAppTestPage() {
               </CardContent>
             </Card>
           )}
+          {/* Inbound messages */}
+          <InboundMessages />
         </div>
       </div>
     </div>
