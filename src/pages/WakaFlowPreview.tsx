@@ -114,6 +114,7 @@ export default function WakaFlowPreview() {
   const [showDemoPicker, setShowDemoPicker] = useState(false);
   const [showVersionList, setShowVersionList] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<{ name: string; url: string }[]>([]);
+  const [engineSelection, setEngineSelection] = useState<EngineSelection>({ engineId: "waka-ai" });
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
