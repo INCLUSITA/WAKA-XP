@@ -15,6 +15,7 @@ serve(async (req) => {
 
   try {
     const apiKey = Deno.env.get("D360_API_KEY");
+    console.log("D360_API_KEY length:", apiKey?.length, "first 8 chars:", apiKey?.slice(0, 8));
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "D360_API_KEY not configured" }),
