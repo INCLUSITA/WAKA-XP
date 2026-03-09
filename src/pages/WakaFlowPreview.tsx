@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft, ChevronRight, Plus, Eye, Code, Copy, Check } from "lucide-react";
+import {
+  Sparkles, Send, Loader2, RotateCcw, ChevronLeft, ChevronRight,
+  Eye, Code, Copy, Check, Upload, FolderOpen, X, LayoutGrid,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
+import { useUploadedDemos } from "@/hooks/useUploadedDemos";
+import { BUILTIN_DEMOS, type UploadedDemo } from "@/demos/registry";
 
 /* ── Types ──────────────────────────────────────── */
 interface ChatMessage {
@@ -70,7 +75,7 @@ export default function WakaFlowPreview() {
     {
       id: "welcome",
       role: "system",
-      content: "Welcome to the Demo Builder. Describe what you want to create and I'll generate a live demo for you.",
+      content: "Welcome to the Demo Builder. Describe what you want to create, upload a JSX file as a starting point, or load an existing demo from your library.",
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -82,12 +87,15 @@ export default function WakaFlowPreview() {
   const [versionIndex, setVersionIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const [copied, setCopied] = useState(false);
+  const [showDemoPicker, setShowDemoPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { demos: uploadedDemos, loading: demosLoading } = useUploadedDemos();
 
   const currentJsx = versions[versionIndex]?.jsx || STARTER_JSX;
 
-  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -98,6 +106,49 @@ export default function WakaFlowPreview() {
       { id: `msg-${Date.now()}`, role, content, timestamp: new Date().toISOString() },
     ]);
   }, []);
+
+  const loadJsx = useCallback((jsx: string, label: string) => {
+    const newVersion: ArtifactVersion = {
+      id: `v${Date.now()}`,
+      jsx,
+      label,
+      timestamp: new Date().toISOString(),
+    };
+    setVersions((prev) => {
+      const next = [...prev, newVersion];
+      setVersionIndex(next.length - 1);
+      return next;
+    });
+    addMessage("system", `Loaded "${label}" as the active artifact. You can now iterate on it.`);
+  }, [addMessage, versions.length]);
+
+  /* ── File upload handler ── */
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.match(/\.(jsx|tsx|js|ts)$/i)) {
+      toast.error("Please upload a .jsx or .tsx file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      if (content) {
+        loadJsx(content, file.name.replace(/\.(jsx|tsx|js|ts)$/i, ""));
+        toast.success(`Loaded ${file.name}`);
+      }
+    };
+    reader.readAsText(file);
+    // Reset so same file can be re-uploaded
+    e.target.value = "";
+  }, [loadJsx]);
+
+  /* ── Load existing demo ── */
+  const handleLoadDemo = useCallback((demo: UploadedDemo) => {
+    loadJsx(demo.jsxSource, demo.title);
+    setShowDemoPicker(false);
+    toast.success(`Loaded demo: ${demo.title}`);
+  }, [loadJsx]);
 
   const handleSend = useCallback(async () => {
     const prompt = input.trim();
@@ -121,7 +172,6 @@ export default function WakaFlowPreview() {
       const modifiedJsx = data.modifiedJsx;
       if (!modifiedJsx) throw new Error("No JSX returned");
 
-      // Add new version
       const newVersion: ArtifactVersion = {
         id: `v${Date.now()}`,
         jsx: modifiedJsx,
@@ -164,6 +214,15 @@ export default function WakaFlowPreview() {
 
   return (
     <div className="h-[calc(100vh-2.5rem)] flex flex-col bg-background">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jsx,.tsx,.js,.ts"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-2.5">
@@ -209,8 +268,11 @@ export default function WakaFlowPreview() {
                     label: `Restored: ${restored.label}`,
                     timestamp: new Date().toISOString(),
                   };
-                  setVersions((prev) => [...prev, newV]);
-                  setVersionIndex(versions.length);
+                  setVersions((prev) => {
+                    const next = [...prev, newV];
+                    setVersionIndex(next.length - 1);
+                    return next;
+                  });
                   toast.success("Version restored");
                 }}
                 className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary hover:bg-primary/20 transition ml-1"
@@ -280,6 +342,24 @@ export default function WakaFlowPreview() {
             <div ref={chatEndRef} />
           </div>
 
+          {/* Source actions bar */}
+          <div className="flex items-center gap-1.5 px-3 py-2 border-t border-border/30">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition border border-border/50"
+            >
+              <Upload className="h-3 w-3" />
+              Upload JSX
+            </button>
+            <button
+              onClick={() => setShowDemoPicker(true)}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition border border-border/50"
+            >
+              <FolderOpen className="h-3 w-3" />
+              Load Demo
+            </button>
+          </div>
+
           {/* Input */}
           <div className="p-3 border-t border-border/40">
             <div className="relative">
@@ -309,13 +389,10 @@ export default function WakaFlowPreview() {
         </div>
 
         {/* Right: Artifact */}
-        <div className="flex-1 flex flex-col bg-muted/20 overflow-hidden">
+        <div className="flex-1 flex flex-col bg-muted/20 overflow-hidden relative">
           {viewMode === "preview" ? (
             <div className="flex-1 overflow-auto">
-              <RuntimeJSXRenderer
-                jsxSource={currentJsx}
-                demoId="demo-builder"
-              />
+              <RuntimeJSXRenderer jsxSource={currentJsx} demoId="demo-builder" />
             </div>
           ) : (
             <div className="flex-1 overflow-auto relative">
@@ -331,6 +408,100 @@ export default function WakaFlowPreview() {
               </pre>
             </div>
           )}
+
+          {/* Demo picker overlay */}
+          <AnimatePresence>
+            {showDemoPicker && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-20 bg-background/95 backdrop-blur-sm flex flex-col"
+              >
+                <div className="flex items-center justify-between px-5 py-3 border-b border-border/40">
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">Load existing demo</span>
+                  </div>
+                  <button
+                    onClick={() => setShowDemoPicker(false)}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5">
+                  {/* Uploaded demos */}
+                  {uploadedDemos.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">
+                        Your Demos
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {uploadedDemos.map((demo) => (
+                          <button
+                            key={demo.id}
+                            onClick={() => handleLoadDemo(demo)}
+                            className="flex items-start gap-3 rounded-xl border border-border/50 bg-background p-3 text-left hover:border-primary/40 hover:bg-primary/[0.03] transition group"
+                          >
+                            <span className="text-xl shrink-0">{demo.icon}</span>
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition">
+                                {demo.title}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                                {demo.description}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <Badge variant="outline" className="text-[8px] capitalize">{demo.status}</Badge>
+                                {demo.tags.slice(0, 2).map((t) => (
+                                  <Badge key={t} variant="secondary" className="text-[8px]">{t}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Built-in demos note */}
+                  <div>
+                    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">
+                      Built-in Demos
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {BUILTIN_DEMOS.map((demo) => (
+                        <div
+                          key={demo.id}
+                          className="flex items-start gap-3 rounded-xl border border-border/30 bg-secondary/20 p-3 text-left opacity-60"
+                        >
+                          <span className="text-xl shrink-0">{demo.icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">{demo.title}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{demo.description}</p>
+                            <p className="text-[9px] text-muted-foreground/50 mt-1 italic">
+                              Built-in · open in Demos page
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {uploadedDemos.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-muted-foreground">No uploaded demos yet.</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        Upload a JSX file or create demos from the Demos page.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
