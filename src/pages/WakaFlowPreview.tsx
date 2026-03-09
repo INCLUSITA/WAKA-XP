@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import { BUILTIN_DEMOS, type UploadedDemo } from "@/demos/registry";
+import AIEngineSelector, { EngineBadge, type EngineSelection, type EngineId } from "@/components/demos/AIEngineSelector";
 
 /* ── Types ──────────────────────────────────────── */
 interface ChatMessage {
