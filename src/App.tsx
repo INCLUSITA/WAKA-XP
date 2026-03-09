@@ -24,6 +24,7 @@ import ProductionPage from "./pages/ProductionPage";
 import LibraryPage from "./pages/LibraryPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
+import WhatsAppTestPage from "./pages/WhatsAppTestPage";
 import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import NotFound from "./pages/NotFound";
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/import" element={<ImportPage />} />
               {/* Infrastructure */}
               <Route path="/integrations" element={<IntegrationsPage />} />
+              <Route path="/whatsapp" element={<WhatsAppTestPage />} />
               <Route path="/tenants" element={<TenantsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               {/* Advanced Tools */}
