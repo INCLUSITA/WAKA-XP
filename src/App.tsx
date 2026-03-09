@@ -66,6 +66,7 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/journeys" element={<JourneysPage />} />
               <Route path="/studio" element={<ExperienceStudioPage />} />
+              <Route path="/wakaflow" element={<WakaFlowPreview />} />
               <Route path="/simulator" element={<PhoneSimulator />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />

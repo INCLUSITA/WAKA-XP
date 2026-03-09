@@ -1,5 +1,5 @@
 import {
-  Home, Map, Sparkles, Hammer, Rocket, Smartphone,
+  Home, Map, Sparkles, Hammer, Rocket, Smartphone, Layers,
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
   Plug, Building2, Settings, MessageSquare, 
   Archive, Globe as GlobIcon, Clock, Webhook,
