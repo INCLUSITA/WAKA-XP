@@ -2,7 +2,7 @@ import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
-  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit,
+  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
