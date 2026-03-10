@@ -63,16 +63,17 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
 
   useEffect(() => {
     if (!open) return;
+    let ignoreFirst = true;
     const handleClick = (e: MouseEvent) => {
+      if (ignoreFirst) {
+        ignoreFirst = false;
+        return;
+      }
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    // Delay listener registration to next frame so the opening click doesn't trigger it
-    const raf = requestAnimationFrame(() => {
-      document.addEventListener("mousedown", handleClick);
-    });
+    document.addEventListener("click", handleClick, true);
     return () => {
-      cancelAnimationFrame(raf);
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("click", handleClick, true);
     };
   }, [open]);
 
