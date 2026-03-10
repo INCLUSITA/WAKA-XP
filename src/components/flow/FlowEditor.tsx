@@ -470,15 +470,35 @@ function FlowEditorInner() {
       });
 
       const nodeIds = new Set(importedNodes.map((n) => n.id));
-      const importedEdges = flow.nodes.flatMap((n: any) =>
-        (n.exits || [])
+      const importedEdges = flow.nodes.flatMap((n: any) => {
+        const categories = n.router?.categories || [];
+        return (n.exits || [])
           .filter((exit: any) => exit.destination_uuid && nodeIds.has(exit.destination_uuid))
-          .map((exit: any) => ({
-            id: uuidv4(),
-            source: n.uuid,
-            target: exit.destination_uuid,
-          }))
-      );
+          .map((exit: any) => {
+            // Find category name for this exit
+            const cat = categories.find((c: any) => c.exit_uuid === exit.uuid);
+            const label = cat?.name || undefined;
+            const isSplitLike = n.router && !n.router?.wait;
+            return {
+              id: uuidv4(),
+              source: n.uuid,
+              target: exit.destination_uuid,
+              ...(isSplitLike && label
+                ? {
+                    type: "labeled",
+                    sourceHandle: label,
+                    label,
+                    style: {
+                      strokeWidth: 2,
+                      stroke: label === "Other"
+                        ? "hsl(220, 10%, 65%)"
+                        : "hsl(260, 60%, 55%)",
+                    },
+                  }
+                : {}),
+            };
+          });
+      });
 
       setNodes(importedNodes);
       setEdges(importedEdges);
