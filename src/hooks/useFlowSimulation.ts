@@ -9,6 +9,14 @@ export interface ChatMessage {
   timestamp: Date;
   imageUrl?: string;
   attachments?: { url: string; name?: string; mime?: string }[];
+  /** For split system messages: structured routing info */
+  splitInfo?: {
+    operand: string;
+    resolvedValue: string;
+    cases: string[];
+    matchedCase: string | null;
+    nodeType?: string;
+  };
 }
 
 export interface SimulationContext {
