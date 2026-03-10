@@ -246,10 +246,16 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                 const si = msg.splitInfo;
                 return (
                   <div key={msg.id} className="flex justify-center">
-                    <div className="rounded-lg bg-card border border-border/60 px-3 py-2 shadow-sm max-w-[90%]">
+                    <div className={`rounded-lg bg-card border px-3 py-2 shadow-sm max-w-[90%] ${si.nodeType === "splitGroup" ? "border-emerald-500/30" : "border-border/60"}`}>
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <GitBranch className="h-3 w-3 text-primary/70" />
-                        <span className="text-[11px] font-semibold text-foreground">Split</span>
+                        {si.nodeType === "splitGroup" ? (
+                          <Users className="h-3 w-3 text-emerald-600" />
+                        ) : (
+                          <GitBranch className="h-3 w-3 text-primary/70" />
+                        )}
+                        <span className="text-[11px] font-semibold text-foreground">
+                          {si.nodeType === "splitGroup" ? "Split by Group" : "Split"}
+                        </span>
                         <span className="text-[10px] text-muted-foreground font-mono ml-1">{si.operand}</span>
                       </div>
                       <div className="space-y-0.5">
