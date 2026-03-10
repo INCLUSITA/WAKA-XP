@@ -14,6 +14,8 @@ import {
   Panel,
   useReactFlow,
   ReactFlowProvider,
+  type OnConnectStart,
+  type OnConnectEnd,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { LabeledEdge } from "./LabeledEdge";
