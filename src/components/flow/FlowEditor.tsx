@@ -208,8 +208,33 @@ function FlowEditorInner() {
   }, [nodes, edges, flowName, debouncedSave]);
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const isSplit = sourceNode && SPLIT_NODE_TYPES.has(sourceNode.type || "");
+      const label = isSplit && connection.sourceHandle ? connection.sourceHandle : undefined;
+
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            ...(label
+              ? {
+                  type: "labeled",
+                  label,
+                  style: {
+                    strokeWidth: 2,
+                    stroke: label === "Other"
+                      ? "hsl(220, 10%, 65%)"
+                      : "hsl(260, 60%, 55%)",
+                  },
+                }
+              : {}),
+          },
+          eds
+        )
+      );
+    },
+    [setEdges, nodes]
   );
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
