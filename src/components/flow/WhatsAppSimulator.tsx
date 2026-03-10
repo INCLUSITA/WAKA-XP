@@ -283,6 +283,43 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                   </div>
                 );
               }
+              // Group action bubble
+              if (msg.groupInfo) {
+                const gi = msg.groupInfo;
+                const isAdd = gi.action === "added";
+                const Icon = isAdd ? Users : UserMinus;
+                const colorClass = isAdd ? "text-emerald-600" : "text-orange-600";
+                const bgClass = isAdd ? "bg-emerald-500/10 border-emerald-500/20" : "bg-orange-500/10 border-orange-500/20";
+                const badgeBg = isAdd ? "bg-emerald-500/15 text-emerald-700" : "bg-orange-500/15 text-orange-700";
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <div className={`rounded-lg border px-3 py-2 shadow-sm max-w-[90%] ${bgClass}`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Icon className={`h-3 w-3 ${colorClass}`} />
+                        <span className={`text-[11px] font-semibold ${colorClass}`}>
+                          {isAdd ? "Group Added" : "Group Removed"}
+                        </span>
+                      </div>
+                      <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeBg}`}>
+                        {gi.groupName}
+                      </div>
+                      {gi.currentGroups.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          <span className="text-[9px] text-muted-foreground mr-0.5">membership:</span>
+                          {gi.currentGroups.map((g) => (
+                            <span key={g} className="rounded-full bg-muted px-1.5 py-px text-[9px] text-foreground/70 font-medium">
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {gi.currentGroups.length === 0 && (
+                        <p className="text-[9px] text-muted-foreground mt-1 italic">no groups</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
               // Default system bubble
               return (
                 <div key={msg.id} className="flex justify-center">
