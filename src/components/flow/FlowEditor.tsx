@@ -204,6 +204,25 @@ function FlowEditorInner() {
     }
   }, [flowIdParam, loadFlow, setNodes, setEdges]);
 
+  // Pick up flow from Import page via sessionStorage
+  useEffect(() => {
+    const importParam = searchParams.get("import");
+    if (importParam === "true" && !flowIdParam) {
+      const raw = sessionStorage.getItem("waka_import_flow");
+      if (raw) {
+        try {
+          const json = JSON.parse(raw);
+          importFlowFromJson(json);
+          sessionStorage.removeItem("waka_import_flow");
+          setSearchParams({}, { replace: true });
+        } catch {
+          toast.error("Error al cargar el flujo importado");
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-save on changes (skip initial load)
   const changeCount = useRef(0);
   useEffect(() => {
