@@ -1,6 +1,8 @@
-# Waka-Flow — Editor Visual de Flujos WhatsApp (TextIt-compatible)
+# WAKA XP — Experience Platform
 
-> Constructor visual de flujos conversacionales para WhatsApp, compatible con el formato JSON v13 de TextIt/RapidPro. Diseñado para operaciones WAKA en África Occidental.
+> Plataforma AI-native para diseñar, simular, validar y operacionalizar journeys conversacionales omnicanal. Construida para el equipo interno de WAKA y partners especiales.
+
+**Documento estratégico de referencia:** [`docs/waka-xp-strategic-foundation.md`](docs/waka-xp-strategic-foundation.md)
 
 ---
 
@@ -10,55 +12,62 @@
 2. [Stack Tecnológico](#stack-tecnológico)
 3. [Arquitectura del Proyecto](#arquitectura-del-proyecto)
 4. [Navegación y Rutas](#navegación-y-rutas)
-5. [Editor de Flujos (Core)](#editor-de-flujos-core)
-6. [Nodos Implementados](#nodos-implementados)
-7. [Panel de Configuración de Nodos](#panel-de-configuración-de-nodos)
-8. [Sistema de Conexiones (Edges)](#sistema-de-conexiones-edges)
-9. [Exportación TextIt JSON v13](#exportación-textit-json-v13)
-10. [Importación de Flujos](#importación-de-flujos)
-11. [Validación de Flujos](#validación-de-flujos)
-12. [Simulador WhatsApp](#simulador-whatsapp)
-13. [Traductor de Flujos](#traductor-de-flujos)
-14. [Webhook Logs](#webhook-logs)
-15. [Páginas de Gestión](#páginas-de-gestión)
-16. [Sistema de Demos](#sistema-de-demos)
-17. [Sistema de Diseño (Design Tokens)](#sistema-de-diseño-design-tokens)
-18. [Tipos TypeScript](#tipos-typescript)
-19. [Instalación y Desarrollo](#instalación-y-desarrollo)
+5. [Capas del Producto](#capas-del-producto)
+   - [Classic Builder](#51-classic-builder)
+   - [XP Layer (Estructura, Contexto, Entidades)](#52-xp-layer)
+   - [Experience Studio](#53-experience-studio)
+   - [Demo Builder / Sandbox AI](#54-demo-builder--sandbox-ai)
+   - [Production Layer](#55-production-layer)
+   - [Simulation Engine](#56-simulation-engine)
+6. [Sistema de Persistencia](#sistema-de-persistencia)
+7. [Multi-Tenancy y Gobernanza](#multi-tenancy-y-gobernanza)
+8. [Versionado Transversal](#versionado-transversal)
+9. [Edge Functions (Backend)](#edge-functions-backend)
+10. [WakaFlow Mapper](#wakaflow-mapper)
+11. [AI Engine Selector](#ai-engine-selector)
+12. [Sistema de Demos](#sistema-de-demos)
+13. [Sistema de Diseño](#sistema-de-diseño)
+14. [Estado del Roadmap Estratégico](#estado-del-roadmap-estratégico)
+15. [Instalación y Desarrollo](#instalación-y-desarrollo)
 
 ---
 
 ## Visión General
 
-**Waka-Flow** es un editor visual drag-and-drop que permite crear, editar, validar, simular y exportar flujos conversacionales para WhatsApp en formato compatible con TextIt/RapidPro. Replica las funcionalidades clave de TextIt con una interfaz moderna basada en React Flow.
+**WAKA XP** es la plataforma central del ecosistema WAKA para el diseño, simulación y operacionalización de experiencias conversacionales. Opera bajo dos superficies de trabajo complementarias:
 
-### Funcionalidades principales:
-- ✅ Editor visual con 12 tipos de nodos
-- ✅ Exportación/importación JSON v13 de TextIt
-- ✅ Simulador WhatsApp integrado
-- ✅ Validación de flujos con errores y advertencias
-- ✅ Traductor automático a 17 idiomas
-- ✅ Logs de Webhooks con vista detallada request/response
-- ✅ Gestión de variables globales
-- ✅ Sidebar de navegación tipo TextIt
+- **Classic Builder** — Capa estable para la edición técnica de flujos, inspirada en TextIt/RapidPro.
+- **Experience Studio / XP Layer** — Capa emergente para la gestión de alto nivel de experiencias de negocio.
+
+Esta dualidad asegura la continuidad operativa de los flujos de trabajo actuales mientras el sistema evoluciona.
+
+### Activos principales
+
+El trabajo se organiza en torno a cuatro tipos de activos:
+
+| Activo | Descripción |
+|---|---|
+| **Experience** | Unidad de negocio de alto nivel (onboarding, cobro, soporte...) |
+| **Demo** | Artefacto visual/interactivo para validación y venta |
+| **Flow** | Implementación técnica de un journey (nodos, edges, lógica) |
+| **Production Candidate** | Activo promovido con ciclo de vida hacia producción |
 
 ---
 
 ## Stack Tecnológico
 
-| Tecnología | Versión | Uso |
-|---|---|---|
-| React | ^18.3.1 | UI framework |
-| TypeScript | ^5.8.3 | Tipado estático |
-| Vite | ^5.4.19 | Bundler y dev server |
-| @xyflow/react | ^12.10.1 | Editor de flujos (nodos y edges) |
-| Tailwind CSS | ^3.4.17 | Estilos utilitarios |
-| shadcn/ui | — | Componentes UI (Radix primitives) |
-| React Router DOM | ^6.30.1 | Enrutamiento SPA |
-| Sonner | ^1.7.4 | Notificaciones toast |
-| uuid | ^13.0.0 | Generación de UUIDs para nodos |
-| Sucrase | ^3.35.1 | Transpilación JSX en runtime (demos) |
-| Vitest | ^3.2.4 | Testing unitario |
+| Tecnología | Uso |
+|---|---|
+| React 18 + TypeScript | UI framework |
+| Vite | Bundler y dev server |
+| @xyflow/react | Editor visual de flujos (nodos y edges) |
+| Tailwind CSS + shadcn/ui | Estilos y componentes UI |
+| Framer Motion | Animaciones |
+| React Router DOM v6 | Enrutamiento SPA |
+| @tanstack/react-query | Data fetching y cache |
+| Supabase (Lovable Cloud) | DB, Auth, Edge Functions, Storage |
+| Sucrase | Transpilación JSX en runtime (demos) |
+| Vitest | Testing |
 
 ---
 
@@ -67,530 +76,499 @@
 ```
 src/
 ├── components/
-│   ├── flow/                    # Componentes del editor de flujos
-│   │   ├── FlowEditor.tsx       # ★ Componente principal (470 líneas)
-│   │   ├── FlowToolbar.tsx      # Barra de herramientas superior
-│   │   ├── NodeConfigPanel.tsx   # Panel lateral de configuración (630 líneas)
-│   │   ├── EdgeInfoPanel.tsx     # Panel info de conexiones
-│   │   ├── ValidationPanel.tsx   # Panel de resultados de validación
-│   │   ├── WhatsAppSimulator.tsx # Simulador tipo WhatsApp
-│   │   ├── TranslatorPanel.tsx   # Panel de traducción
-│   │   ├── SendMsgNode.tsx       # Nodo: Enviar mensaje
-│   │   ├── WaitResponseNode.tsx  # Nodo: Esperar respuesta
-│   │   ├── SplitNode.tsx         # Nodo: Divisiones (5 variantes)
-│   │   ├── WebhookNode.tsx       # Nodo: Llamar webhook
-│   │   ├── SaveResultNode.tsx    # Nodo: Guardar resultado
-│   │   ├── UpdateContactNode.tsx # Nodo: Actualizar contacto
-│   │   ├── SendEmailNode.tsx     # Nodo: Enviar email
-│   │   ├── CallAINode.tsx        # Nodo: Llamar servicio IA
-│   │   ├── EnterFlowNode.tsx     # Nodo: Entrar en otro flujo
-│   │   ├── OpenTicketNode.tsx    # Nodo: Abrir ticket
-│   │   ├── CallZapierNode.tsx    # Nodo: Llamar Zapier
-│   │   └── SendAirtimeNode.tsx   # Nodo: Enviar airtime
-│   ├── AppLayout.tsx             # Layout con sidebar
-│   ├── AppSidebar.tsx            # Sidebar de navegación
-│   ├── NavLink.tsx               # Link de navegación activo
-│   └── ui/                       # Componentes shadcn/ui (50+)
-├── pages/
-│   ├── Index.tsx                 # Página principal (editor)
-│   ├── ArchivedFlows.tsx         # Flujos archivados
-│   ├── GlobalsPage.tsx           # Variables globales
-│   ├── StartsPage.tsx            # Historial de inicios
-│   ├── WebhookLogs.tsx           # Logs de webhooks
-│   ├── ExportPage.tsx            # Exportación
-│   ├── ImportPage.tsx            # Importación
-│   ├── ValidatePage.tsx          # Validación
-│   ├── SettingsPage.tsx          # Configuración
-│   ├── PhoneSimulator.tsx        # Simulador de teléfono
-│   ├── Demos.tsx                 # Lista de demos
-│   ├── DemoViewer.tsx            # Visor de demos
-│   └── NotFound.tsx              # 404
-├── lib/
-│   ├── flowExport.ts             # Exportación a TextIt JSON v13
-│   ├── flowValidation.ts         # Motor de validación
-│   ├── flowTranslator.ts         # Motor de traducción (MyMemory API)
-│   └── utils.ts                  # Utilidades (cn)
+│   ├── flow/                        # Editor de flujos (Classic Builder)
+│   │   ├── FlowEditor.tsx           # ★ Componente principal del canvas
+│   │   ├── FlowToolbar.tsx          # Barra de herramientas
+│   │   ├── NodeConfigPanel.tsx      # Panel lateral de configuración de nodos
+│   │   ├── FlowContextPanel.tsx     # Panel de contexto (variables + entidades)
+│   │   ├── StructuredView.tsx       # Vista jerárquica de módulos
+│   │   ├── ModuleGroupNode.tsx      # Nodo contenedor de módulos
+│   │   ├── NodeEffectsEditor.tsx    # Editor de side-effects por nodo
+│   │   ├── ValidationPanel.tsx      # Panel de validación
+│   │   ├── TranslatorPanel.tsx      # Panel de traducción multi-idioma
+│   │   ├── WhatsAppSimulator.tsx    # Simulador WhatsApp integrado
+│   │   ├── SaveStatusIndicator.tsx  # Indicador de auto-guardado
+│   │   ├── EdgeInfoPanel.tsx        # Panel info de conexiones
+│   │   ├── SendMsgNode.tsx          # Nodo: Enviar mensaje
+│   │   ├── WaitResponseNode.tsx     # Nodo: Esperar respuesta
+│   │   ├── SplitNode.tsx            # Nodo: Divisiones (5 variantes)
+│   │   ├── WebhookNode.tsx          # Nodo: Llamar webhook
+│   │   ├── CallAINode.tsx           # Nodo: Llamar servicio IA
+│   │   ├── SaveResultNode.tsx       # Nodo: Guardar resultado
+│   │   ├── UpdateContactNode.tsx    # Nodo: Actualizar contacto
+│   │   ├── SendEmailNode.tsx        # Nodo: Enviar email
+│   │   ├── EnterFlowNode.tsx        # Nodo: Entrar en otro flujo
+│   │   ├── OpenTicketNode.tsx       # Nodo: Abrir ticket
+│   │   ├── CallZapierNode.tsx       # Nodo: Llamar Zapier
+│   │   └── SendAirtimeNode.tsx      # Nodo: Enviar airtime
+│   ├── demos/                       # Componentes del Demo Builder
+│   │   ├── AIEngineSelector.tsx     # Selector de motor IA
+│   │   ├── AIProposalsPanel.tsx     # Panel de propuestas IA
+│   │   ├── BlockPalette.tsx         # Paleta de bloques estructurales
+│   │   ├── StructuralEditor.tsx     # Editor de bloques estructurales
+│   │   ├── StructuralBlockCard.tsx  # Card de bloque
+│   │   ├── StructuralBlocksPreview.tsx # Preview de bloques
+│   │   ├── SandboxVersionBar.tsx    # Barra de versiones sandbox
+│   │   ├── MediaUploader.tsx        # Subida de archivos/imágenes
+│   │   ├── GuidedTourOverlay.tsx    # Tour guiado
+│   │   ├── LLMSelector.tsx          # Selector legacy de LLM
+│   │   └── DemoContextMenu.tsx      # Menú contextual de demos
+│   ├── versioning/
+│   │   └── VersionHistoryPanel.tsx  # Panel de historial de versiones
+│   ├── whatsapp/
+│   │   └── InboundMessages.tsx      # Mensajes entrantes WhatsApp
+│   ├── ui/                          # Componentes shadcn/ui (50+)
+│   ├── AppLayout.tsx                # Layout principal con sidebar
+│   ├── AppSidebar.tsx               # Sidebar de navegación
+│   ├── AuthGuard.tsx                # Guardia de autenticación
+│   ├── DemoDomainGuard.tsx          # Enrutamiento por dominio para demos
+│   ├── WorkspaceContextBar.tsx      # Barra de contexto tenant/workspace
+│   ├── ThemeToggle.tsx              # Toggle dark/light mode
+│   └── NavLink.tsx                  # Link de navegación activo
+├── pages/                           # Páginas/rutas de la aplicación
+│   ├── HomePage.tsx                 # Home con WAKA Stack status
+│   ├── JourneysPage.tsx             # Gestión de journeys
+│   ├── ExperienceStudioPage.tsx     # Experience Studio
+│   ├── WakaFlowPreview.tsx          # Demo Builder / Sandbox AI
+│   ├── Index.tsx                    # Classic Flow Editor
+│   ├── FlowDashboard.tsx            # Dashboard de flujos
+│   ├── ProductionPage.tsx           # Production Candidates
+│   ├── Demos.tsx                    # Lista de demos
+│   ├── DemoViewer.tsx               # Visor de demo individual
+│   ├── ShareDemo.tsx                # Compartir demo (ruta pública)
+│   ├── LibraryPage.tsx              # Librería de activos
+│   ├── TemplatesPage.tsx            # Templates
+│   ├── ImportPage.tsx               # Importación de flujos JSON
+│   ├── ExportPage.tsx               # Exportación
+│   ├── ValidatePage.tsx             # Validación
+│   ├── IntegrationsPage.tsx         # Integraciones / conectores
+│   ├── WhatsAppTestPage.tsx         # Testing WhatsApp real
+│   ├── TenantsPage.tsx              # Gestión de tenants
+│   ├── GlobalsPage.tsx              # Variables globales
+│   ├── WebhookLogs.tsx              # Logs de webhooks
+│   ├── SettingsPage.tsx             # Configuración
+│   ├── LoginPage.tsx                # Login / registro
+│   ├── PhoneSimulator.tsx           # Simulador de teléfono
+│   └── ArchivedFlows.tsx            # Flujos archivados
 ├── hooks/
-│   ├── useFlowSimulation.ts      # Lógica del simulador WhatsApp
-│   ├── use-mobile.tsx            # Detección de móvil
-│   └── use-toast.ts              # Hook de toasts
-├── types/
-│   └── flow.ts                   # Tipos TextIt/RapidPro
+│   ├── useFlowPersistence.ts        # Auto-save con debounce a DB
+│   ├── useFlowModules.ts            # Gestión de módulos/agrupación
+│   ├── useFlowSimulation.ts         # Motor de simulación WhatsApp
+│   ├── useAssetVersions.ts          # Versionado transversal
+│   ├── useUploadedDemos.ts          # Demos subidas por usuario
+│   ├── use-mobile.tsx               # Detección de móvil
+│   └── use-toast.ts                 # Hook de toasts
+├── contexts/
+│   └── WorkspaceContext.tsx         # Contexto global tenant/workspace
 ├── demos/
-│   ├── registry.ts               # Registro de demos (built-in + uploaded)
-│   ├── MoovWakaDemo.tsx          # Demo: Moov Africa BF
-│   └── RuntimeJSXRenderer.tsx    # Renderizador JSX en runtime
-├── App.tsx                       # Enrutador principal
-├── main.tsx                      # Entry point
-└── index.css                     # Design tokens y estilos globales
+│   ├── registry.ts                  # Registro de demos (built-in + uploaded)
+│   ├── MoovWakaDemo.tsx             # Demo: Moov Africa BF
+│   └── RuntimeJSXRenderer.tsx       # Renderizador JSX en runtime
+├── lib/
+│   ├── flowExport.ts                # Exportación a TextIt JSON v13
+│   ├── flowValidation.ts            # Motor de validación
+│   ├── flowTranslator.ts            # Motor de traducción (MyMemory API)
+│   ├── wakaflowMapper.ts            # Mapper WakaFlow → TextIt
+│   ├── constants.ts                 # Constantes globales
+│   └── utils.ts                     # Utilidades
+├── types/
+│   ├── flow.ts                      # Tipos TextIt/RapidPro
+│   └── structuralBlocks.ts          # Tipos de bloques estructurales
+├── integrations/supabase/
+│   ├── client.ts                    # Cliente Supabase (auto-generado)
+│   └── types.ts                     # Tipos de DB (auto-generado)
+├── App.tsx                          # Router principal
+├── main.tsx                         # Entry point
+└── index.css                        # Design tokens y estilos globales
+
+supabase/
+├── functions/
+│   ├── waka-ai-apply/index.ts       # Generación/rewrite de JSX con IA
+│   ├── waka-ai-proposal/index.ts    # Propuestas de cambio IA
+│   ├── whatsapp-send/index.ts       # Envío de mensajes WhatsApp reales
+│   └── whatsapp-webhook/index.ts    # Recepción de webhooks WhatsApp
+└── config.toml                      # Configuración Supabase (auto-generado)
+
+docs/
+├── waka-xp-strategic-foundation.md  # Documento base estratégico
+└── source/                          # Documentos fuente originales
 ```
 
 ---
 
 ## Navegación y Rutas
 
-### Sidebar (AppSidebar.tsx)
-Organizada en 3 secciones tipo TextIt:
+### Rutas protegidas (requieren AuthGuard)
 
-| Sección | Ruta | Componente | Descripción |
+| Sección | Ruta | Página | Descripción |
 |---|---|---|---|
-| **Flows** | `/` | `Index.tsx` → `FlowEditor` | Editor visual activo |
-| | `/archived` | `ArchivedFlows.tsx` | Flujos archivados |
-| | `/globals` | `GlobalsPage.tsx` | Variables globales clave-valor |
-| **History** | `/starts` | `StartsPage.tsx` | Historial de ejecuciones |
-| | `/webhooks` | `WebhookLogs.tsx` | Logs de webhooks |
-| **Settings** | `/export` | `ExportPage.tsx` | Exportación de flujos |
-| | `/import` | `ImportPage.tsx` | Importación de flujos |
-| | `/validate` | `ValidatePage.tsx` | Validación de flujos |
-| | `/settings` | `SettingsPage.tsx` | Configuración general |
+| **Principal** | `/` | HomePage | Home con WAKA Stack status |
+| | `/journeys` | JourneysPage | Gestión de journeys |
+| | `/studio` | ExperienceStudioPage | Experience Studio |
+| | `/wakaflow` | WakaFlowPreview | Demo Builder / Sandbox AI |
+| | `/editor` | Index (FlowEditor) | Classic Flow Editor |
+| | `/simulator` | PhoneSimulator | Simulador completo |
+| | `/production` | ProductionPage | Production Candidates |
+| **Assets** | `/library` | LibraryPage | Librería de activos |
+| | `/demos` | Demos | Lista de demos |
+| | `/demo/:id` | DemoViewer | Visor de demo |
+| | `/templates` | TemplatesPage | Templates |
+| | `/import` | ImportPage | Importación JSON |
+| **Infra** | `/integrations` | IntegrationsPage | Conectores |
+| | `/whatsapp` | WhatsAppTestPage | Testing WhatsApp real |
+| | `/tenants` | TenantsPage | Gestión de tenants |
+| | `/settings` | SettingsPage | Configuración |
+| **Tools** | `/flows` | FlowDashboard | Dashboard de flujos |
+| | `/archived` | ArchivedFlows | Flujos archivados |
+| | `/globals` | GlobalsPage | Variables globales |
+| | `/webhooks` | WebhookLogs | Logs de webhooks |
+| | `/export` | ExportPage | Exportación |
+| | `/validate` | ValidatePage | Validación |
 
-### Rutas adicionales (sin sidebar):
-- `/simulator` — Simulador de teléfono completo
-- `/demos` — Lista de demos interactivas
-- `/demo/:id` — Visor de demo individual
+### Rutas públicas
 
-### Layout (AppLayout.tsx)
-```
-┌──────────┬─────────────────────────────────┐
-│          │                                 │
-│ Sidebar  │         <Outlet />              │
-│ (collap- │    (contenido de la ruta)       │
-│  sable)  │                                 │
-│          │                                 │
-└──────────┴─────────────────────────────────┘
-```
+| Ruta | Página | Descripción |
+|---|---|---|
+| `/share/:id` | ShareDemo | Demo compartida públicamente |
+| `/login` | LoginPage | Login / registro |
 
----
+### Enrutamiento por dominio
 
-## Editor de Flujos (Core)
-
-### FlowEditor.tsx — Componente Principal
-
-**Archivo:** `src/components/flow/FlowEditor.tsx` (470 líneas)
-
-Gestiona todo el estado del editor:
-
-```typescript
-// Estado principal
-const [nodes, setNodes, onNodesChange] = useNodesState([]);
-const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
-const [flowName, setFlowName] = useState("Mi Flujo WhatsApp");
-const [showSimulator, setShowSimulator] = useState(false);
-const [showTranslator, setShowTranslator] = useState(false);
-const [showValidation, setShowValidation] = useState(false);
-```
-
-**Funciones clave:**
-| Función | Descripción |
-|---|---|
-| `addNode(type)` | Crea un nodo nuevo con datos por defecto según el tipo |
-| `updateNodeData(id, data)` | Actualiza los datos de un nodo existente |
-| `deleteNode(id)` | Elimina nodo y sus conexiones |
-| `deleteEdge(id)` | Elimina una conexión |
-| `onConnect(connection)` | Crea nueva conexión entre nodos |
-| `handleValidate()` | Ejecuta validación y muestra panel |
-| `handleExport()` | Valida → exporta JSON v13 → descarga |
-| `handleImport()` | Abre selector de archivo JSON |
-| `importFlowFromJson(json)` | Parsea JSON TextIt e importa nodos/edges |
-| `handleLoadSample()` | Carga flujo de ejemplo desde `/sample-flow.json` |
-| `handleClear()` | Limpia todo el canvas |
-
-**Componentes integrados en el canvas:**
-- `ReactFlow` con `MiniMap`, `Controls`, `Background` (dots)
-- `NodeConfigPanel` — panel lateral derecho al seleccionar nodo
-- `EdgeInfoPanel` — panel inferior al seleccionar edge
-- `ValidationPanel` — panel inferior izquierdo
-- `WhatsAppSimulator` — panel lateral derecho
-- `TranslatorPanel` — panel inferior izquierdo
-
-### FlowToolbar.tsx — Barra de Herramientas
-
-**Elementos:**
-1. `SidebarTrigger` — Colapsar/expandir sidebar
-2. `Input` — Nombre editable del flujo
-3. `DropdownMenu "Add Node"` — Menú desplegable con 3 secciones:
-   - **Actions:** Send Message, Update Contact, Send Email, Save Result, Webhook, Call AI, Zapier, Enter Flow, Open Ticket, Send Airtime
-   - **Splits:** Expression, Contact Field, Result, Random, Group
-   - **Wait:** Wait for Response
-4. **Botones derecha:** Simulate, Translate, Validate, Sample, Import, Export, Clear
+El componente `DemoDomainGuard` detecta subdominios específicos (ej. `wakaxp.wakacore.com`) y renderiza demos dedicadas omitiendo el shell principal y la autenticación.
 
 ---
 
-## Nodos Implementados
+## Capas del Producto
 
-### 12 tipos de nodos registrados en `nodeTypes`:
+### 5.1. Classic Builder
+
+Capa estable de edición técnica de flujos, inspirada en TextIt/RapidPro.
+
+**Ruta:** `/editor`
+
+**Componente principal:** `FlowEditor.tsx`
+
+#### 16 tipos de nodos registrados
 
 | Tipo | Componente | Color | Descripción |
 |---|---|---|---|
-| `sendMsg` | `SendMsgNode` | `hsl(160, 84%, 39%)` 🟢 | Enviar mensaje de texto con quick replies |
-| `waitResponse` | `WaitResponseNode` | `hsl(220, 80%, 55%)` 🔵 | Esperar respuesta del usuario |
-| `splitExpression` | `SplitNode` | `hsl(260, 60%, 55%)` 🟣 | Dividir por expresión |
-| `splitContactField` | `SplitNode` | 🟣 | Dividir por campo de contacto |
-| `splitResult` | `SplitNode` | 🟣 | Dividir por resultado de flujo |
-| `splitRandom` | `SplitNode` | 🟣 | Dividir aleatoriamente |
-| `splitGroup` | `SplitNode` | 🟣 | Dividir por grupo |
-| `webhook` | `WebhookNode` | `hsl(30, 90%, 55%)` 🟠 | Llamar webhook HTTP |
-| `saveResult` | `SaveResultNode` | `hsl(45, 80%, 50%)` 🟡 | Guardar resultado del flujo |
-| `updateContact` | `UpdateContactNode` | `hsl(200, 70%, 50%)` | Actualizar campo de contacto |
-| `sendEmail` | `SendEmailNode` | `hsl(340, 70%, 50%)` | Enviar email |
-| `callAI` | `CallAINode` | `hsl(270, 70%, 55%)` | Llamar servicio IA |
-| `enterFlow` | `EnterFlowNode` | `hsl(190, 70%, 45%)` | Entrar en otro flujo |
-| `openTicket` | `OpenTicketNode` | `hsl(15, 80%, 50%)` | Abrir ticket de soporte |
-| `callZapier` | `CallZapierNode` | `hsl(20, 90%, 55%)` | Llamar Zapier |
-| `sendAirtime` | `SendAirtimeNode` | `hsl(50, 80%, 45%)` | Enviar airtime/saldo |
+| `sendMsg` | SendMsgNode | 🟢 Verde | Enviar mensaje con quick replies |
+| `waitResponse` | WaitResponseNode | 🔵 Azul | Esperar respuesta del usuario |
+| `splitExpression` | SplitNode | 🟣 Púrpura | Dividir por expresión |
+| `splitContactField` | SplitNode | 🟣 | Dividir por campo de contacto |
+| `splitResult` | SplitNode | 🟣 | Dividir por resultado |
+| `splitRandom` | SplitNode | 🟣 | Dividir aleatoriamente |
+| `splitGroup` | SplitNode | 🟣 | Dividir por grupo |
+| `webhook` | WebhookNode | 🟠 Naranja | Llamar webhook HTTP |
+| `callAI` | CallAINode | 🟣 Violeta | Llamar servicio IA |
+| `saveResult` | SaveResultNode | 🟡 Amarillo | Guardar resultado |
+| `updateContact` | UpdateContactNode | 🔵 | Actualizar campo de contacto |
+| `sendEmail` | SendEmailNode | 🔴 Rosa | Enviar email |
+| `enterFlow` | EnterFlowNode | 🔵 Cyan | Entrar en otro flujo |
+| `openTicket` | OpenTicketNode | 🟠 | Abrir ticket de soporte |
+| `callZapier` | CallZapierNode | 🟠 | Llamar Zapier |
+| `sendAirtime` | SendAirtimeNode | 🟡 | Enviar airtime/saldo |
 
-### Anatomía de un nodo visual (ejemplo SendMsgNode):
-```
-┌─────────────────────────────────┐
-│ ● Handle (target/entrada)       │
-├─────────────────────────────────┤
-│ 📨 SEND MESSAGE          (pill) │  ← Header con color del tipo
-├─────────────────────────────────┤
-│ Texto del mensaje...            │  ← Body con preview
-│                                 │
-│ [Opción 1] [Opción 2]          │  ← Quick replies como chips
-├─────────────────────────────────┤
-│ ● Handle (source/salida)        │
-└─────────────────────────────────┘
-```
+#### Capacidades del Classic Builder
+
+- ✅ Importación/exportación JSON v13 TextIt
+- ✅ Validación de flujos con errores y warnings
+- ✅ Traducción automática a 17 idiomas (MyMemory API)
+- ✅ Simulador WhatsApp con modo live (webhooks reales)
+- ✅ Auto-save con debounce 2s a base de datos
+- ✅ Variables globales clave-valor
+- ✅ Webhook logs con vista detallada request/response
+- ✅ Flow dashboard con listado, búsqueda y estados
+
+### 5.2. XP Layer
+
+Capa de estructura, contexto y entidades que coexiste con el Classic Builder sin romperlo.
+
+#### Módulos (ModuleGroupNode)
+
+- Contenedores visuales colapsables para agrupar nodos semánticamente
+- Hook `useFlowModules` para gestión de módulos
+- Expand/collapse con animaciones
+
+#### Structure View (StructuredView)
+
+- Vista jerárquica alternativa al canvas
+- Auto-focus/pan al canvas al hacer clic en un nodo
+- Navegación rápida entre módulos
+
+#### Flow Context Panel (FlowContextPanel)
+
+- Definición centralizada de variables y entidades
+- **Variables locales al flujo:** campos simples de contexto de ejecución
+- **Entidades estructuradas:** conceptos reutilizables de negocio (Customer, Loan, Payment...)
+- Formularios inline diferenciados, iconografía específica y descripciones
+- Precursor del futuro Context Board
+
+#### Node Effects Editor (NodeEffectsEditor)
+
+- Side-effects por nodo (acciones secundarias que un nodo puede disparar)
+
+### 5.3. Experience Studio
+
+**Ruta:** `/studio`
+
+Centro relacional de activos donde se gestionan experiencias de negocio.
+
+- ✅ CRUD de experiencias con nombre, descripción, environment, tags
+- ✅ Vinculación/desvinculación de flujos reales a una experiencia
+- ✅ Contadores actualizados de activos vinculados
+- ✅ Pestañas: Demos, Flows, Version History
+- ✅ Promote to Production desde el Studio
+
+### 5.4. Demo Builder / Sandbox AI
+
+**Ruta:** `/wakaflow`
+
+Entorno de creación e iteración de demos basado en IA, estilo "Claude-like sandbox".
+
+- ✅ Generación de artefactos JSX mediante lenguaje natural
+- ✅ Iteración conversacional (rebuild con historial)
+- ✅ Vista dual: Preview (renderizado) + Code (fuente JSX)
+- ✅ Historial de versiones con restore
+- ✅ Upload JSX externo como punto de partida
+- ✅ Attach Image para referencia visual
+- ✅ Load Demo existente de la librería
+- ✅ AI Engine Selector (WAKA AI activo, Azure/BYOM coming soon)
+
+**Edge Functions:**
+- `waka-ai-apply` — Generación/rewrite de JSX con Gemini Flash
+- `waka-ai-proposal` — Propuestas de cambio IA
+
+### 5.5. Production Layer
+
+**Ruta:** `/production`
+
+Gestión de Production Candidates con ciclo de vida completo.
+
+- ✅ Estados: `Candidate` → `Validated` → `Live` → `Archived`
+- ✅ Promote inteligente desde Experience Studio o Builder
+- ✅ Vinculación automática de flow si hay uno solo, selección si hay múltiples
+- ✅ Trazabilidad completa via versionado transversal
+
+### 5.6. Simulation Engine
+
+**Simulador WhatsApp integrado** en el Classic Builder:
+
+- ✅ Modo Live con ejecución real de webhooks
+- ✅ Detección inteligente del punto de inicio (nodos Start, módulos Entry)
+- ✅ Banners explicativos sobre la lógica de selección de entrada
+- ✅ Burbujas de chat con renderizado de attachments (imágenes, archivos)
+- ✅ Motor de depuración: JSON resuelto de webhooks
+- ✅ Inyección global de `x-api-key`
+
+**WhatsApp real:**
+- Edge function `whatsapp-send` para envío de mensajes
+- Edge function `whatsapp-webhook` para recepción de mensajes entrantes
 
 ---
 
-## Panel de Configuración de Nodos
+## Sistema de Persistencia
 
-**Archivo:** `src/components/flow/NodeConfigPanel.tsx` (630 líneas)
+- **Auto-save** con debounce de 2 segundos (`useFlowPersistence`)
+- **Vinculación** a `tenant_id` para aislamiento de datos
+- **Indicador visual** sutil de sincronización (spinner → check → ocultar)
+- **DEMO_TENANT_ID** fijo para pruebas antes de autenticación obligatoria
 
-Panel lateral derecho que aparece al hacer clic en un nodo. Campos dinámicos según tipo:
+### Tablas principales (Supabase)
 
-### Campos por tipo de nodo:
-
-| Tipo | Campos |
+| Tabla | Descripción |
 |---|---|
-| **sendMsg** | Texto del mensaje (textarea), Quick Replies (lista dinámica), Attachments (lista URLs) |
-| **waitResponse** | Save as Result (input), Categorías de respuesta (lista dinámica), nota "Other" automático |
-| **splitExpression** | Operando (@input.text), Test Type (select: has_any_word, regex, number, date, email, phone, pattern), Cases (lista) |
-| **splitContactField** | Contact Field (select: name, language, channel, URN, groups, created_on), Cases (lista) |
-| **splitResult** | Flow Result (input @results.xxx), Cases (lista) |
-| **splitRandom** | Number of Buckets (input numérico 2-10) |
-| **splitGroup** | Group Name (input) |
-| **webhook** | URL, Method (GET/POST/PUT/PATCH/DELETE), Headers (key-value dinámicos), Request Body JSON (textarea), Save as Result |
-| **saveResult** | Result Name, Value, Category |
-| **updateContact** | Field (select: name, first_name, language, channel, status), Custom Field Name, Value |
-| **sendEmail** | To, Subject, Body |
-| **callAI** | Provider (OpenAI/Anthropic/Custom), System Prompt, User Prompt, Save as Result |
-| **enterFlow** | Flow Name, Flow UUID, nota informativa |
-| **openTicket** | Ticketer (Internal/Zendesk/Mailgun), Topic, Body, Assignee |
-| **callZapier** | Webhook URL, Data to Send (JSON) |
-| **sendAirtime** | Amount, Currency (XOF/XAF/USD/EUR/GHS/NGN/KES) |
-
-### Funciones helper reutilizables:
-- `renderListEditor(key, label, placeholder)` — Editor de listas dinámicas (add/edit/remove)
-- `addHeader()` / `updateHeader()` / `removeHeader()` — Gestión de headers HTTP
-- `update(key, value)` — Actualizar cualquier campo del nodo
+| `tenants` | Entidades aisladas (clientes, ambientes WAKA) |
+| `workspaces` | Espacios de trabajo dentro de un tenant |
+| `profiles` | Perfiles de usuario con tenant_id |
+| `user_roles` | Roles (admin, editor, viewer) — tabla separada por seguridad |
+| `flows` | Flujos con nodos, edges, status, tenant_id |
+| `flow_versions` | Versiones de flujos (snapshots de nodos/edges) |
+| `experiences` | Experiencias de negocio |
+| `production_candidates` | Candidatos a producción con ciclo de estados |
+| `asset_versions` | Versionado transversal (4 tipos de activo) |
+| `globals` | Variables globales clave-valor por tenant |
+| `webhook_logs` | Logs de webhooks con payload y response |
+| `uploaded_demos` | Demos subidas/generadas por usuarios |
+| `whatsapp_messages` | Mensajes WhatsApp reales (inbound/outbound) |
 
 ---
 
-## Sistema de Conexiones (Edges)
+## Multi-Tenancy y Gobernanza
 
-### Configuración por defecto:
-```typescript
-const defaultEdgeOptions = {
-  type: "step",
-  animated: false,
-  style: { strokeWidth: 2, stroke: "hsl(200, 30%, 65%)" },
-};
+### Jerarquía
+
+```
+Tenant → Workspace → Environment (Draft / Sandbox / Production)
 ```
 
-### EdgeInfoPanel.tsx
-Al hacer clic en una conexión, muestra:
-- Nodo origen y destino con tipo, color e icono
-- Preview del contenido de cada nodo
-- UUID truncados de la conexión
-- Botón para eliminar la conexión
-- Clic en nodo origen/destino abre su configuración
+### Aislamiento
 
-### Estilos CSS de edges (index.css):
-```css
-.react-flow__edge:hover .react-flow__edge-path { stroke: hsl(200, 60%, 50%); stroke-width: 3; }
-.react-flow__edge.selected .react-flow__edge-path { stroke: hsl(200, 70%, 45%); stroke-width: 3; }
-.react-flow__edge-interaction { stroke-width: 20; } /* Área clicable ampliada */
-```
+- `tenant_id` como clave en todas las tablas de datos
+- RLS (Row Level Security) en Supabase
+- Función `get_user_tenant_id()` para resolver tenant del usuario
+
+### Gestión de Tenants (`/tenants`)
+
+- Branding: colores, logo, display name
+- Localización: país, timezone
+- Canales habilitados
+- Simulador de roles integrado (Superadmin, Admin, Viewer)
+
+### Workspace Context Bar
+
+- Selector de tenant y workspace activo
+- Contexto visible en toda la aplicación
 
 ---
 
-## Exportación TextIt JSON v13
+## Versionado Transversal
 
-**Archivo:** `src/lib/flowExport.ts`
+**Hook:** `useAssetVersions`
 
-### Función `exportToTextIt(nodes, edges, flowName) → FlowExport`
+Sistema unificado de versionado aplicable a los 4 tipos de activo:
 
-Convierte nodos de React Flow a formato TextIt v13:
+| Tipo | Enum |
+|---|---|
+| Experience | `experience` |
+| Demo | `demo` |
+| Flow | `flow` |
+| Production Candidate | `production_candidate` |
 
-```typescript
-interface FlowExport {
-  version: "13";
-  site: "https://textit.com";
-  flows: [{
-    uuid: string;
-    name: string;
-    language: "spa";
-    type: "messaging";
-    nodes: TextItNode[];
-  }];
-}
-```
+### Capacidades
 
-### Mapeo de nodos React Flow → TextIt:
+- ✅ Snapshots completos (`snapshot_data` JSON)
+- ✅ Historial visible con nombre y nota editable
+- ✅ Restore a versión anterior
+- ✅ Función `set_current_version()` para marcar versión activa
+- ✅ Función `next_asset_version_number()` para autoincremento
+- ✅ Environments: Draft → Sandbox → Production
+- ✅ Estados: Draft → Validated → Candidate → Live → Archived
 
-| Tipo React Flow | TextIt Action Type | Router |
+---
+
+## Edge Functions (Backend)
+
+| Función | Descripción |
+|---|---|
+| `waka-ai-apply` | Genera/reescribe JSX de demos usando Lovable AI (Gemini Flash) |
+| `waka-ai-proposal` | Genera propuestas de cambio IA para artefactos |
+| `whatsapp-send` | Envía mensajes WhatsApp reales via API |
+| `whatsapp-webhook` | Recibe y almacena mensajes entrantes de WhatsApp |
+
+---
+
+## WakaFlow Mapper
+
+**Archivo:** `src/lib/wakaflowMapper.ts`
+
+Puente técnico entre el diseño de alto nivel y la implementación TextIt.
+
+- Convierte `WakaFlowModel` a JSON compatible con TextIt
+- Identifica bloques no soportados y genera warnings
+- Vista de previsualización: comparación **Flow-first** (legacy) vs **Model-first** (WakaFlow)
+- Transición guiada hacia la nueva arquitectura
+
+---
+
+## AI Engine Selector
+
+**Componente:** `AIEngineSelector.tsx`
+
+Selector de motor IA para el Demo Builder:
+
+| Engine | Estado | Descripción |
 |---|---|---|
-| `sendMsg` | `send_msg` (text, quick_replies) | — |
-| `waitResponse` | — | `switch` con `wait: { type: "msg" }` |
-| `splitExpression` | — | `switch` con `operand` y `cases` |
-| `webhook` | `call_webhook` (url, method, body) | `switch` con Success/Failure |
-| Otros | Exit simple | — |
+| **WAKA AI** | ✅ Active | Built-in AI via Lovable Cloud (Gemini Flash) |
+| **Azure OpenAI** | 🔜 Coming Soon | GPT-4o via Waka's managed Azure deployment |
+| **BYOM** | 🔜 Planned | Bring Your Own Model, routed via Waka Azure layer |
 
-### Función `downloadJson(data, filename)`
-Crea blob JSON y descarga como archivo.
-
----
-
-## Importación de Flujos
-
-**Lógica en:** `FlowEditor.tsx → importFlowFromJson(json)`
-
-### Proceso de importación:
-1. Lee `json.flows[0]`
-2. Detecta tipo de nodo por `router` y `actions`:
-   - `router.wait.type === "msg"` → `waitResponse`
-   - `actions.type === "call_webhook"` → `webhook`
-   - `router && !actions.length` → `splitExpression`
-   - Default → `sendMsg`
-3. Posiciona nodos usando `_ui.nodes[uuid].position` si disponible (con escala 0.8x)
-4. Genera edges desde `exits[].destination_uuid`
-5. Filtra edges a nodos existentes
-
-### Flujo de ejemplo:
-`public/sample-flow.json` — archivo de demostración cargable desde el toolbar.
-
----
-
-## Validación de Flujos
-
-**Archivo:** `src/lib/flowValidation.ts`
-
-### Reglas implementadas:
-
-| Tipo | Condición | Severidad |
-|---|---|---|
-| Conectividad | Nodo sin conexión de entrada (excepto primero) | ⚠️ Warning |
-| Conectividad | Nodo sin conexión de salida | ⚠️ Warning |
-| sendMsg | Texto vacío | ❌ Error |
-| sendMsg | Quick replies vacías | ⚠️ Warning |
-| waitResponse | Sin categorías definidas | ❌ Error |
-| waitResponse | Categorías vacías | ⚠️ Warning |
-| webhook | URL vacía | ❌ Error |
-| webhook | URL inválida (no parseable) | ❌ Error |
-| webhook | Body no es JSON válido | ⚠️ Warning |
-| splitExpression | Operando vacío | ❌ Error |
-
-### ValidationPanel.tsx
-- Muestra conteo de errores y warnings
-- Lista clickable que enfoca el nodo problemático
-- Bloquea exportación si hay errores (warnings permiten exportar)
-
----
-
-## Simulador WhatsApp
-
-### WhatsAppSimulator.tsx
-Panel lateral derecho con UI estilo WhatsApp:
-- Header verde con estado (en línea / esperando / finalizado)
-- Burbujas de chat (bot = izquierda/blanco, usuario = derecha/verde)
-- Quick replies como chips clickables
-- Categorías de respuesta como botones centrales
-- Mensajes de sistema (splits, webhooks, fin de flujo)
-- Input con botón de envío
-- Botón de reinicio
-
-### useFlowSimulation.ts (Hook)
-Motor de simulación que recorre el grafo de nodos:
-
-```typescript
-interface ChatMessage {
-  id: string;
-  sender: "bot" | "user" | "system";
-  text: string;
-  quickReplies?: string[];
-  timestamp: Date;
-}
-```
-
-**Lógica por tipo de nodo:**
-- `sendMsg` → Emite mensaje bot, avanza automáticamente (800ms)
-- `waitResponse` → Pausa, muestra categorías, espera input del usuario
-- `splitExpression` → Emite mensaje sistema, avanza (500ms)
-- `webhook` → Emite mensaje sistema con URL, avanza (600ms)
-- Otros → Avanza automáticamente
-
-**Navegación del grafo:**
-- `findFirstNode()` — Busca nodo sin edges de entrada
-- `getNextNodeId(nodeId, sourceHandle?)` — Sigue edge, opcionalmente por handle
-- Match de categorías case-insensitive
-
----
-
-## Traductor de Flujos
-
-### TranslatorPanel.tsx + flowTranslator.ts
-
-**API utilizada:** MyMemory Translation API (`api.mymemory.translated.net`)
-
-### 17 idiomas soportados:
-ES, EN, FR, PT, DE, IT, NL, PL, RU, ZH, JA, KO, AR, HI, TR, UK, CA
-
-### Proceso de traducción:
-1. Escanea nodos para textos traducibles (mensajes, quick replies, categorías, labels)
-2. Preserva variables (@contact.name, @input.text) reemplazándolas con placeholders
-3. Traduce texto por texto con delay de 300ms (rate limiting)
-4. Restaura variables en texto traducido
-5. Exporta como JSON v13 con nombre `{flowName}_{lang}.json`
-6. **No modifica el flujo original** — genera copia
-
-### Panel UI:
-- Selectores de idioma origen/destino
-- Conteo de textos a traducir
-- Barra de progreso con texto actual
-- Info: qué se preserva (webhooks, variables, estructura)
-- Nombre del archivo de salida
-
----
-
-## Webhook Logs
-
-**Archivo:** `src/pages/WebhookLogs.tsx`
-
-### Vista de lista:
-- Tabla con columnas: Flow, URL, Status, Elapsed, Time
-- Buscador por nombre de flujo o URL
-- Badges de status coloreados (200-299 verde, 400-499 naranja, 500+ rojo)
-- Filas clickables
-
-### Vista de detalle (WebhookDetail):
-- Status banner (Success/Error con tiempo de respuesta)
-- **Request:** Método + URL + Headers + Body (formatted)
-- **Response:** HTTP status + Headers + Body (coloreado según status)
-- Formato HTTP raw con syntax highlighting
-
-### Datos de ejemplo:
-Genera 25 registros de muestra con flujos WAKA reales y URLs de Supabase/OpenAI.
-
----
-
-## Páginas de Gestión
-
-### GlobalsPage.tsx — Variables Globales
-- Editor clave-valor dinámico
-- Datos de ejemplo: `org_name=WAKA`, `support_phone=+22670000000`, `default_language=fr`
-- Botones Add/Remove por fila
-
-### StartsPage.tsx — Historial de Inicios
-- Tabla con Flow, Contacts, Time
-- Datos de ejemplo con flujos WAKA
-
-### ArchivedFlows.tsx — Flujos Archivados
-- Placeholder: "No archived flows yet"
-
-### ExportPage.tsx — Exportación
-- Instrucciones para usar el botón Export del toolbar
-- Formato: TextIt JSON v13
-
-### ImportPage.tsx — Importación
-- Placeholder para funcionalidad de importación
-
-### SettingsPage.tsx — Configuración
-- Campos: Organization Name, Default Language, TextIt API Token
+- Default seguro: WAKA AI siempre funciona sin configuración
+- Dropdown premium con Radix Popover
 
 ---
 
 ## Sistema de Demos
 
-### registry.ts — Registro de demos
-- **Built-in demos:** Moov Africa BF × WAKA
-- **Uploaded demos:** Almacenadas en localStorage
-- Funciones: `getUploadedDemos()`, `saveUploadedDemo()`, `deleteUploadedDemo()`
+### Registry (`demos/registry.ts`)
 
-### MoovWakaDemo.tsx
-Demo completa de onboarding GSM→Moov Money para Burkina Faso.
+- **Built-in demos:** Componentes pre-compilados (ej. Moov Africa BF)
+- **Uploaded demos:** Almacenadas en DB (`uploaded_demos`)
+- Sistema de estados: `Stable` (protegidas), `Sandbox` (editables), `Approved`
 
-### RuntimeJSXRenderer.tsx
-Renderizador que transpila JSX en runtime usando Sucrase para demos subidas por el usuario.
+### Runtime JSX Renderer
+
+- Transpilación JSX en runtime usando Sucrase
+- `sourceId` para resolver componentes built-in originales
+- Error boundary con fallback visual
+
+### Compartir demos
+
+- Ruta pública `/share/:id` para compartir demos sin autenticación
 
 ---
 
-## Sistema de Diseño (Design Tokens)
+## Sistema de Diseño
 
-### index.css — Variables CSS (HSL)
+### Design Tokens (HSL en `index.css`)
 
 ```css
 :root {
-  /* Base */
-  --background: 220 20% 97%;    /* Fondo general */
-  --foreground: 220 30% 10%;    /* Texto principal */
-  --card: 0 0% 100%;            /* Fondo de tarjetas */
-  --primary: 160 84% 39%;       /* Verde principal (nodo send) */
-  --accent: 260 60% 55%;        /* Púrpura (nodo split) */
-  --destructive: 0 72% 51%;     /* Rojo para errores */
-
-  /* Nodos del editor */
-  --node-send: 160 84% 39%;     /* Verde — enviar mensaje */
-  --node-wait: 220 80% 55%;     /* Azul — esperar respuesta */
-  --node-split: 260 60% 55%;    /* Púrpura — splits */
-  --node-webhook: 30 90% 55%;   /* Naranja — webhooks */
-
-  /* Canvas */
-  --canvas-bg: 220 20% 95%;     /* Fondo del editor */
-
-  /* Sidebar */
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
+  --background, --foreground, --card, --primary, --accent, --destructive
+  --node-send (verde), --node-wait (azul), --node-split (púrpura), --node-webhook (naranja)
+  --canvas-bg, --sidebar-*
 }
 ```
 
-### Clases Tailwind personalizadas:
-- `bg-node-send`, `text-node-send`, `border-node-send`
-- `bg-node-wait`, `text-node-wait`, `border-node-wait`
-- `bg-node-split`, `text-node-split`
-- `bg-node-webhook`, `text-node-webhook`
-- `bg-canvas-bg`
+- Dark mode completo via `.dark` class
+- Clases Tailwind semánticas: `bg-node-send`, `text-node-wait`, etc.
+- Componentes shadcn/ui personalizados con variantes
 
 ---
 
-## Tipos TypeScript
+## Estado del Roadmap Estratégico
 
-**Archivo:** `src/types/flow.ts`
+Referencia: `docs/waka-xp-strategic-foundation.md`, secciones §17 y §20.
 
-```typescript
-// Tipos del formato TextIt/RapidPro JSON v13
-type FlowNodeType = "send_msg" | "wait_for_response" | "split_by_expression" | "call_webhook";
+| Fase | Descripción | Estado | Progreso |
+|---|---|---|---|
+| **Fase 1** | Builder + compatibilidad heredada | ✅ Completa | 100% |
+| **Fase 2** | Experience Studio | 🟡 En curso | ~70% |
+| **Fase 3** | Blueprint Layer | 🟡 Parcial | ~40% |
+| **Fase 4** | Structure & Context Layer | 🟡 Parcial | ~50% |
+| **Fase 5** | Omnichannel & Modality Layer | 🔜 No iniciada | 0% |
+| **Fase 6** | Production Promotion | 🟡 Parcial | ~60% |
+| **Fase 7** | Integración profunda WAKA | 🔜 No iniciada | 0% |
 
-interface TextItAction {
-  uuid: string; type: string;
-  text?: string; quick_replies?: string[];
-  url?: string; method?: string; headers?: Record<string, string>; body?: string;
-}
+### Detalle de componentes estratégicos
 
-interface TextItCategory { uuid: string; name: string; exit_uuid: string; }
-interface TextItRouter { type: string; default_category_uuid: string; categories: TextItCategory[]; operand?: string; cases?: TextItCase[]; wait?: { type: string }; }
-interface TextItCase { uuid: string; type: string; arguments: string[]; category_uuid: string; }
-interface TextItExit { uuid: string; destination_uuid: string | null; }
-interface TextItNode { uuid: string; actions: TextItAction[]; exits: TextItExit[]; router?: TextItRouter; }
-interface TextItFlow { uuid: string; name: string; language: string; type: "messaging"; nodes: TextItNode[]; }
-interface FlowExport { version: "13"; site: string; flows: TextItFlow[]; }
-```
+| Componente (§17.3) | Estado |
+|---|---|
+| Simulator Shell | 🟡 Parcial — WhatsApp Simulator funcional, falta shell nativo reutilizable |
+| Scenario Editor | 🔜 No iniciado — Demo Builder es el precursor |
+| AI Journey Generator | 🟡 Parcial — Demo Builder genera con IA, falta generación de flows |
+| Scenario-to-Flow Bridge | 🔜 Diseñado — WakaFlow Mapper es el primer paso |
+| Blueprint Generator | 🔜 No iniciado |
+
+### Conceptos estratégicos pendientes
+
+| Concepto (§19) | Estado |
+|---|---|
+| Experience Trees | 🔜 Conceptual — sin implementación |
+| Experience Forests | 🔜 Conceptual |
+| Context Board | 🔜 Conceptual — Flow Context Panel es el precursor |
+| Contexto cross-flow | 🔜 Diseñado — entidades por flujo, sin resolución compartida |
+| Vistas alternativas (Path, Exception, Data Flow) | 🔜 No iniciadas |
+| Copy/paste semántico | 🔜 No iniciado |
+
+### Gaps operativos conocidos
+
+| Área | Estado |
+|---|---|
+| Autenticación obligatoria | ⚠️ Login existe pero no es enforced — se usa DEMO_TENANT_ID |
+| RLS por tenant real | ⚠️ Políticas existen pero dependen de auth activa |
+| Azure OpenAI engine | 🔜 Planned — routing pendiente |
+| BYOM engine | 🔜 Planned — sin path propio |
 
 ---
 
@@ -618,42 +596,26 @@ npm run test:watch
 npm run lint
 ```
 
-### Scripts disponibles:
-| Script | Descripción |
+### Variables de entorno (auto-configuradas por Lovable Cloud)
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
+
+---
+
+## Home: WAKA Stack Status
+
+La página principal (`/`) incluye una sección **Connected WAKA Stack** con visibilidad del estado de integración:
+
+| Módulo | Estados posibles |
 |---|---|
-| `npm run dev` | Inicia Vite dev server |
-| `npm run build` | Build de producción |
-| `npm run build:dev` | Build en modo development |
-| `npm run preview` | Preview del build |
-| `npm run test` | Ejecuta tests con Vitest |
-| `npm run test:watch` | Tests en modo watch |
-| `npm run lint` | ESLint |
+| WAKA NEXUS | Connected / Simulated / Inactive |
+| WAKA AXIOM | Connected / Simulated / Inactive |
+| WAKA VOICE | Connected / Simulated / Inactive |
+| WAKA CORE | Connected / Simulated / Inactive |
+| WAKA CRM | Connected / Simulated / Inactive |
 
 ---
 
-## Estado Actual y Limitaciones
-
-### ✅ Implementado:
-- Editor visual completo con 12 tipos de nodos
-- Exportación/importación JSON v13
-- Panel de configuración con campos completos por tipo
-- Simulador WhatsApp funcional
-- Validación con errores y warnings
-- Traductor a 17 idiomas
-- Webhook logs con vista detallada
-- Sidebar de navegación tipo TextIt
-- Variables globales
-- Sistema de demos con upload
-
-### ⏳ Pendiente / Placeholder:
-- Persistencia de datos (actualmente en memoria/localStorage)
-- Conexión real con API de TextIt
-- Flujos archivados (UI placeholder)
-- Importación desde página dedicada (solo funciona desde toolbar)
-- Autenticación de usuarios
-- Webhook logs con datos reales (actualmente datos de ejemplo)
-- Multi-flujo (gestión de lista de flujos)
-
----
-
-*Documentación generada el 7 de marzo de 2026 — Proyecto Waka-Flow v0.1*
+*Documentación actualizada el 10 de marzo de 2026 — WAKA XP v0.2*
