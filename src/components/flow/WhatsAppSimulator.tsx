@@ -369,6 +369,19 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                 ))}
               </div>
             </div>
+            {/* Groups */}
+            {context.groups.size > 0 && (
+              <div>
+                <span className="text-muted-foreground font-sans font-semibold text-[10px] uppercase tracking-wide">groups</span>
+                <div className="mt-0.5 flex flex-wrap gap-1">
+                  {Array.from(context.groups).map((g) => (
+                    <span key={g} className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Webhook */}
             {context.webhook.status && (
               <div>
