@@ -37,17 +37,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // If served from the demo subdomain, show only the demo
-  if (isDemoDomain()) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <DemoDomainRoot />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
-
   return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
