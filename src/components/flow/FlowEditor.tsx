@@ -16,6 +16,7 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { LabeledEdge } from "./LabeledEdge";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -67,6 +68,14 @@ const nodeTypes = {
   splitGroup: SplitNode,
   moduleGroup: ModuleGroupNode,
 };
+
+const edgeTypes = {
+  labeled: LabeledEdge,
+};
+
+const SPLIT_NODE_TYPES = new Set([
+  "splitExpression", "splitContactField", "splitResult", "splitRandom", "splitGroup",
+]);
 
 const defaultEdgeOptions = {
   type: "step",
@@ -199,8 +208,33 @@ function FlowEditorInner() {
   }, [nodes, edges, flowName, debouncedSave]);
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const isSplit = sourceNode && SPLIT_NODE_TYPES.has(sourceNode.type || "");
+      const label = isSplit && connection.sourceHandle ? connection.sourceHandle : undefined;
+
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            ...(label
+              ? {
+                  type: "labeled",
+                  label,
+                  style: {
+                    strokeWidth: 2,
+                    stroke: label === "Other"
+                      ? "hsl(220, 10%, 65%)"
+                      : "hsl(260, 60%, 55%)",
+                  },
+                }
+              : {}),
+          },
+          eds
+        )
+      );
+    },
+    [setEdges, nodes]
   );
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -241,11 +275,26 @@ function FlowEditorInner() {
           defaultData.categories = ["Sí", "No"];
           break;
         case "splitExpression":
-        case "splitContactField":
-        case "splitResult":
-        case "splitRandom":
-        case "splitGroup":
           defaultData.operand = "@input.text";
+          defaultData.cases = ["Has Text"];
+          defaultData.testType = "has_any_word";
+          break;
+        case "splitContactField":
+          defaultData.operand = "@contact.language";
+          defaultData.cases = ["en", "fr"];
+          break;
+        case "splitResult":
+          defaultData.operand = "@results.response";
+          defaultData.cases = ["Yes", "No"];
+          break;
+        case "splitRandom":
+          defaultData.operand = "";
+          defaultData.cases = ["Bucket 1", "Bucket 2"];
+          defaultData.buckets = 2;
+          break;
+        case "splitGroup":
+          defaultData.operand = "";
+          defaultData.cases = ["In Group"];
           break;
         case "webhook":
           defaultData.url = "";
@@ -395,6 +444,10 @@ function FlowEditorInner() {
         } else if (n.router && !n.actions?.length) {
           type = "splitExpression";
           data.operand = n.router.operand || "@input.text";
+          data.cases = n.router.categories
+            ?.filter((c: any) => c.name !== "Other")
+            .map((c: any) => c.name) || [];
+          data.testType = n.router.cases?.[0]?.type || "has_any_word";
         } else if (n.actions?.[0]?.type === "call_webhook") {
           type = "webhook";
           data.url = n.actions[0].url || "";
@@ -417,15 +470,35 @@ function FlowEditorInner() {
       });
 
       const nodeIds = new Set(importedNodes.map((n) => n.id));
-      const importedEdges = flow.nodes.flatMap((n: any) =>
-        (n.exits || [])
+      const importedEdges = flow.nodes.flatMap((n: any) => {
+        const categories = n.router?.categories || [];
+        return (n.exits || [])
           .filter((exit: any) => exit.destination_uuid && nodeIds.has(exit.destination_uuid))
-          .map((exit: any) => ({
-            id: uuidv4(),
-            source: n.uuid,
-            target: exit.destination_uuid,
-          }))
-      );
+          .map((exit: any) => {
+            // Find category name for this exit
+            const cat = categories.find((c: any) => c.exit_uuid === exit.uuid);
+            const label = cat?.name || undefined;
+            const isSplitLike = n.router && !n.router?.wait;
+            return {
+              id: uuidv4(),
+              source: n.uuid,
+              target: exit.destination_uuid,
+              ...(isSplitLike && label
+                ? {
+                    type: "labeled",
+                    sourceHandle: label,
+                    label,
+                    style: {
+                      strokeWidth: 2,
+                      stroke: label === "Other"
+                        ? "hsl(220, 10%, 65%)"
+                        : "hsl(260, 60%, 55%)",
+                    },
+                  }
+                : {}),
+            };
+          });
+      });
 
       setNodes(importedNodes);
       setEdges(importedEdges);
@@ -597,6 +670,7 @@ function FlowEditorInner() {
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             fitViewOptions={{ padding: 0.2, maxZoom: 1.5 }}

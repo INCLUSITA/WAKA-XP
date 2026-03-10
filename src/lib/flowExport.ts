@@ -68,20 +68,48 @@ function buildTextItNode(node: Node, edges: Edge[]): TextItNode {
       break;
     }
 
-    case "splitExpression": {
+    case "splitExpression":
+    case "splitContactField":
+    case "splitResult":
+    case "splitRandom":
+    case "splitGroup": {
+      const categories: TextItCategory[] = [];
+      const cases: TextItCase[] = [];
+      const userCases = (data.cases || []) as string[];
+      const testType = data.testType || "has_any_word";
+
+      userCases.forEach((caseName: string) => {
+        if (!caseName.trim()) return;
+        const exitUuid = uuidv4();
+        const catUuid = uuidv4();
+        categories.push({ uuid: catUuid, name: caseName, exit_uuid: exitUuid });
+        cases.push({
+          uuid: uuidv4(),
+          type: testType,
+          arguments: [caseName.toLowerCase()],
+          category_uuid: catUuid,
+        });
+        exits.push({
+          uuid: exitUuid,
+          destination_uuid: outEdges.find((e) => e.sourceHandle === caseName)?.target || null,
+        });
+      });
+
+      // Other/default category
       const defaultExitUuid = uuidv4();
       const defaultCatUuid = uuidv4();
+      categories.push({ uuid: defaultCatUuid, name: "Other", exit_uuid: defaultExitUuid });
       exits.push({
         uuid: defaultExitUuid,
-        destination_uuid: outEdges[0]?.target || null,
+        destination_uuid: outEdges.find((e) => e.sourceHandle === "Other")?.target || null,
       });
 
       router = {
         type: "switch",
         default_category_uuid: defaultCatUuid,
-        categories: [{ uuid: defaultCatUuid, name: "Other", exit_uuid: defaultExitUuid }],
+        categories,
         operand: data.operand || "@input.text",
-        cases: [],
+        cases,
       };
       break;
     }
