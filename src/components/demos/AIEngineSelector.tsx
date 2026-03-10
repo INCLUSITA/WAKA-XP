@@ -180,7 +180,7 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
             {/* Footer hint */}
             <div className="px-3.5 py-2 border-t border-border/20">
               <p className="text-[9px] text-muted-foreground/40">
-                Azure & BYOM coming soon · Default engine requires no setup
+                Azure OpenAI & BYOM coming soon · Routed via Waka managed infra
               </p>
             </div>
           </motion.div>
