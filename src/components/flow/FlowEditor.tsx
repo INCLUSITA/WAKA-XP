@@ -16,6 +16,7 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { LabeledEdge } from "./LabeledEdge";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
