@@ -42,6 +42,8 @@ const nodeTypeLabels: Record<string, string> = {
   openTicket: "Open Ticket",
   callZapier: "Call Zapier",
   sendAirtime: "Send Airtime",
+  addGroup: "Add to Group",
+  removeGroup: "Remove from Group",
 };
 
 interface Attachment {
