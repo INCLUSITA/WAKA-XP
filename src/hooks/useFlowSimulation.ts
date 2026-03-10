@@ -9,6 +9,14 @@ export interface ChatMessage {
   timestamp: Date;
   imageUrl?: string;
   attachments?: { url: string; name?: string; mime?: string }[];
+  /** For split system messages: structured routing info */
+  splitInfo?: {
+    operand: string;
+    resolvedValue: string;
+    cases: string[];
+    matchedCase: string | null;
+    nodeType?: string;
+  };
 }
 
 export interface SimulationContext {
@@ -265,18 +273,86 @@ export function useFlowSimulation(
           break;
         }
 
-        case "splitExpression": {
+        case "splitExpression":
+        case "splitContactField":
+        case "splitResult":
+        case "splitRandom":
+        case "splitGroup": {
           const operand = resolveTemplate(data.operand || "@input.text", ctxRef.current);
+          const cases: string[] = (data.cases || []).filter((c: string) => c.trim());
+          const allCategories = [...cases, "Other"];
+
+          // Evaluate: find first case that matches (simple text match for now)
+          let matchedCase: string | null = null;
+          const testType = data.testType || "has_any_word";
+          const operandLower = operand.toLowerCase().trim();
+
+          for (const caseName of cases) {
+            const caseVal = caseName.toLowerCase().trim();
+            let matched = false;
+            switch (testType) {
+              case "has_any_word":
+                matched = operandLower.split(/\s+/).some((w) => w === caseVal);
+                break;
+              case "has_all_words":
+                matched = caseVal.split(/\s+/).every((w) => operandLower.includes(w));
+                break;
+              case "has_phrase":
+              case "has_only_phrase":
+                matched = operandLower.includes(caseVal);
+                break;
+              case "has_text":
+                matched = operandLower.length > 0;
+                break;
+              case "has_number":
+                matched = /\d+/.test(operand);
+                break;
+              case "has_number_eq":
+                matched = parseFloat(operand) === parseFloat(caseName);
+                break;
+              case "has_number_gt":
+                matched = parseFloat(operand) > parseFloat(caseName);
+                break;
+              case "has_number_lt":
+                matched = parseFloat(operand) < parseFloat(caseName);
+                break;
+              case "has_pattern":
+                try { matched = new RegExp(caseName, "i").test(operand); } catch { matched = false; }
+                break;
+              default:
+                // Fallback: case-insensitive equality or contains
+                matched = operandLower === caseVal || operandLower.includes(caseVal);
+            }
+            if (matched) { matchedCase = caseName; break; }
+          }
+
+          // If no case matched and operand is non-empty, check for "has_text" style catch-all
+          const resolvedCategory = matchedCase || "Other";
+
+          const splitLabel = matchedCase
+            ? `⚡ Split → "${matchedCase}" (matched "${operand.substring(0, 40)}")`
+            : `⚡ Split → "Other" (no match for "${operand.substring(0, 40)}")`;
+
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `⚡ Split: evaluating "${data.operand}" → "${operand.substring(0, 60)}"`, timestamp: new Date() },
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: splitLabel,
+              timestamp: new Date(),
+              splitInfo: {
+                operand: data.operand || "@input.text",
+                resolvedValue: operand.substring(0, 60),
+                cases: allCategories,
+                matchedCase: resolvedCategory,
+                nodeType: node.type,
+              },
+            },
           ]);
 
-          // If operand resolves to non-empty, take first path; if empty, try "Other" or default
           setTimeout(() => {
-            const nextId = operand && operand !== "undefined" && operand !== "null" && operand.trim()
-              ? getNextNodeId(nodeId) // first path (non-empty)
-              : getNextNodeId(nodeId); // fallback — same for now
+            // Try matched category handle first, then fall back
+            const nextId = getNextNodeId(nodeId, resolvedCategory);
             if (nextId) processNode(nextId);
             else endFlow();
           }, 500);
@@ -504,6 +580,7 @@ export function useFlowSimulation(
 
   return {
     messages,
+    currentNodeId,
     waitingForInput,
     waitingForAttachment,
     categories,

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2 } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useFlowSimulation } from "@/hooks/useFlowSimulation";
+import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
 
 interface WhatsAppSimulatorProps {
   nodes: Node[];
@@ -113,7 +113,7 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
   const [inputText, setInputText] = useState("");
   const [selectedEntrypoint, setSelectedEntrypoint] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
+  const { messages, waitingForInput, categories, isFinished, isProcessing, currentNodeId, start, sendMessage, sendAttachment } =
     useFlowSimulation(nodes, edges, onHighlightNode);
 
   const entryInfo = detectEntrypointStatus(nodes, edges);
@@ -157,16 +157,28 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
     return atts.map((a: any) => typeof a === "string" ? { url: a } : a);
   };
 
+  // Active node info for header
+  const activeNode = currentNodeId ? nodes.find((n) => n.id === currentNodeId) : null;
+  const activeNodeLabel = activeNode
+    ? (activeNode.data as any)?.text?.substring(0, 25) || (activeNode.data as any)?.label || nodeTypeLabelsShort[activeNode.type || ""] || activeNode.type
+    : null;
+
   return (
     <div className="absolute right-0 top-0 z-50 flex h-full w-96 flex-col border-l border-border bg-background shadow-2xl">
       <div className="flex items-center gap-3 bg-node-send px-4 py-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/20">
           <Bot className="h-5 w-5 text-primary-foreground" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-primary-foreground">Simulador WhatsApp</p>
-          <p className="text-xs text-primary-foreground/70">
-            {isProcessing ? "procesando…" : isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
+          <p className="text-xs text-primary-foreground/70 truncate">
+            {isProcessing
+              ? `procesando${activeNodeLabel ? ` · ${activeNodeLabel}` : ""}…`
+              : isFinished
+                ? "Flujo finalizado"
+                : waitingForInput
+                  ? `Esperando respuesta${activeNodeLabel ? ` · ${activeNodeLabel}` : ""}…`
+                  : "En línea"}
           </p>
         </div>
         <div className="flex gap-1">
@@ -227,6 +239,49 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
         <div className="space-y-2">
           {messages.map((msg) => {
             if (msg.sender === "system") {
+              // Split routing bubble with structured info
+              if (msg.splitInfo) {
+                const si = msg.splitInfo;
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <div className="rounded-lg bg-card border border-border/60 px-3 py-2 shadow-sm max-w-[90%]">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <GitBranch className="h-3 w-3 text-primary/70" />
+                        <span className="text-[11px] font-semibold text-foreground">Split</span>
+                        <span className="text-[10px] text-muted-foreground font-mono ml-1">{si.operand}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {si.cases.map((c, i) => {
+                          const isMatch = c === si.matchedCase;
+                          return (
+                            <div
+                              key={`${c}-${i}`}
+                              className={`flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                                isMatch
+                                  ? "bg-primary/10 text-foreground font-semibold"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {isMatch ? (
+                                <Check className="h-2.5 w-2.5 text-primary shrink-0" />
+                              ) : (
+                                <span className="h-2.5 w-2.5 flex items-center justify-center shrink-0 text-[8px]">·</span>
+                              )}
+                              <span className={c === "Other" && !isMatch ? "italic" : ""}>{c}</span>
+                              {isMatch && si.resolvedValue && (
+                                <span className="ml-auto text-[9px] text-muted-foreground font-normal truncate max-w-[100px]">
+                                  "{si.resolvedValue}"
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              // Default system bubble
               return (
                 <div key={msg.id} className="flex justify-center">
                   <span className="rounded-lg bg-muted px-3 py-1 text-[11px] text-muted-foreground shadow-sm max-w-[90%] text-center">{msg.text}</span>
