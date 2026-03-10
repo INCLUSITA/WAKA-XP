@@ -185,7 +185,19 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                   : "En línea"}
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          {/* Live mode toggle */}
+          <div className="flex items-center gap-1.5 mr-1" title={liveMode ? "Live mode: webhooks execute for real" : "Dry mode: webhooks are simulated"}>
+            <Zap className={`h-3 w-3 ${liveMode ? "text-amber-300" : "text-primary-foreground/40"}`} />
+            <Switch
+              checked={liveMode}
+              onCheckedChange={setLiveMode}
+              className="scale-75 data-[state=checked]:bg-amber-400"
+            />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${liveMode ? "text-amber-200" : "text-primary-foreground/40"}`}>
+              {liveMode ? "Live" : "Dry"}
+            </span>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => { setSelectedEntrypoint(null); start(); }} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar simulación">
             <RotateCcw className="h-4 w-4" />
           </Button>

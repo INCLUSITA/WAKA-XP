@@ -746,6 +746,11 @@ export function useFlowSimulation(
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !currentNodeId) return;
+      // Clear any pending timeout
+      if ((ctxRef.current as any)._waitTimeout) {
+        clearTimeout((ctxRef.current as any)._waitTimeout);
+        (ctxRef.current as any)._waitTimeout = null;
+      }
       ctxRef.current.input.text = text;
       setMessages((prev) => [
         ...prev,
