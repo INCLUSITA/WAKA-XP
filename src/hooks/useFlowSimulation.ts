@@ -29,6 +29,15 @@ export interface ChatMessage {
     flowName: string;
     parentFlowName?: string;
   };
+  /** For retry/backoff system messages */
+  retryInfo?: {
+    action: "retrying" | "exhausted" | "success_after_retry";
+    attempt: number;
+    maxAttempts: number;
+    url?: string;
+    statusCode?: number;
+    errorMessage?: string;
+  };
 }
 
 export interface SimulationContext {
