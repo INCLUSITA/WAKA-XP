@@ -526,11 +526,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
           <>
             <div className="space-y-2">
               <Label className="text-foreground">Flow Result</Label>
-              <Input
+              <ExpressionInput
                 value={data.operand || ""}
-                onChange={(e) => update("operand", e.target.value)}
+                onChange={(v) => update("operand", v)}
                 placeholder="@results.result_name"
-                className="font-mono text-sm"
               />
             </div>
             {renderListEditor("cases", "Cases", "Value")}
