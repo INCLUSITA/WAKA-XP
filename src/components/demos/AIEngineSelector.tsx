@@ -60,21 +60,22 @@ interface AIEngineSelectorProps {
 export default function AIEngineSelector({ selection, onSelect }: AIEngineSelectorProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const openedAt = useRef(0);
+
+  const toggleOpen = () => {
+    if (!open) openedAt.current = Date.now();
+    setOpen(!open);
+  };
 
   useEffect(() => {
     if (!open) return;
-    let ignoreFirst = true;
     const handleClick = (e: MouseEvent) => {
-      if (ignoreFirst) {
-        ignoreFirst = false;
-        return;
-      }
+      // Ignore clicks within 100ms of opening (same click that opened it)
+      if (Date.now() - openedAt.current < 100) return;
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("click", handleClick, true);
-    return () => {
-      document.removeEventListener("click", handleClick, true);
-    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
   const activeEngine = ENGINES.find((e) => e.id === selection.engineId) || ENGINES[0];
@@ -84,7 +85,7 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
     <div className="relative" ref={ref}>
       {/* Trigger */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={toggleOpen}
         className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition group border border-transparent hover:border-border/50"
       >
         <ActiveIcon className="h-3 w-3 text-primary/70 group-hover:text-primary transition" />
