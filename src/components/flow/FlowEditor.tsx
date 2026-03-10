@@ -69,6 +69,14 @@ const nodeTypes = {
   moduleGroup: ModuleGroupNode,
 };
 
+const edgeTypes = {
+  labeled: LabeledEdge,
+};
+
+const SPLIT_NODE_TYPES = new Set([
+  "splitExpression", "splitContactField", "splitResult", "splitRandom", "splitGroup",
+]);
+
 const defaultEdgeOptions = {
   type: "step",
   animated: false,
