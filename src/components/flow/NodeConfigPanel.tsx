@@ -623,11 +623,12 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Request Body (JSON)</Label>
-              <Textarea
+              <ExpressionInput
                 value={data.body || ""}
-                onChange={(e) => update("body", e.target.value)}
+                onChange={(v) => update("body", v)}
                 placeholder='{"key": "@results.value"}'
-                className="min-h-[100px] font-mono text-sm"
+                className="min-h-[100px]"
+                multiline
               />
             </div>
             <div className="space-y-2">
