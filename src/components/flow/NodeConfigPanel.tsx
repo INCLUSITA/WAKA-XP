@@ -457,6 +457,52 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
                 An <strong>"Other"</strong> category is automatically added for unmatched responses.
               </p>
             </div>
+
+            <Separator />
+
+            {/* Timeout configuration */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Timeout</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground">Duration</span>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1440}
+                      value={data.timeoutSeconds || ""}
+                      onChange={(e) => update("timeoutSeconds", e.target.value ? parseInt(e.target.value) : null)}
+                      placeholder="0"
+                      className="text-xs"
+                    />
+                    <Select value={data.timeoutUnit || "minutes"} onValueChange={(v) => update("timeoutUnit", v)}>
+                      <SelectTrigger className="text-xs w-24"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="seconds">sec</SelectItem>
+                        <SelectItem value="minutes">min</SelectItem>
+                        <SelectItem value="hours">hrs</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground">On timeout</span>
+                  <Select value={data.timeoutAction || "continue"} onValueChange={(v) => update("timeoutAction", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="continue">Continue flow</SelectItem>
+                      <SelectItem value="end">End flow</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {data.timeoutSeconds
+                  ? `After ${data.timeoutSeconds} ${data.timeoutUnit || "minutes"}, the flow will ${data.timeoutAction === "end" ? "end" : "continue via the \"Timeout\" exit"}.`
+                  : "No timeout configured — the flow will wait indefinitely."}
+              </p>
+            </div>
           </>
         )}
 

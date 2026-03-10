@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft, RefreshCw, XOctagon } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft, RefreshCw, XOctagon, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
@@ -115,8 +116,9 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
   const [selectedEntrypoint, setSelectedEntrypoint] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [liveMode, setLiveMode] = useState(false);
   const { messages, waitingForInput, categories, isFinished, isProcessing, currentNodeId, start, sendMessage, sendAttachment, context } =
-    useFlowSimulation(nodes, edges, onHighlightNode);
+    useFlowSimulation(nodes, edges, onHighlightNode, { executeWebhooks: liveMode });
 
   const entryInfo = detectEntrypointStatus(nodes, edges);
 
@@ -183,7 +185,19 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                   : "En línea"}
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          {/* Live mode toggle */}
+          <div className="flex items-center gap-1.5 mr-1" title={liveMode ? "Live mode: webhooks execute for real" : "Dry mode: webhooks are simulated"}>
+            <Zap className={`h-3 w-3 ${liveMode ? "text-amber-300" : "text-primary-foreground/40"}`} />
+            <Switch
+              checked={liveMode}
+              onCheckedChange={setLiveMode}
+              className="scale-75 data-[state=checked]:bg-amber-400"
+            />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${liveMode ? "text-amber-200" : "text-primary-foreground/40"}`}>
+              {liveMode ? "Live" : "Dry"}
+            </span>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => { setSelectedEntrypoint(null); start(); }} className="text-primary-foreground hover:bg-primary-foreground/20" title="Reiniciar simulación">
             <RotateCcw className="h-4 w-4" />
           </Button>

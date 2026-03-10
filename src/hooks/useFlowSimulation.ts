@@ -293,6 +293,48 @@ export function useFlowSimulation(
           setCategories(cats);
           setWaitingForInput(true);
           setIsProcessing(false);
+
+          // Timeout handling
+          const timeoutVal = parseInt(data.timeoutSeconds) || 0;
+          if (timeoutVal > 0) {
+            const unit = data.timeoutUnit || "minutes";
+            const ms = unit === "seconds" ? timeoutVal * 1000
+              : unit === "hours" ? timeoutVal * 3600 * 1000
+              : timeoutVal * 60 * 1000;
+            // In simulator, cap timeout to 30s for usability
+            const simMs = Math.min(ms, 30000);
+            const timeoutId = setTimeout(() => {
+              // Only fire if still waiting on this node
+              setWaitingForInput((w) => {
+                if (!w) return w;
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: crypto.randomUUID(),
+                    sender: "system",
+                    text: `⏱ Timeout after ${timeoutVal}${unit.charAt(0)}`,
+                    timestamp: new Date(),
+                  },
+                ]);
+                setCategories([]);
+                const timeoutAction = data.timeoutAction || "continue";
+                if (timeoutAction === "end") {
+                  endFlow();
+                } else {
+                  setTimeout(() => {
+                    const timeoutExit = getNextNodeId(nodeId, "Timeout");
+                    const fallback = getNextNodeId(nodeId);
+                    const nextId = timeoutExit || fallback;
+                    if (nextId) processNode(nextId);
+                    else endFlow();
+                  }, 400);
+                }
+                return false;
+              });
+            }, simMs);
+            // Store timeout ref for cleanup — cleared when user responds
+            (ctxRef.current as any)._waitTimeout = timeoutId;
+          }
           break;
         }
 
@@ -704,6 +746,11 @@ export function useFlowSimulation(
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !currentNodeId) return;
+      // Clear any pending timeout
+      if ((ctxRef.current as any)._waitTimeout) {
+        clearTimeout((ctxRef.current as any)._waitTimeout);
+        (ctxRef.current as any)._waitTimeout = null;
+      }
       ctxRef.current.input.text = text;
       setMessages((prev) => [
         ...prev,

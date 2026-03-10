@@ -502,6 +502,70 @@ function FlowEditorInner() {
     [setNodes, setEdges]
   );
 
+  // ── Copy/Paste ──
+  const clipboardRef = useRef<Node | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when typing in inputs
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "c" && selectedNode) {
+        e.preventDefault();
+        clipboardRef.current = selectedNode;
+        toast.info("Node copied");
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "v" && clipboardRef.current) {
+        e.preventDefault();
+        const src = clipboardRef.current;
+        const id = uuidv4();
+        const newNode: Node = {
+          id,
+          type: src.type,
+          position: { x: src.position.x + 40, y: src.position.y + 60 },
+          data: { ...(src.data as Record<string, any>) },
+        };
+        setNodes((nds) => [...nds, newNode]);
+        setSelectedNode(newNode);
+        toast.success("Node pasted");
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNode, setNodes]);
+
+  // ── Auto edge cleanup when split cases / wait categories change ──
+  useEffect(() => {
+    setEdges((eds) => {
+      let changed = false;
+      const filtered = eds.filter((e) => {
+        if (!e.sourceHandle) return true;
+        const sourceNode = nodes.find((n) => n.id === e.source);
+        if (!sourceNode) return true;
+        const d = sourceNode.data as any;
+
+        if (SPLIT_NODE_TYPES.has(sourceNode.type || "")) {
+          const validHandles = new Set([...(d.cases || []).filter((c: string) => c.trim()), "Other"]);
+          if (!validHandles.has(e.sourceHandle)) { changed = true; return false; }
+        }
+
+        if (sourceNode.type === "waitResponse") {
+          const validHandles = new Set([
+            ...(d.categories || []).filter((c: string) => c.trim()),
+            "default",
+            ...(d.timeoutSeconds > 0 ? ["Timeout"] : []),
+          ]);
+          if (!validHandles.has(e.sourceHandle)) { changed = true; return false; }
+        }
+
+        return true;
+      });
+      return changed ? filtered : eds;
+    });
+  }, [nodes, setEdges]);
+
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [showValidation, setShowValidation] = useState(false);
 
