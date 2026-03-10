@@ -108,6 +108,8 @@ function FlowEditorInner() {
   const [showContext, setShowContext] = useState(false);
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const [channel, setChannel] = useState("whatsapp");
+  const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
+  const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
   const navigate = useNavigate();
   const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);
