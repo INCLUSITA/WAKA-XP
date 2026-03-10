@@ -39,7 +39,7 @@ import { RemoveGroupNode } from "./RemoveGroupNode";
 import { ModuleGroupNode } from "./ModuleGroupNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
-import { EdgeInfoPanel } from "./EdgeInfoPanel";
+
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
