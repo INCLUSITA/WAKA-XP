@@ -1,4 +1,5 @@
 import { EdgeProps, getBezierPath, EdgeLabelRenderer } from "@xyflow/react";
+import { CornerDownRight } from "lucide-react";
 
 export function LabeledEdge({
   id,
@@ -23,6 +24,7 @@ export function LabeledEdge({
   });
 
   const displayLabel = (label as string) || (data as any)?.label || "";
+  const isDefault = displayLabel === "Other";
 
   return (
     <>
@@ -41,8 +43,15 @@ export function LabeledEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: "all",
             }}
-            className="rounded-md border border-border/60 bg-card px-2 py-0.5 text-[10px] font-semibold text-foreground shadow-sm"
+            className={`flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur-sm ${
+              isDefault
+                ? "border-border/40 bg-muted/90 text-muted-foreground"
+                : "border-primary/20 bg-card/95 text-foreground"
+            }`}
           >
+            <CornerDownRight className={`h-2.5 w-2.5 ${
+              isDefault ? "text-muted-foreground/50" : "text-primary/60"
+            }`} />
             {displayLabel}
           </div>
         </EdgeLabelRenderer>
