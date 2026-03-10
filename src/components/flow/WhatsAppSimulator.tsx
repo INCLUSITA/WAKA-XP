@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
