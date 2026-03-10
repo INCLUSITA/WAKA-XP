@@ -419,15 +419,13 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
                     {textLen}/{constraints.maxTextLength}
                   </span>
                 </div>
-                <Textarea
+                <ExpressionInput
                   value={data.text || ""}
-                  onChange={(e) => update("text", e.target.value)}
+                  onChange={(v) => update("text", v)}
                   placeholder="Type your message here... Use @contact.name for variables"
                   className="min-h-[120px]"
+                  multiline
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Use @contact.name, @input.text, @results.value for dynamic content
-                </p>
               </div>
               {renderListEditor("quick_replies", "Quick Replies", "Option")}
               {qrCount > 0 && constraints.maxQuickReplies > 0 && (
