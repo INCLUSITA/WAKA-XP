@@ -34,6 +34,8 @@ import { EnterFlowNode } from "./EnterFlowNode";
 import { OpenTicketNode } from "./OpenTicketNode";
 import { CallZapierNode } from "./CallZapierNode";
 import { SendAirtimeNode } from "./SendAirtimeNode";
+import { AddGroupNode } from "./AddGroupNode";
+import { RemoveGroupNode } from "./RemoveGroupNode";
 import { ModuleGroupNode } from "./ModuleGroupNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
@@ -62,6 +64,8 @@ const nodeTypes = {
   openTicket: OpenTicketNode,
   callZapier: CallZapierNode,
   sendAirtime: SendAirtimeNode,
+  addGroup: AddGroupNode,
+  removeGroup: RemoveGroupNode,
   splitContactField: SplitNode,
   splitResult: SplitNode,
   splitRandom: SplitNode,
