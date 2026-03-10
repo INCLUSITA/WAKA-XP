@@ -420,6 +420,39 @@ export type Database = {
           },
         ]
       }
+      telegram_messages: {
+        Row: {
+          chat_id: number
+          created_at: string
+          direction: string
+          first_name: string | null
+          id: string
+          message_text: string | null
+          telegram_message_id: number | null
+          username: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          direction?: string
+          first_name?: string | null
+          id?: string
+          message_text?: string | null
+          telegram_message_id?: number | null
+          username?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          direction?: string
+          first_name?: string | null
+          id?: string
+          message_text?: string | null
+          telegram_message_id?: number | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           channels: string[]
