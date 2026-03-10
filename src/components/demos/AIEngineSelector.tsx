@@ -24,16 +24,16 @@ const ENGINES: AIEngine[] = [
   {
     id: "waka-ai",
     name: "WAKA AI",
-    subtitle: "Default",
-    description: "Fast generation powered by Gemini Flash",
+    subtitle: "Active",
+    description: "Default engine · Powered by Gemini Flash",
     icon: Cpu,
     available: true,
   },
   {
     id: "azure-openai",
     name: "Azure OpenAI",
-    subtitle: "Enterprise",
-    description: "GPT-4o via your Azure deployment",
+    subtitle: "Coming Soon",
+    description: "GPT-4o via Waka's managed Azure deployment",
     icon: Cloud,
     available: false,
     models: [
@@ -45,13 +45,10 @@ const ENGINES: AIEngine[] = [
   {
     id: "byom",
     name: "BYOM",
-    subtitle: "Bring Your Own Model",
-    description: "Connect any OpenAI-compatible endpoint",
+    subtitle: "Planned",
+    description: "Bring your own model · Routed via Waka Azure layer",
     icon: Server,
     available: false,
-    models: [
-      { id: "custom", label: "Custom Endpoint" },
-    ],
   },
 ];
 
@@ -183,7 +180,7 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
             {/* Footer hint */}
             <div className="px-3.5 py-2 border-t border-border/20">
               <p className="text-[9px] text-muted-foreground/40">
-                Azure & BYOM coming soon · Default engine requires no setup
+                Azure OpenAI & BYOM coming soon · Routed via Waka managed infra
               </p>
             </div>
           </motion.div>
