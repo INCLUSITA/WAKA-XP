@@ -80,6 +80,50 @@ export type Database = {
           },
         ]
       }
+      channel_connections: {
+        Row: {
+          config: Json
+          created_at: string
+          display_name: string
+          id: string
+          provider: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          provider: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          provider?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_connections_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiences: {
         Row: {
           created_at: string
