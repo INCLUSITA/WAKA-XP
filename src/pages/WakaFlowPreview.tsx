@@ -375,9 +375,10 @@ export default function WakaFlowPreview() {
           )}
         </div>
 
-        {/* Right: view toggle */}
+        {/* Right: engine selector + view toggle */}
         <div className="flex items-center gap-2 shrink-0">
-
+          <AIEngineSelector selection={engineSelection} onSelect={setEngineSelection} />
+          <div className="w-px h-5 bg-border/30" />
           <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("preview")}
