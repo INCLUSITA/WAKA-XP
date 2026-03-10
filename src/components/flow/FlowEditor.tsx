@@ -920,6 +920,15 @@ function FlowEditorInner() {
           </div>
         )}
       </div>
+
+      {/* Drop-to-create node menu */}
+      {dropMenu && (
+        <DropNodeMenu
+          position={dropMenu}
+          onSelect={handleDropMenuSelect}
+          onClose={() => { setDropMenu(null); connectStartRef.current = null; }}
+        />
+      )}
     </div>
   );
 }
