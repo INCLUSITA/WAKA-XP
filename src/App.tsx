@@ -31,7 +31,7 @@ import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import WakaFlowPreview from "./pages/WakaFlowPreview";
 import ShareDemo from "./pages/ShareDemo";
-import DemoDomainRoot, { isDemoDomain } from "./components/DemoDomainGuard";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
