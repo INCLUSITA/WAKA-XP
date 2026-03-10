@@ -17,6 +17,12 @@ export interface ChatMessage {
     matchedCase: string | null;
     nodeType?: string;
   };
+  /** For group action system messages */
+  groupInfo?: {
+    action: "added" | "removed" | "branch_matched";
+    groupName: string;
+    currentGroups: string[];
+  };
 }
 
 export interface SimulationContext {
