@@ -513,7 +513,17 @@ export function useFlowSimulation(
           ctxRef.current.groups.add(groupName);
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `👥 Group added: ${groupName}`, timestamp: new Date() },
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: `Group added: ${groupName}`,
+              timestamp: new Date(),
+              groupInfo: {
+                action: "added",
+                groupName,
+                currentGroups: Array.from(ctxRef.current.groups),
+              },
+            },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);
@@ -528,7 +538,17 @@ export function useFlowSimulation(
           ctxRef.current.groups.delete(rmGroupName);
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `👥 Group removed: ${rmGroupName}`, timestamp: new Date() },
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: `Group removed: ${rmGroupName}`,
+              timestamp: new Date(),
+              groupInfo: {
+                action: "removed",
+                groupName: rmGroupName,
+                currentGroups: Array.from(ctxRef.current.groups),
+              },
+            },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);

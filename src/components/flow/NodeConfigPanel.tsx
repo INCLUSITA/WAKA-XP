@@ -933,6 +933,45 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
           </>
         )}
+
+        {/* ─── ADD TO GROUP ─── */}
+        {node.type === "addGroup" && (
+          <>
+            <div className="space-y-2">
+              <Label className="text-foreground">Group Name</Label>
+              <Input
+                value={data.groupName || ""}
+                onChange={(e) => update("groupName", e.target.value)}
+                placeholder="e.g. Premium Users, Onboarding"
+              />
+            </div>
+            <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3">
+              <p className="text-xs text-foreground/80">
+                The contact will be added to this group. Groups are used for segmenting contacts and controlling flow logic via <span className="font-mono text-[11px] text-emerald-600">Split by Group</span>.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* ─── REMOVE FROM GROUP ─── */}
+        {node.type === "removeGroup" && (
+          <>
+            <div className="space-y-2">
+              <Label className="text-foreground">Group Name</Label>
+              <Input
+                value={data.groupName || ""}
+                onChange={(e) => update("groupName", e.target.value)}
+                placeholder="e.g. Trial Users, Inactive"
+              />
+            </div>
+            <div className="rounded-lg border border-orange-500/15 bg-orange-500/5 p-3">
+              <p className="text-xs text-foreground/80">
+                The contact will be removed from this group. If the contact is not in the group, this action has no effect.
+              </p>
+            </div>
+          </>
+        )}
+
         {/* ─── XP NODE EFFECTS ─── */}
         {node.type !== "moduleGroup" && (
           <>
