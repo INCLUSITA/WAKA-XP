@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
@@ -321,6 +321,52 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                       )}
                       {gi.currentGroups.length === 0 && (
                         <p className="text-[9px] text-muted-foreground mt-1 italic">no groups</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              // Subflow enter/return bubble
+              if (msg.subflowInfo) {
+                const sf = msg.subflowInfo;
+                const isEntering = sf.action === "entering";
+                const isReturning = sf.action === "returning";
+                const isCompleted = sf.action === "completed";
+                const Icon = isEntering ? CornerDownRight : isReturning ? CornerUpLeft : CheckCircle2;
+                const label = isEntering
+                  ? "Entering Subflow"
+                  : isReturning
+                    ? "Returning to Parent"
+                    : "Subflow Completed";
+                const borderColor = isEntering
+                  ? "border-[hsl(190,70%,45%)]/30"
+                  : isCompleted
+                    ? "border-[hsl(190,70%,45%)]/20"
+                    : "border-muted-foreground/20";
+                const bgColor = isEntering
+                  ? "bg-[hsl(190,70%,45%)]/8"
+                  : isCompleted
+                    ? "bg-[hsl(190,70%,45%)]/5"
+                    : "bg-muted/50";
+                const iconColor = isReturning
+                  ? "text-muted-foreground"
+                  : "text-[hsl(190,70%,45%)]";
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <div className={`rounded-lg border px-3 py-2 shadow-sm max-w-[90%] ${borderColor} ${bgColor}`}>
+                      <div className="flex items-center gap-1.5">
+                        <Icon className={`h-3 w-3 ${iconColor}`} />
+                        <span className={`text-[11px] font-semibold ${iconColor}`}>{label}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Workflow className="h-3 w-3 text-[hsl(190,70%,45%)]/60" />
+                        <span className="text-[11px] font-medium text-foreground">{sf.flowName}</span>
+                      </div>
+                      {isEntering && (
+                        <p className="text-[9px] text-muted-foreground mt-1 italic">contact enters subflow execution</p>
+                      )}
+                      {isReturning && (
+                        <p className="text-[9px] text-muted-foreground mt-1 italic">resuming parent flow</p>
                       )}
                     </div>
                   </div>

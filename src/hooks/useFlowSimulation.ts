@@ -23,6 +23,12 @@ export interface ChatMessage {
     groupName: string;
     currentGroups: string[];
   };
+  /** For subflow enter/return system messages */
+  subflowInfo?: {
+    action: "entering" | "returning" | "completed";
+    flowName: string;
+    parentFlowName?: string;
+  };
 }
 
 export interface SimulationContext {
@@ -561,6 +567,52 @@ export function useFlowSimulation(
             if (nextId) processNode(nextId);
             else endFlow();
           }, 400);
+          break;
+        }
+
+        case "enterFlow": {
+          const flowName = data.flowName || "Unknown Flow";
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: `Entering flow: ${flowName}`,
+              timestamp: new Date(),
+              subflowInfo: { action: "entering", flowName },
+            },
+          ]);
+          // Simulate subflow execution delay, then show completion and continue
+          setTimeout(() => {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: crypto.randomUUID(),
+                sender: "system",
+                text: `Completed subflow: ${flowName}`,
+                timestamp: new Date(),
+                subflowInfo: { action: "completed", flowName },
+              },
+            ]);
+            setTimeout(() => {
+              const nextId = getNextNodeId(nodeId);
+              if (nextId) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: crypto.randomUUID(),
+                    sender: "system",
+                    text: `Returning to parent flow`,
+                    timestamp: new Date(),
+                    subflowInfo: { action: "returning", flowName },
+                  },
+                ]);
+                setTimeout(() => processNode(nextId), 400);
+              } else {
+                endFlow();
+              }
+            }, 400);
+          }, 1200);
           break;
         }
 
