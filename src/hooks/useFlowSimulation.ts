@@ -23,6 +23,12 @@ export interface ChatMessage {
     groupName: string;
     currentGroups: string[];
   };
+  /** For subflow enter/return system messages */
+  subflowInfo?: {
+    action: "entering" | "returning" | "completed";
+    flowName: string;
+    parentFlowName?: string;
+  };
 }
 
 export interface SimulationContext {
