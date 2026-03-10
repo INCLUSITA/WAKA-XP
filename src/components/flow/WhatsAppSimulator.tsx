@@ -41,6 +41,7 @@ const nodeTypeLabelsShort: Record<string, string> = {
   sendMsg: "Send Msg", waitResponse: "Wait", splitExpression: "Split", webhook: "Webhook",
   saveResult: "Save", updateContact: "Update", sendEmail: "Email", callAI: "AI",
   enterFlow: "Enter Flow", openTicket: "Ticket", callZapier: "Zapier", sendAirtime: "Airtime",
+  addGroup: "Add Group", removeGroup: "Remove Group", splitGroup: "Split Group",
 };
 
 function AttachmentBubble({ att }: { att: { url: string; name?: string; mime?: string } }) {
