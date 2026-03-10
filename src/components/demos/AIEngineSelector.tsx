@@ -66,10 +66,12 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    // Use setTimeout to avoid the opening click being caught
-    const timer = setTimeout(() => document.addEventListener("mousedown", handleClick), 0);
+    // Delay listener registration to next frame so the opening click doesn't trigger it
+    const raf = requestAnimationFrame(() => {
+      document.addEventListener("mousedown", handleClick);
+    });
     return () => {
-      clearTimeout(timer);
+      cancelAnimationFrame(raf);
       document.removeEventListener("mousedown", handleClick);
     };
   }, [open]);
