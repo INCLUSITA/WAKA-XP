@@ -335,6 +335,12 @@ function FlowEditorInner() {
           defaultData.amount = "";
           defaultData.currency = "XOF";
           break;
+        case "addGroup":
+          defaultData.groupName = "";
+          break;
+        case "removeGroup":
+          defaultData.groupName = "";
+          break;
       }
 
       // Calculate position at viewport center so the new node is always visible
