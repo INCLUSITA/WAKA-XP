@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getChannelConstraints } from "@/lib/flowValidation";
+import { ExpressionInput } from "./ExpressionInput";
 
 interface NodeConfigPanelProps {
   node: Node;
@@ -418,15 +419,13 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
                     {textLen}/{constraints.maxTextLength}
                   </span>
                 </div>
-                <Textarea
+                <ExpressionInput
                   value={data.text || ""}
-                  onChange={(e) => update("text", e.target.value)}
+                  onChange={(v) => update("text", v)}
                   placeholder="Type your message here... Use @contact.name for variables"
                   className="min-h-[120px]"
+                  multiline
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Use @contact.name, @input.text, @results.value for dynamic content
-                </p>
               </div>
               {renderListEditor("quick_replies", "Quick Replies", "Option")}
               {qrCount > 0 && constraints.maxQuickReplies > 0 && (
@@ -466,11 +465,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
           <>
             <div className="space-y-2">
               <Label className="text-foreground">Expression Operand</Label>
-              <Input
+              <ExpressionInput
                 value={data.operand || ""}
-                onChange={(e) => update("operand", e.target.value)}
+                onChange={(v) => update("operand", v)}
                 placeholder="@input.text"
-                className="font-mono text-sm"
               />
             </div>
             <div className="space-y-2">
@@ -528,11 +526,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
           <>
             <div className="space-y-2">
               <Label className="text-foreground">Flow Result</Label>
-              <Input
+              <ExpressionInput
                 value={data.operand || ""}
-                onChange={(e) => update("operand", e.target.value)}
+                onChange={(v) => update("operand", v)}
                 placeholder="@results.result_name"
-                className="font-mono text-sm"
               />
             </div>
             {renderListEditor("cases", "Cases", "Value")}
@@ -626,11 +623,12 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Request Body (JSON)</Label>
-              <Textarea
+              <ExpressionInput
                 value={data.body || ""}
-                onChange={(e) => update("body", e.target.value)}
+                onChange={(v) => update("body", v)}
                 placeholder='{"key": "@results.value"}'
-                className="min-h-[100px] font-mono text-sm"
+                className="min-h-[100px]"
+                multiline
               />
             </div>
             <div className="space-y-2">
@@ -694,11 +692,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Value</Label>
-              <Input
+              <ExpressionInput
                 value={data.value || ""}
-                onChange={(e) => update("value", e.target.value)}
+                onChange={(v) => update("value", v)}
                 placeholder="@input.text"
-                className="font-mono text-sm"
               />
             </div>
             <div className="space-y-2">
@@ -741,11 +738,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Value</Label>
-              <Input
+              <ExpressionInput
                 value={data.value || ""}
-                onChange={(e) => update("value", e.target.value)}
+                onChange={(v) => update("value", v)}
                 placeholder="@input.text"
-                className="font-mono text-sm"
               />
             </div>
           </>
@@ -789,11 +785,12 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Body</Label>
-              <Textarea
+              <ExpressionInput
                 value={data.body || ""}
-                onChange={(e) => update("body", e.target.value)}
+                onChange={(v) => update("body", v)}
                 placeholder="Email body text..."
                 className="min-h-[100px]"
+                multiline
               />
             </div>
           </>
