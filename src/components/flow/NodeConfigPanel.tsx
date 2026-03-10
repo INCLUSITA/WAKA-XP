@@ -785,11 +785,12 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Body</Label>
-              <Textarea
+              <ExpressionInput
                 value={data.body || ""}
-                onChange={(e) => update("body", e.target.value)}
+                onChange={(v) => update("body", v)}
                 placeholder="Email body text..."
                 className="min-h-[100px]"
+                multiline
               />
             </div>
           </>
