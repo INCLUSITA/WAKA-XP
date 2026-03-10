@@ -641,6 +641,43 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
                 placeholder="webhook_result"
               />
             </div>
+
+            <Separator />
+
+            {/* Retry / Error Policy */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Retry Policy</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground">Max retries</span>
+                  <Select value={String(data.retryCount || "0")} onValueChange={(v) => update("retryCount", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">None</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground">Delay (seconds)</span>
+                  <Select value={String(data.retryDelay || "2")} onValueChange={(v) => update("retryDelay", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1s</SelectItem>
+                      <SelectItem value="2">2s</SelectItem>
+                      <SelectItem value="5">5s</SelectItem>
+                      <SelectItem value="10">10s</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Retries use linear backoff (delay × attempt). On exhaustion, follows "Failure" exit if available.
+              </p>
+            </div>
           </>
         )}
 
