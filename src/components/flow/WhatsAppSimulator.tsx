@@ -331,8 +331,72 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
         <div ref={chatEndRef} />
       </div>
 
+      {/* Context Inspector */}
+      {inspectorOpen && (
+        <div className="border-t border-border bg-muted/50 max-h-48 overflow-y-auto">
+          <div className="px-3 py-2 space-y-2 text-[11px] font-mono">
+            {/* Input */}
+            <div>
+              <span className="text-muted-foreground font-sans font-semibold text-[10px] uppercase tracking-wide">input</span>
+              <div className="mt-0.5 rounded bg-background border border-border/50 px-2 py-1 text-foreground/80 truncate">
+                {context.input.text || <span className="text-muted-foreground italic font-sans">vacío</span>}
+              </div>
+            </div>
+            {/* Results */}
+            {Object.keys(context.results).length > 0 && (
+              <div>
+                <span className="text-muted-foreground font-sans font-semibold text-[10px] uppercase tracking-wide">results</span>
+                <div className="mt-0.5 space-y-0.5">
+                  {Object.entries(context.results).map(([k, v]) => (
+                    <div key={k} className="flex gap-1.5 rounded bg-background border border-border/50 px-2 py-1">
+                      <span className="text-primary/70 shrink-0">@results.{k}</span>
+                      <span className="text-foreground/80 truncate">{v.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Contact */}
+            <div>
+              <span className="text-muted-foreground font-sans font-semibold text-[10px] uppercase tracking-wide">contact</span>
+              <div className="mt-0.5 space-y-0.5">
+                {Object.entries(context.contact).map(([k, v]) => (
+                  <div key={k} className="flex gap-1.5 rounded bg-background border border-border/50 px-2 py-1">
+                    <span className="text-primary/70 shrink-0">@contact.{k}</span>
+                    <span className="text-foreground/80 truncate">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Webhook */}
+            {context.webhook.status && (
+              <div>
+                <span className="text-muted-foreground font-sans font-semibold text-[10px] uppercase tracking-wide">webhook</span>
+                <div className="mt-0.5 rounded bg-background border border-border/50 px-2 py-1">
+                  <span className={`${context.webhook.status === "success" ? "text-green-600" : "text-destructive"}`}>
+                    {context.webhook.status}
+                  </span>
+                  <span className="text-foreground/60 ml-1.5 truncate">
+                    {JSON.stringify(context.webhook.json).substring(0, 80)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="border-t border-border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={() => setInspectorOpen(!inspectorOpen)}
+            title={inspectorOpen ? "Cerrar inspector" : "Abrir inspector de contexto"}
+          >
+            <Terminal className={`h-4 w-4 ${inspectorOpen ? "text-primary" : ""}`} />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
