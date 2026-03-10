@@ -245,6 +245,116 @@ function FlowEditorInner() {
     [setEdges, nodes]
   );
 
+  const onConnectStart: OnConnectStart = useCallback((_event, params) => {
+    connectStartRef.current = { nodeId: params.nodeId || "", handleId: params.handleId };
+  }, []);
+
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (event) => {
+      if (!connectStartRef.current) return;
+      // Only show menu if the connection was dropped on the pane (not on a node handle)
+      const target = (event as MouseEvent).target as HTMLElement;
+      if (target.closest(".react-flow__handle")) return;
+
+      const reactFlowBounds = document.querySelector(".react-flow")?.getBoundingClientRect();
+      if (!reactFlowBounds) return;
+
+      const clientX = (event as MouseEvent).clientX;
+      const clientY = (event as MouseEvent).clientY;
+
+      // Check if drop is inside the pane area
+      if (
+        clientX < reactFlowBounds.left ||
+        clientX > reactFlowBounds.right ||
+        clientY < reactFlowBounds.top ||
+        clientY > reactFlowBounds.bottom
+      ) return;
+
+      setDropMenu({
+        x: clientX,
+        y: clientY,
+        sourceNodeId: connectStartRef.current.nodeId,
+        sourceHandleId: connectStartRef.current.handleId,
+      });
+    },
+    []
+  );
+
+  const handleDropMenuSelect = useCallback(
+    (type: string) => {
+      if (!dropMenu) return;
+      const id = uuidv4();
+      const defaultData: Record<string, unknown> = {};
+
+      switch (type) {
+        case "sendMsg": defaultData.text = ""; defaultData.quick_replies = []; break;
+        case "waitResponse": defaultData.label = ""; defaultData.categories = ["Sí", "No"]; break;
+        case "splitExpression": defaultData.operand = "@input.text"; defaultData.cases = ["Has Text"]; defaultData.testType = "has_any_word"; break;
+        case "splitContactField": defaultData.operand = "@contact.language"; defaultData.cases = ["en", "fr"]; break;
+        case "splitResult": defaultData.operand = "@results.response"; defaultData.cases = ["Yes", "No"]; break;
+        case "splitRandom": defaultData.operand = ""; defaultData.cases = ["Bucket 1", "Bucket 2"]; defaultData.buckets = 2; break;
+        case "splitGroup": defaultData.operand = ""; defaultData.cases = ["In Group"]; break;
+        case "webhook": defaultData.url = ""; defaultData.method = "GET"; defaultData.body = ""; break;
+        case "saveResult": defaultData.value = "@input.text"; defaultData.resultName = "Result"; break;
+        case "updateContact": defaultData.field = "name"; defaultData.value = ""; break;
+        case "sendEmail": defaultData.to = ""; defaultData.subject = ""; defaultData.body = ""; break;
+        case "callAI": defaultData.prompt = ""; break;
+        case "enterFlow": defaultData.flowName = ""; break;
+        case "openTicket": defaultData.topic = ""; defaultData.body = ""; break;
+        case "callZapier": defaultData.url = ""; break;
+        case "sendAirtime": defaultData.amount = ""; defaultData.currency = "XOF"; break;
+        case "addGroup": defaultData.groupName = ""; break;
+        case "removeGroup": defaultData.groupName = ""; break;
+      }
+
+      // Position node at the drop point in flow coordinates
+      const viewport = reactFlowInstance.getViewport();
+      const reactFlowBounds = document.querySelector(".react-flow")?.getBoundingClientRect();
+      let position = { x: 250, y: 200 };
+      if (reactFlowBounds) {
+        position = {
+          x: (dropMenu.x - reactFlowBounds.left - viewport.x) / viewport.zoom - 110,
+          y: (dropMenu.y - reactFlowBounds.top - viewport.y) / viewport.zoom - 20,
+        };
+      }
+
+      const newNode: Node = { id, type, position, data: defaultData };
+      setNodes((nds) => [...nds, newNode]);
+
+      // Auto-create edge from source to new node
+      const sourceNode = nodes.find((n) => n.id === dropMenu.sourceNodeId);
+      const isSplit = sourceNode && SPLIT_NODE_TYPES.has(sourceNode.type || "");
+      const label = isSplit && dropMenu.sourceHandleId ? dropMenu.sourceHandleId : undefined;
+
+      const newEdge: Edge = {
+        id: uuidv4(),
+        source: dropMenu.sourceNodeId,
+        target: id,
+        ...(dropMenu.sourceHandleId ? { sourceHandle: dropMenu.sourceHandleId } : {}),
+        ...(label
+          ? {
+              type: "labeled",
+              label,
+              style: {
+                strokeWidth: 2,
+                stroke: label === "Other" ? "hsl(220, 10%, 65%)" : "hsl(260, 60%, 55%)",
+              },
+            }
+          : {}),
+      };
+      setEdges((eds) => [...eds, newEdge]);
+
+      setDropMenu(null);
+      connectStartRef.current = null;
+
+      // Auto-select the new node
+      setTimeout(() => {
+        setSelectedNode({ ...newNode });
+      }, 50);
+    },
+    [dropMenu, setNodes, setEdges, nodes, reactFlowInstance]
+  );
+
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     if (node.type === "moduleGroup") return; // don't open config for modules
     setSelectedNode(node);
