@@ -502,6 +502,36 @@ export function useFlowSimulation(
           break;
         }
 
+        case "addGroup": {
+          const groupName = data.groupName || data.label || "Unknown Group";
+          ctxRef.current.groups.add(groupName);
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `👥 Group added: ${groupName}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
+          break;
+        }
+
+        case "removeGroup": {
+          const rmGroupName = data.groupName || data.label || "Unknown Group";
+          ctxRef.current.groups.delete(rmGroupName);
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `👥 Group removed: ${rmGroupName}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
+          break;
+        }
+
         default: {
           setMessages((prev) => [
             ...prev,
