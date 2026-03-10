@@ -113,7 +113,8 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
   const [inputText, setInputText] = useState("");
   const [selectedEntrypoint, setSelectedEntrypoint] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const { messages, waitingForInput, categories, isFinished, isProcessing, currentNodeId, start, sendMessage, sendAttachment } =
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const { messages, waitingForInput, categories, isFinished, isProcessing, currentNodeId, start, sendMessage, sendAttachment, context } =
     useFlowSimulation(nodes, edges, onHighlightNode);
 
   const entryInfo = detectEntrypointStatus(nodes, edges);
