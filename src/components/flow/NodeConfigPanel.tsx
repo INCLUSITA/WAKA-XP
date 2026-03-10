@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getChannelConstraints } from "@/lib/flowValidation";
+import { ExpressionInput } from "./ExpressionInput";
 
 interface NodeConfigPanelProps {
   node: Node;
