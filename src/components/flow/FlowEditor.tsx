@@ -52,7 +52,7 @@ import { FlowContextPanel, ContextItem } from "./FlowContextPanel";
 import { useFlowPersistence } from "@/hooks/useFlowPersistence";
 import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
-
+import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
