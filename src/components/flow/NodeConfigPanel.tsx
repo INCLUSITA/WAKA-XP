@@ -465,11 +465,10 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
           <>
             <div className="space-y-2">
               <Label className="text-foreground">Expression Operand</Label>
-              <Input
+              <ExpressionInput
                 value={data.operand || ""}
-                onChange={(e) => update("operand", e.target.value)}
+                onChange={(v) => update("operand", v)}
                 placeholder="@input.text"
-                className="font-mono text-sm"
               />
             </div>
             <div className="space-y-2">
