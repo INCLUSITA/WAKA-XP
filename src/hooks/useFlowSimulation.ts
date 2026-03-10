@@ -349,9 +349,13 @@ export function useFlowSimulation(
           // If no case matched and operand is non-empty, check for "has_text" style catch-all
           const resolvedCategory = matchedCase || "Other";
 
+          const splitDisplayOperand = isGroupSplit
+            ? `groups: [${Array.from(ctxRef.current.groups).join(", ") || "none"}]`
+            : operand.substring(0, 40);
+
           const splitLabel = matchedCase
-            ? `⚡ Split → "${matchedCase}" (matched "${operand.substring(0, 40)}")`
-            : `⚡ Split → "Other" (no match for "${operand.substring(0, 40)}")`;
+            ? `⚡ Split → "${matchedCase}" (matched "${splitDisplayOperand}")`
+            : `⚡ Split → "Other" (no match for "${splitDisplayOperand}")`;
 
           setMessages((prev) => [
             ...prev,
@@ -361,8 +365,10 @@ export function useFlowSimulation(
               text: splitLabel,
               timestamp: new Date(),
               splitInfo: {
-                operand: data.operand || "@input.text",
-                resolvedValue: operand.substring(0, 60),
+                operand: isGroupSplit ? "@contact.groups" : (data.operand || "@input.text"),
+                resolvedValue: isGroupSplit
+                  ? Array.from(ctxRef.current.groups).join(", ") || "(no groups)"
+                  : operand.substring(0, 60),
                 cases: allCategories,
                 matchedCase: resolvedCategory,
                 nodeType: node.type,
