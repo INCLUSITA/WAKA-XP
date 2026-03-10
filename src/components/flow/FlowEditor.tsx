@@ -444,6 +444,10 @@ function FlowEditorInner() {
         } else if (n.router && !n.actions?.length) {
           type = "splitExpression";
           data.operand = n.router.operand || "@input.text";
+          data.cases = n.router.categories
+            ?.filter((c: any) => c.name !== "Other")
+            .map((c: any) => c.name) || [];
+          data.testType = n.router.cases?.[0]?.type || "has_any_word";
         } else if (n.actions?.[0]?.type === "call_webhook") {
           type = "webhook";
           data.url = n.actions[0].url || "";
