@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
@@ -246,10 +246,16 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                 const si = msg.splitInfo;
                 return (
                   <div key={msg.id} className="flex justify-center">
-                    <div className="rounded-lg bg-card border border-border/60 px-3 py-2 shadow-sm max-w-[90%]">
+                    <div className={`rounded-lg bg-card border px-3 py-2 shadow-sm max-w-[90%] ${si.nodeType === "splitGroup" ? "border-emerald-500/30" : "border-border/60"}`}>
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <GitBranch className="h-3 w-3 text-primary/70" />
-                        <span className="text-[11px] font-semibold text-foreground">Split</span>
+                        {si.nodeType === "splitGroup" ? (
+                          <Users className="h-3 w-3 text-emerald-600" />
+                        ) : (
+                          <GitBranch className="h-3 w-3 text-primary/70" />
+                        )}
+                        <span className="text-[11px] font-semibold text-foreground">
+                          {si.nodeType === "splitGroup" ? "Split by Group" : "Split"}
+                        </span>
                         <span className="text-[10px] text-muted-foreground font-mono ml-1">{si.operand}</span>
                       </div>
                       <div className="space-y-0.5">
@@ -279,6 +285,43 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                           );
                         })}
                       </div>
+                    </div>
+                  </div>
+                );
+              }
+              // Group action bubble
+              if (msg.groupInfo) {
+                const gi = msg.groupInfo;
+                const isAdd = gi.action === "added";
+                const Icon = isAdd ? Users : UserMinus;
+                const colorClass = isAdd ? "text-emerald-600" : "text-orange-600";
+                const bgClass = isAdd ? "bg-emerald-500/10 border-emerald-500/20" : "bg-orange-500/10 border-orange-500/20";
+                const badgeBg = isAdd ? "bg-emerald-500/15 text-emerald-700" : "bg-orange-500/15 text-orange-700";
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <div className={`rounded-lg border px-3 py-2 shadow-sm max-w-[90%] ${bgClass}`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Icon className={`h-3 w-3 ${colorClass}`} />
+                        <span className={`text-[11px] font-semibold ${colorClass}`}>
+                          {isAdd ? "Group Added" : "Group Removed"}
+                        </span>
+                      </div>
+                      <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeBg}`}>
+                        {gi.groupName}
+                      </div>
+                      {gi.currentGroups.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          <span className="text-[9px] text-muted-foreground mr-0.5">membership:</span>
+                          {gi.currentGroups.map((g) => (
+                            <span key={g} className="rounded-full bg-muted px-1.5 py-px text-[9px] text-foreground/70 font-medium">
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {gi.currentGroups.length === 0 && (
+                        <p className="text-[9px] text-muted-foreground mt-1 italic">no groups</p>
+                      )}
                     </div>
                   </div>
                 );

@@ -17,6 +17,12 @@ export interface ChatMessage {
     matchedCase: string | null;
     nodeType?: string;
   };
+  /** For group action system messages */
+  groupInfo?: {
+    action: "added" | "removed" | "branch_matched";
+    groupName: string;
+    currentGroups: string[];
+  };
 }
 
 export interface SimulationContext {
@@ -343,9 +349,13 @@ export function useFlowSimulation(
           // If no case matched and operand is non-empty, check for "has_text" style catch-all
           const resolvedCategory = matchedCase || "Other";
 
+          const splitDisplayOperand = isGroupSplit
+            ? `groups: [${Array.from(ctxRef.current.groups).join(", ") || "none"}]`
+            : operand.substring(0, 40);
+
           const splitLabel = matchedCase
-            ? `⚡ Split → "${matchedCase}" (matched "${operand.substring(0, 40)}")`
-            : `⚡ Split → "Other" (no match for "${operand.substring(0, 40)}")`;
+            ? `⚡ Split → "${matchedCase}" (matched "${splitDisplayOperand}")`
+            : `⚡ Split → "Other" (no match for "${splitDisplayOperand}")`;
 
           setMessages((prev) => [
             ...prev,
@@ -355,8 +365,10 @@ export function useFlowSimulation(
               text: splitLabel,
               timestamp: new Date(),
               splitInfo: {
-                operand: data.operand || "@input.text",
-                resolvedValue: operand.substring(0, 60),
+                operand: isGroupSplit ? "@contact.groups" : (data.operand || "@input.text"),
+                resolvedValue: isGroupSplit
+                  ? Array.from(ctxRef.current.groups).join(", ") || "(no groups)"
+                  : operand.substring(0, 60),
                 cases: allCategories,
                 matchedCase: resolvedCategory,
                 nodeType: node.type,
@@ -507,7 +519,17 @@ export function useFlowSimulation(
           ctxRef.current.groups.add(groupName);
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `👥 Group added: ${groupName}`, timestamp: new Date() },
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: `Group added: ${groupName}`,
+              timestamp: new Date(),
+              groupInfo: {
+                action: "added",
+                groupName,
+                currentGroups: Array.from(ctxRef.current.groups),
+              },
+            },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);
@@ -522,7 +544,17 @@ export function useFlowSimulation(
           ctxRef.current.groups.delete(rmGroupName);
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), sender: "system", text: `👥 Group removed: ${rmGroupName}`, timestamp: new Date() },
+            {
+              id: crypto.randomUUID(),
+              sender: "system",
+              text: `Group removed: ${rmGroupName}`,
+              timestamp: new Date(),
+              groupInfo: {
+                action: "removed",
+                groupName: rmGroupName,
+                currentGroups: Array.from(ctxRef.current.groups),
+              },
+            },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);
