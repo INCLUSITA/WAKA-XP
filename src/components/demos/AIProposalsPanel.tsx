@@ -103,14 +103,22 @@ async function applyProposals(
   proposals: { prompt: string; summary?: string }[]
 ): Promise<{ modifiedJsx: string; appliedCount: number } | null> {
   try {
+    console.log("[Waka AI Apply] Calling edge function with", proposals.length, "proposals, JSX length:", jsxSource.length);
     const { data, error } = await supabase.functions.invoke("waka-ai-apply", {
       body: { jsxSource, proposals },
     });
+    console.log("[Waka AI Apply] Response — data:", data, "error:", error);
     if (error) {
       console.error("Waka AI apply error:", error);
       toast({ title: "Apply failed", description: error.message || "Could not apply changes.", variant: "destructive" });
       return null;
     }
+    if (!data || !data.modifiedJsx) {
+      console.error("Waka AI apply: empty or invalid response data", data);
+      toast({ title: "Apply failed", description: "AI returned empty result. Try again.", variant: "destructive" });
+      return null;
+    }
+    console.log("[Waka AI Apply] Success — modified JSX length:", data.modifiedJsx.length, "applied:", data.appliedCount);
     return { modifiedJsx: data.modifiedJsx, appliedCount: data.appliedCount };
   } catch (e) {
     console.error("Waka AI apply call failed:", e);

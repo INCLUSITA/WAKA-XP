@@ -182,6 +182,7 @@ export default function DemoViewer() {
   const currentJsx = versions.length > 0 ? versions[versionIndex]?.jsx : baseJsx;
 
   const handleJsxUpdate = useCallback(async (newJsx: string, label?: string) => {
+    console.log("[DemoViewer] handleJsxUpdate called — new JSX length:", newJsx.length, "label:", label);
     const newVersion: SandboxVersion = {
       id: `v-${Date.now().toString(36)}`,
       jsx: newJsx,
@@ -191,19 +192,20 @@ export default function DemoViewer() {
 
     setVersions((prev) => {
       const base = prev.slice(0, versionIndex + 1);
-      return [...base, newVersion];
-    });
-    setVersionIndex((prev) => {
-      const base = versions.slice(0, prev + 1);
-      return base.length;
+      const updated = [...base, newVersion];
+      console.log("[DemoViewer] Version added — total versions:", updated.length, "new index will be:", base.length);
+      // Also update the index inside the same tick to avoid stale closure
+      setVersionIndex(base.length);
+      return updated;
     });
 
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
       await saveDemo(updated);
       setUploadedDemo(updated);
+      console.log("[DemoViewer] JSX saved to DB");
     }
-  }, [uploadedDemo, versionIndex, versions, saveDemo]);
+  }, [uploadedDemo, versionIndex, saveDemo]);
 
   const handleVersionNavigate = useCallback((index: number) => {
     if (index < 0 || index >= versions.length) return;
