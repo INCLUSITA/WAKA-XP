@@ -275,11 +275,26 @@ function FlowEditorInner() {
           defaultData.categories = ["Sí", "No"];
           break;
         case "splitExpression":
-        case "splitContactField":
-        case "splitResult":
-        case "splitRandom":
-        case "splitGroup":
           defaultData.operand = "@input.text";
+          defaultData.cases = ["Has Text"];
+          defaultData.testType = "has_any_word";
+          break;
+        case "splitContactField":
+          defaultData.operand = "@contact.language";
+          defaultData.cases = ["en", "fr"];
+          break;
+        case "splitResult":
+          defaultData.operand = "@results.response";
+          defaultData.cases = ["Yes", "No"];
+          break;
+        case "splitRandom":
+          defaultData.operand = "";
+          defaultData.cases = ["Bucket 1", "Bucket 2"];
+          defaultData.buckets = 2;
+          break;
+        case "splitGroup":
+          defaultData.operand = "";
+          defaultData.cases = ["In Group"];
           break;
         case "webhook":
           defaultData.url = "";
