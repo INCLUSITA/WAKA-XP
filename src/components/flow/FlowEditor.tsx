@@ -774,18 +774,6 @@ function FlowEditorInner() {
           />
         )}
 
-        {selectedEdge && (
-          <EdgeInfoPanel
-            edge={selectedEdge}
-            nodes={nodes}
-            onClose={() => setSelectedEdge(null)}
-            onDelete={deleteEdge}
-            onSelectNode={(node) => {
-              setSelectedEdge(null);
-              setSelectedNode(node);
-            }}
-          />
-        )}
 
         {showVersions && (
           <div className="absolute right-0 top-0 h-full w-80 border-l border-border bg-card shadow-xl z-20">
