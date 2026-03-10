@@ -25,6 +25,7 @@ export interface SimulationContext {
   results: Record<string, { value: string }>;
   contact: Record<string, string>;
   urns: { whatsapp: string };
+  groups: Set<string>;
 }
 
 function createEmptyContext(): SimulationContext {
@@ -34,6 +35,7 @@ function createEmptyContext(): SimulationContext {
     results: {},
     contact: { name: "Simulador User" },
     urns: { whatsapp: "+22670000000" },
+    groups: new Set(),
   };
 }
 
