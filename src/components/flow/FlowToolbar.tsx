@@ -2,7 +2,7 @@ import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
-  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit,
+  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ const actionNodes = [
   { type: "enterFlow", label: "Enter another flow", icon: Workflow, color: "hsl(190, 70%, 45%)" },
   { type: "openTicket", label: "Open a ticket", icon: Headphones, color: "hsl(15, 80%, 50%)" },
   { type: "sendAirtime", label: "Send airtime", icon: Coins, color: "hsl(50, 80%, 45%)" },
+  { type: "addGroup", label: "Add to a group", icon: Users, color: "hsl(150, 60%, 40%)" },
+  { type: "removeGroup", label: "Remove from a group", icon: UserMinus, color: "hsl(25, 85%, 50%)" },
 ];
 
 const splitNodes = [

@@ -25,6 +25,7 @@ export interface SimulationContext {
   results: Record<string, { value: string }>;
   contact: Record<string, string>;
   urns: { whatsapp: string };
+  groups: Set<string>;
 }
 
 function createEmptyContext(): SimulationContext {
@@ -34,6 +35,7 @@ function createEmptyContext(): SimulationContext {
     results: {},
     contact: { name: "Simulador User" },
     urns: { whatsapp: "+22670000000" },
+    groups: new Set(),
   };
 }
 
@@ -278,52 +280,64 @@ export function useFlowSimulation(
         case "splitResult":
         case "splitRandom":
         case "splitGroup": {
-          const operand = resolveTemplate(data.operand || "@input.text", ctxRef.current);
+          const isGroupSplit = node.type === "splitGroup";
+          const operand = isGroupSplit
+            ? "" // group splits don't use operand text
+            : resolveTemplate(data.operand || "@input.text", ctxRef.current);
           const cases: string[] = (data.cases || []).filter((c: string) => c.trim());
           const allCategories = [...cases, "Other"];
 
-          // Evaluate: find first case that matches (simple text match for now)
           let matchedCase: string | null = null;
-          const testType = data.testType || "has_any_word";
-          const operandLower = operand.toLowerCase().trim();
 
-          for (const caseName of cases) {
-            const caseVal = caseName.toLowerCase().trim();
-            let matched = false;
-            switch (testType) {
-              case "has_any_word":
-                matched = operandLower.split(/\s+/).some((w) => w === caseVal);
+          if (isGroupSplit) {
+            // Group split: each case is a group name, match if contact is in that group
+            for (const caseName of cases) {
+              if (ctxRef.current.groups.has(caseName)) {
+                matchedCase = caseName;
                 break;
-              case "has_all_words":
-                matched = caseVal.split(/\s+/).every((w) => operandLower.includes(w));
-                break;
-              case "has_phrase":
-              case "has_only_phrase":
-                matched = operandLower.includes(caseVal);
-                break;
-              case "has_text":
-                matched = operandLower.length > 0;
-                break;
-              case "has_number":
-                matched = /\d+/.test(operand);
-                break;
-              case "has_number_eq":
-                matched = parseFloat(operand) === parseFloat(caseName);
-                break;
-              case "has_number_gt":
-                matched = parseFloat(operand) > parseFloat(caseName);
-                break;
-              case "has_number_lt":
-                matched = parseFloat(operand) < parseFloat(caseName);
-                break;
-              case "has_pattern":
-                try { matched = new RegExp(caseName, "i").test(operand); } catch { matched = false; }
-                break;
-              default:
-                // Fallback: case-insensitive equality or contains
-                matched = operandLower === caseVal || operandLower.includes(caseVal);
+              }
             }
-            if (matched) { matchedCase = caseName; break; }
+          } else {
+            const testType = data.testType || "has_any_word";
+            const operandLower = operand.toLowerCase().trim();
+
+            for (const caseName of cases) {
+              const caseVal = caseName.toLowerCase().trim();
+              let matched = false;
+              switch (testType) {
+                case "has_any_word":
+                  matched = operandLower.split(/\s+/).some((w) => w === caseVal);
+                  break;
+                case "has_all_words":
+                  matched = caseVal.split(/\s+/).every((w) => operandLower.includes(w));
+                  break;
+                case "has_phrase":
+                case "has_only_phrase":
+                  matched = operandLower.includes(caseVal);
+                  break;
+                case "has_text":
+                  matched = operandLower.length > 0;
+                  break;
+                case "has_number":
+                  matched = /\d+/.test(operand);
+                  break;
+                case "has_number_eq":
+                  matched = parseFloat(operand) === parseFloat(caseName);
+                  break;
+                case "has_number_gt":
+                  matched = parseFloat(operand) > parseFloat(caseName);
+                  break;
+                case "has_number_lt":
+                  matched = parseFloat(operand) < parseFloat(caseName);
+                  break;
+                case "has_pattern":
+                  try { matched = new RegExp(caseName, "i").test(operand); } catch { matched = false; }
+                  break;
+                default:
+                  matched = operandLower === caseVal || operandLower.includes(caseVal);
+              }
+              if (matched) { matchedCase = caseName; break; }
+            }
           }
 
           // If no case matched and operand is non-empty, check for "has_text" style catch-all
@@ -479,6 +493,36 @@ export function useFlowSimulation(
           setMessages((prev) => [
             ...prev,
             { id: crypto.randomUUID(), sender: "system", text: `👤 Contact: ${field} = ${value}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
+          break;
+        }
+
+        case "addGroup": {
+          const groupName = data.groupName || data.label || "Unknown Group";
+          ctxRef.current.groups.add(groupName);
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `👥 Group added: ${groupName}`, timestamp: new Date() },
+          ]);
+          setTimeout(() => {
+            const nextId = getNextNodeId(nodeId);
+            if (nextId) processNode(nextId);
+            else endFlow();
+          }, 400);
+          break;
+        }
+
+        case "removeGroup": {
+          const rmGroupName = data.groupName || data.label || "Unknown Group";
+          ctxRef.current.groups.delete(rmGroupName);
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), sender: "system", text: `👥 Group removed: ${rmGroupName}`, timestamp: new Date() },
           ]);
           setTimeout(() => {
             const nextId = getNextNodeId(nodeId);

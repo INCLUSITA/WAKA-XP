@@ -42,6 +42,8 @@ const nodeTypeLabels: Record<string, string> = {
   openTicket: "Open Ticket",
   callZapier: "Call Zapier",
   sendAirtime: "Send Airtime",
+  addGroup: "Add to Group",
+  removeGroup: "Remove from Group",
 };
 
 interface Attachment {
@@ -708,6 +710,23 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
                 placeholder="@input.text"
                 className="font-mono text-sm"
               />
+            </div>
+          </>
+        )}
+
+        {/* ─── ADD/REMOVE GROUP ─── */}
+        {(node.type === "addGroup" || node.type === "removeGroup") && (
+          <>
+            <div className="space-y-2">
+              <Label className="text-foreground">Group Name</Label>
+              <Input
+                value={data.groupName || ""}
+                onChange={(e) => update("groupName", e.target.value)}
+                placeholder="e.g. Subscribed, VIP, Opt-out"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                The name of the group to {node.type === "addGroup" ? "add the contact to" : "remove the contact from"}
+              </p>
             </div>
           </>
         )}
