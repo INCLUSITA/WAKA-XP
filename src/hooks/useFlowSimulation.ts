@@ -580,6 +580,7 @@ export function useFlowSimulation(
 
   return {
     messages,
+    currentNodeId,
     waitingForInput,
     waitingForAttachment,
     categories,

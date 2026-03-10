@@ -157,16 +157,28 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
     return atts.map((a: any) => typeof a === "string" ? { url: a } : a);
   };
 
+  // Active node info for header
+  const activeNode = currentNodeId ? nodes.find((n) => n.id === currentNodeId) : null;
+  const activeNodeLabel = activeNode
+    ? (activeNode.data as any)?.text?.substring(0, 25) || (activeNode.data as any)?.label || nodeTypeLabelsShort[activeNode.type || ""] || activeNode.type
+    : null;
+
   return (
     <div className="absolute right-0 top-0 z-50 flex h-full w-96 flex-col border-l border-border bg-background shadow-2xl">
       <div className="flex items-center gap-3 bg-node-send px-4 py-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/20">
           <Bot className="h-5 w-5 text-primary-foreground" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-primary-foreground">Simulador WhatsApp</p>
-          <p className="text-xs text-primary-foreground/70">
-            {isProcessing ? "procesando…" : isFinished ? "Flujo finalizado" : waitingForInput ? "Esperando respuesta…" : "En línea"}
+          <p className="text-xs text-primary-foreground/70 truncate">
+            {isProcessing
+              ? `procesando${activeNodeLabel ? ` · ${activeNodeLabel}` : ""}…`
+              : isFinished
+                ? "Flujo finalizado"
+                : waitingForInput
+                  ? `Esperando respuesta${activeNodeLabel ? ` · ${activeNodeLabel}` : ""}…`
+                  : "En línea"}
           </p>
         </div>
         <div className="flex gap-1">
