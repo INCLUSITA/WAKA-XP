@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
-import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft } from "lucide-react";
+import { X, RotateCcw, Send, Bot, Paperclip, AlertTriangle, Play, Info, CheckCircle2, Image as ImageIcon, FileText, Film, Volume2, GitBranch, Check, ChevronUp, ChevronDown, Terminal, Users, UserMinus, Workflow, CornerDownRight, CornerUpLeft, RefreshCw, XOctagon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
@@ -367,6 +367,61 @@ export function WhatsAppSimulator({ nodes, edges, onClose, onHighlightNode }: Wh
                       )}
                       {isReturning && (
                         <p className="text-[9px] text-muted-foreground mt-1 italic">resuming parent flow</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              // Retry/backoff bubble
+              if (msg.retryInfo) {
+                const ri = msg.retryInfo;
+                const isRetrying = ri.action === "retrying";
+                const isExhausted = ri.action === "exhausted";
+                const isSuccessAfter = ri.action === "success_after_retry";
+                const Icon = isExhausted ? XOctagon : isSuccessAfter ? CheckCircle2 : RefreshCw;
+                const borderColor = isExhausted
+                  ? "border-destructive/30"
+                  : isSuccessAfter
+                    ? "border-emerald-500/30"
+                    : "border-amber-500/30";
+                const bgColor = isExhausted
+                  ? "bg-destructive/8"
+                  : isSuccessAfter
+                    ? "bg-emerald-500/8"
+                    : "bg-amber-500/8";
+                const iconColor = isExhausted
+                  ? "text-destructive"
+                  : isSuccessAfter
+                    ? "text-emerald-600"
+                    : "text-amber-600";
+                const label = isExhausted
+                  ? "Retries Exhausted"
+                  : isSuccessAfter
+                    ? `OK after ${ri.attempt} ${ri.attempt === 1 ? "retry" : "retries"}`
+                    : `Retry ${ri.attempt}/${ri.maxAttempts}`;
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <div className={`rounded-lg border px-3 py-2 shadow-sm max-w-[90%] ${borderColor} ${bgColor}`}>
+                      <div className="flex items-center gap-1.5">
+                        <Icon className={`h-3 w-3 ${iconColor} ${isRetrying ? "animate-spin" : ""}`} />
+                        <span className={`text-[11px] font-semibold ${iconColor}`}>{label}</span>
+                      </div>
+                      {(ri.statusCode || ri.errorMessage) && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {ri.statusCode && (
+                            <span className="rounded bg-muted px-1.5 py-px text-[9px] font-mono text-muted-foreground">
+                              HTTP {ri.statusCode}
+                            </span>
+                          )}
+                          {ri.errorMessage && (
+                            <span className="text-[9px] text-muted-foreground truncate max-w-[140px]">
+                              {ri.errorMessage}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {isExhausted && (
+                        <p className="text-[9px] text-muted-foreground mt-1 italic">continuing via failure path</p>
                       )}
                     </div>
                   </div>

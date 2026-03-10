@@ -29,6 +29,15 @@ export interface ChatMessage {
     flowName: string;
     parentFlowName?: string;
   };
+  /** For retry/backoff system messages */
+  retryInfo?: {
+    action: "retrying" | "exhausted" | "success_after_retry";
+    attempt: number;
+    maxAttempts: number;
+    url?: string;
+    statusCode?: number;
+    errorMessage?: string;
+  };
 }
 
 export interface SimulationContext {
@@ -411,6 +420,9 @@ export function useFlowSimulation(
           }
 
           if (executeWebhooks && url) {
+            const maxRetries = Math.max(0, Math.min(parseInt(data.retryCount) || 0, 5));
+            const retryDelay = parseInt(data.retryDelay) || 2;
+
             setIsProcessing(true);
             setMessages((prev) => [
               ...prev,
@@ -418,61 +430,105 @@ export function useFlowSimulation(
               ...(body ? [{ id: crypto.randomUUID(), sender: "system" as const, text: `📤 Body: ${body.substring(0, 200)}${body.length > 200 ? "…" : ""}`, timestamp: new Date() }] : []),
             ]);
 
-            try {
-              const fetchOptions: RequestInit = {
-                method,
-                headers: resolvedHeaders,
-              };
-              if (method !== "GET" && method !== "HEAD" && body) {
-                fetchOptions.body = body;
+            const attemptWebhook = async (attempt: number): Promise<void> => {
+              try {
+                const fetchOptions: RequestInit = { method, headers: resolvedHeaders };
+                if (method !== "GET" && method !== "HEAD" && body) fetchOptions.body = body;
+
+                const response = await fetch(url, fetchOptions);
+                const responseText = await response.text();
+                let responseJson: any = {};
+                try { responseJson = JSON.parse(responseText); } catch { responseJson = { raw: responseText }; }
+
+                if (!response.ok && attempt < maxRetries) {
+                  // Retry on HTTP error
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: crypto.randomUUID(), sender: "system", text: `Retry ${attempt + 1}/${maxRetries}`,
+                      timestamp: new Date(),
+                      retryInfo: { action: "retrying", attempt: attempt + 1, maxAttempts: maxRetries, url, statusCode: response.status },
+                    },
+                  ]);
+                  await new Promise((r) => setTimeout(r, retryDelay * 1000 * (attempt + 1)));
+                  return attemptWebhook(attempt + 1);
+                }
+
+                ctxRef.current.webhook = { json: responseJson, status: response.ok ? "success" : "failure" };
+                if (data.resultName) ctxRef.current.results[data.resultName.toLowerCase()] = { value: responseText };
+                optionsRef.current?.onWebhookExecuted?.(url, response.status, responseJson);
+
+                if (!response.ok && attempt >= maxRetries && maxRetries > 0) {
+                  // Retries exhausted
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: crypto.randomUUID(), sender: "system", text: `Retries exhausted`,
+                      timestamp: new Date(),
+                      retryInfo: { action: "exhausted", attempt: attempt + 1, maxAttempts: maxRetries, url, statusCode: response.status },
+                    },
+                  ]);
+                  setIsProcessing(false);
+                  setTimeout(() => {
+                    const failId = getNextNodeId(nodeId, "Failure");
+                    const nextId = failId || getNextNodeId(nodeId);
+                    if (nextId) processNode(nextId);
+                    else endFlow();
+                  }, 600);
+                  return;
+                }
+
+                const successMsg = attempt > 0
+                  ? { id: crypto.randomUUID(), sender: "system" as const, text: `Webhook OK after retry`, timestamp: new Date(), retryInfo: { action: "success_after_retry" as const, attempt: attempt + 1, maxAttempts: maxRetries, url, statusCode: response.status } }
+                  : { id: crypto.randomUUID(), sender: "system" as const, text: `✅ Webhook ${response.status}: ${JSON.stringify(responseJson).substring(0, 120)}${JSON.stringify(responseJson).length > 120 ? "…" : ""}`, timestamp: new Date() };
+
+                setMessages((prev) => [...prev, successMsg]);
+                setIsProcessing(false);
+                setTimeout(() => {
+                  const nextId = getNextNodeId(nodeId);
+                  if (nextId) processNode(nextId);
+                  else endFlow();
+                }, 600);
+              } catch (err: any) {
+                if (attempt < maxRetries) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: crypto.randomUUID(), sender: "system", text: `Retry ${attempt + 1}/${maxRetries}`,
+                      timestamp: new Date(),
+                      retryInfo: { action: "retrying", attempt: attempt + 1, maxAttempts: maxRetries, url, errorMessage: err.message },
+                    },
+                  ]);
+                  await new Promise((r) => setTimeout(r, retryDelay * 1000 * (attempt + 1)));
+                  return attemptWebhook(attempt + 1);
+                }
+                ctxRef.current.webhook = { json: { error: err.message }, status: "failure" };
+                if (maxRetries > 0) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: crypto.randomUUID(), sender: "system", text: `Retries exhausted`,
+                      timestamp: new Date(),
+                      retryInfo: { action: "exhausted", attempt: attempt + 1, maxAttempts: maxRetries, url, errorMessage: err.message },
+                    },
+                  ]);
+                } else {
+                  setMessages((prev) => [
+                    ...prev,
+                    { id: crypto.randomUUID(), sender: "system", text: `❌ Webhook error: ${err.message}`, timestamp: new Date() },
+                  ]);
+                }
+                setIsProcessing(false);
+                setTimeout(() => {
+                  const failId = getNextNodeId(nodeId, "Failure");
+                  const nextId = failId || getNextNodeId(nodeId);
+                  if (nextId) processNode(nextId);
+                  else endFlow();
+                }, 600);
               }
+            };
 
-              const response = await fetch(url, fetchOptions);
-              const responseText = await response.text();
-              let responseJson: any = {};
-              try { responseJson = JSON.parse(responseText); } catch { responseJson = { raw: responseText }; }
-
-              ctxRef.current.webhook = {
-                json: responseJson,
-                status: response.ok ? "success" : "failure",
-              };
-
-              // Save result_name if configured
-              if (data.resultName) {
-                ctxRef.current.results[data.resultName.toLowerCase()] = { value: responseText };
-              }
-
-              optionsRef.current?.onWebhookExecuted?.(url, response.status, responseJson);
-
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: crypto.randomUUID(),
-                  sender: "system",
-                  text: `✅ Webhook ${response.status}: ${JSON.stringify(responseJson).substring(0, 120)}${JSON.stringify(responseJson).length > 120 ? "…" : ""}`,
-                  timestamp: new Date(),
-                },
-              ]);
-
-              setIsProcessing(false);
-              setTimeout(() => {
-                const nextId = getNextNodeId(nodeId);
-                if (nextId) processNode(nextId);
-                else endFlow();
-              }, 600);
-            } catch (err: any) {
-              ctxRef.current.webhook = { json: { error: err.message }, status: "failure" };
-              setMessages((prev) => [
-                ...prev,
-                { id: crypto.randomUUID(), sender: "system", text: `❌ Webhook error: ${err.message}`, timestamp: new Date() },
-              ]);
-              setIsProcessing(false);
-              setTimeout(() => {
-                const nextId = getNextNodeId(nodeId);
-                if (nextId) processNode(nextId);
-                else endFlow();
-              }, 600);
-            }
+            attemptWebhook(0);
           } else {
             // Non-executing mode — just show info
             setMessages((prev) => [
