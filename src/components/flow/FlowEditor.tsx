@@ -630,42 +630,118 @@ function FlowEditorInner() {
       const uiNodes = flow._ui?.nodes || {};
       const SCALE = 0.8;
 
+      // Map TextIt action types to Waka XP node types
+      const actionTypeMap: Record<string, string> = {
+        send_msg: "sendMsg",
+        call_webhook: "webhook",
+        set_run_result: "saveResult",
+        set_contact_field: "updateContact",
+        send_email: "sendEmail",
+        enter_flow: "enterFlow",
+        open_ticket: "openTicket",
+        call_zapier: "callZapier",
+        send_airtime: "sendAirtime",
+        add_contact_groups: "addGroup",
+        remove_contact_groups: "removeGroup",
+        call_resthook: "webhook",
+        call_classifier: "callAI",
+        transfer_airtime: "sendAirtime",
+      };
+
       const importedNodes: Node[] = flow.nodes.map((n: any, i: number) => {
         let type = "sendMsg";
         const data: Record<string, any> = {};
 
+        // 1) Wait for response (has router with wait)
         if (n.router?.wait?.type === "msg") {
           type = "waitResponse";
           data.label = "";
           data.categories = n.router.categories
             ?.filter((c: any) => c.name !== "Other")
             .map((c: any) => c.name) || [];
-        } else if (n.router && n.actions?.some((a: any) => a.type === "call_webhook")) {
-          type = "webhook";
-          const whAction = n.actions.find((a: any) => a.type === "call_webhook");
-          data.url = whAction?.url || "";
-          data.method = whAction?.method || "GET";
-          data.body = whAction?.body || "";
-          data.headers = whAction?.headers || {};
-          data.resultName = whAction?.result_name || "";
-        } else if (n.router && !n.actions?.length) {
+          if (n.router.result_name) data.resultName = n.router.result_name;
+
+        // 2) Pure split (router, no actions or only set_run_result)
+        } else if (n.router && (!n.actions?.length || n.actions.every((a: any) => a.type === "set_run_result"))) {
           type = "splitExpression";
           data.operand = n.router.operand || "@input.text";
           data.cases = n.router.categories
             ?.filter((c: any) => c.name !== "Other")
             .map((c: any) => c.name) || [];
           data.testType = n.router.cases?.[0]?.type || "has_any_word";
-        } else if (n.actions?.[0]?.type === "call_webhook") {
-          type = "webhook";
-          data.url = n.actions[0].url || "";
-          data.method = n.actions[0].method || "GET";
-          data.body = n.actions[0].body || "";
-          data.headers = n.actions[0].headers || {};
-          data.resultName = n.actions[0].result_name || "";
+          // Preserve result saving
+          const saveAction = n.actions?.find((a: any) => a.type === "set_run_result");
+          if (saveAction) {
+            data.resultName = saveAction.name;
+          }
+
+        // 3) Action node with optional router (action+split combo)
+        } else if (n.actions?.length > 0) {
+          const primaryAction = n.actions[0];
+          type = actionTypeMap[primaryAction.type] || "sendMsg";
+
+          // Extract data based on action type
+          switch (primaryAction.type) {
+            case "send_msg":
+              data.text = primaryAction.text || "";
+              data.quick_replies = primaryAction.quick_replies || [];
+              data.attachments = primaryAction.attachments || [];
+              break;
+            case "call_webhook":
+            case "call_resthook":
+              data.url = primaryAction.url || "";
+              data.method = primaryAction.method || "GET";
+              data.body = primaryAction.body || "";
+              data.headers = primaryAction.headers || {};
+              data.resultName = primaryAction.result_name || "";
+              break;
+            case "set_run_result":
+              data.resultName = primaryAction.name || "";
+              data.value = primaryAction.value || "";
+              data.category = primaryAction.category || "";
+              break;
+            case "set_contact_field":
+              data.field = primaryAction.field?.key || "";
+              data.fieldName = primaryAction.field?.name || "";
+              data.value = primaryAction.value || "";
+              break;
+            case "send_email":
+              data.to = Array.isArray(primaryAction.addresses) ? primaryAction.addresses.join(", ") : (primaryAction.addresses || "");
+              data.subject = primaryAction.subject || "";
+              data.body = primaryAction.body || "";
+              break;
+            case "enter_flow":
+              data.flowName = primaryAction.flow?.name || "";
+              data.flowUuid = primaryAction.flow?.uuid || "";
+              break;
+            case "open_ticket":
+              data.subject = primaryAction.subject || "";
+              data.body = primaryAction.body || "";
+              data.topic = primaryAction.topic?.name || "";
+              break;
+            case "add_contact_groups":
+              data.groups = (primaryAction.groups || []).map((g: any) => g.name || g.uuid);
+              break;
+            case "remove_contact_groups":
+              data.groups = (primaryAction.groups || []).map((g: any) => g.name || g.uuid);
+              data.allGroups = primaryAction.all_groups || false;
+              break;
+            default:
+              data.text = primaryAction.text || JSON.stringify(primaryAction).slice(0, 200);
+              break;
+          }
+
+          // If this action node also has a router (action+split combo), store split data
+          if (n.router && !n.router.wait) {
+            data.hasSplitAfter = true;
+            data.categories = n.router.categories
+              ?.filter((c: any) => c.name !== "Other")
+              .map((c: any) => c.name) || [];
+          }
+
+        // 4) Fallback: empty node
         } else {
-          const sendAction = n.actions?.find((a: any) => a.type === "send_msg");
-          data.text = sendAction?.text || n.actions?.map((a: any) => a.text || a.type).filter(Boolean).join("\n") || "";
-          data.quick_replies = sendAction?.quick_replies || [];
+          data.text = "";
         }
 
         const uiInfo = uiNodes[n.uuid];
@@ -676,13 +752,13 @@ function FlowEditorInner() {
         return { id: n.uuid, type, position, data };
       });
 
+      // Build edges from exits
       const nodeIds = new Set(importedNodes.map((n) => n.id));
       const importedEdges = flow.nodes.flatMap((n: any) => {
         const categories = n.router?.categories || [];
         return (n.exits || [])
           .filter((exit: any) => exit.destination_uuid && nodeIds.has(exit.destination_uuid))
           .map((exit: any) => {
-            // Find category name for this exit
             const cat = categories.find((c: any) => c.exit_uuid === exit.uuid);
             const label = cat?.name || undefined;
             const isSplitLike = n.router && !n.router?.wait;
@@ -706,6 +782,17 @@ function FlowEditorInner() {
             };
           });
       });
+
+      // Mark the entry node: first node in the flow array is TextIt's convention
+      if (importedNodes.length > 0 && flow.nodes[0]?.uuid) {
+        const entryIdx = importedNodes.findIndex((n) => n.id === flow.nodes[0].uuid);
+        if (entryIdx >= 0) {
+          importedNodes[entryIdx] = {
+            ...importedNodes[entryIdx],
+            data: { ...importedNodes[entryIdx].data, isStart: true },
+          };
+        }
+      }
 
       setNodes(importedNodes);
       setEdges(importedEdges);
