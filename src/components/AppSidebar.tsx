@@ -27,6 +27,7 @@ const principalItems = [
   { title: "Builder", url: "/editor", icon: Hammer },
   { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
+  { title: "Runs", url: "/runs", icon: ServerCog },
 ];
 
 const assetsItems = [
