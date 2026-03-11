@@ -1,5 +1,6 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { GitBranch, CornerDownRight } from "lucide-react";
+import { EntryNodeMarker } from "./EntryNodeMarker";
 
 const SPLIT_TYPE_LABELS: Record<string, string> = {
   splitExpression: "Split by Expression",
