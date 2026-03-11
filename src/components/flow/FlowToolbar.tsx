@@ -53,6 +53,7 @@ interface FlowToolbarProps {
   nodes?: Node[];
   edges?: Edge[];
   onSearch?: () => void;
+  onFocusNode?: (nodeId: string) => void;
 }
 
 const actionNodes = [
@@ -109,6 +110,7 @@ export function FlowToolbar({
   nodes = [],
   edges = [],
   onSearch,
+  onFocusNode,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges);
@@ -125,7 +127,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
-      <TriggerReadinessBadge readiness={triggerReadiness} />
+      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} />
 
       {/* Experience link */}
       {experienceName && (
