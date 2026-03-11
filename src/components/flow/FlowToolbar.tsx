@@ -127,7 +127,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
-      <TriggerReadinessBadge readiness={triggerReadiness} />
+      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} />
 
       {/* Experience link */}
       {experienceName && (
