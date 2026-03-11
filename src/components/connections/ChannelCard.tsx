@@ -125,8 +125,12 @@ export function ChannelCard({
       </CardHeader>
 
       {/* Webhook URL row */}
-      {webhookUrl && isConnected && (
-        <CardContent className="pt-0">
+      {isConnected && (provider.id === "360dialog" || webhookUrl) && (
+        <CardContent className="pt-0 space-y-2">
+          {provider.id === "360dialog" && (
+            <WhatsAppPolicyNote />
+          )}
+          {webhookUrl && (
           <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-xs font-mono">
             <span className="text-muted-foreground shrink-0">Webhook:</span>
             <span className="truncate text-foreground">{webhookUrl}</span>
