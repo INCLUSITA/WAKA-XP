@@ -35,6 +35,8 @@ const nodeTypeColors: Record<string, string> = {
 function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
   const colorClass = nodeTypeColors[step.node_type] ?? "bg-muted text-muted-foreground border-border";
   const hasOutput = Object.keys(step.output).length > 0;
+  const outputStr = hasOutput ? JSON.stringify(step.output) : "";
+  const windowIssue = step.node_type === "send_msg" && isWindowPolicyError(outputStr);
 
   return (
     <div className="flex gap-3">
@@ -48,11 +50,12 @@ function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
 
       {/* Content */}
       <div className="flex-1 pb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-foreground">{step.node_label || step.node_uuid.slice(0, 8)}</span>
           <Badge variant="outline" className={cn("text-[10px] font-mono", colorClass)}>
             {step.node_type}
           </Badge>
+          {windowIssue && <WindowPolicyBadge />}
           {step.elapsed_ms != null && (
             <span className="text-[10px] text-muted-foreground ml-auto">{step.elapsed_ms}ms</span>
           )}
