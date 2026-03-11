@@ -766,6 +766,53 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_templates: {
+        Row: {
+          body_text: string
+          category: string
+          created_at: string
+          id: string
+          language: string
+          name: string
+          parameter_count: number
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body_text?: string
+          category?: string
+          created_at?: string
+          id?: string
+          language?: string
+          name: string
+          parameter_count?: number
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string
+          category?: string
+          created_at?: string
+          id?: string
+          language?: string
+          name?: string
+          parameter_count?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspaces: {
         Row: {
           created_at: string
