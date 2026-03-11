@@ -958,6 +958,7 @@ function FlowEditorInner() {
         nodes={nodes}
         edges={edges}
         onSearch={() => setShowNodeSearch((v) => !v)}
+        onFocusNode={handleFocusNodeInCanvas}
       />
 
       <input
