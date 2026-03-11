@@ -1091,6 +1091,9 @@ function FlowEditorInner() {
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
             channel={channel}
+            isPinnedStart={pinnedStartNodeId === selectedNode.id}
+            onPinAsStart={(nodeId) => setPinnedStartNodeId(nodeId)}
+            onUnpinStart={() => setPinnedStartNodeId(null)}
             availableEntities={contextItems
               .filter((i) => i.category === "entity")
               .map((i) => ({ name: i.name, entityType: i.entityType }))}
