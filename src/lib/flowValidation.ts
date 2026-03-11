@@ -232,18 +232,19 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
   const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
 
   if (executableNodes.length === 0) {
-    return { ready: false, reason: "Flow has no nodes" };
+    return { ready: false, reason: "Flow has no nodes", rootNodeIds: [] };
   }
 
   const connectedAsTarget = new Set(edges.map((e) => e.target));
   const rootNodes = executableNodes.filter((n) => !connectedAsTarget.has(n.id));
+  const rootNodeIds = rootNodes.map((n) => n.id);
 
   if (rootNodes.length === 0) {
-    return { ready: false, reason: "No clear entry point — all nodes have incoming connections" };
+    return { ready: false, reason: "No clear entry point — all nodes have incoming connections", rootNodeIds: [] };
   }
 
   if (rootNodes.length > 1) {
-    return { ready: false, reason: `Ambiguous entry — ${rootNodes.length} root nodes detected` };
+    return { ready: false, reason: `Ambiguous entry — ${rootNodes.length} root nodes detected`, rootNodeIds, entryNodeId: rootNodes[0].id, entryNodeType: rootNodes[0].type };
   }
 
   const entry = rootNodes[0];
