@@ -54,6 +54,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
+import { NodeSearchPanel } from "./NodeSearchPanel";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
