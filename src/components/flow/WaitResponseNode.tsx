@@ -1,5 +1,6 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Clock, Timer } from "lucide-react";
+import { EntryNodeMarker } from "./EntryNodeMarker";
 
 export function WaitResponseNode({ data, selected }: NodeProps) {
   const d = data as any;
