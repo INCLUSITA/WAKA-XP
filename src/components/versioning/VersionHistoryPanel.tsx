@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   AssetVersion,
   AssetType,

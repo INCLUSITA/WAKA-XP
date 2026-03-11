@@ -50,6 +50,7 @@ import { TranslatorPanel } from "./TranslatorPanel";
 import { StructuredView } from "./StructuredView";
 import { FlowContextPanel, ContextItem } from "./FlowContextPanel";
 import { useFlowPersistence } from "@/hooks/useFlowPersistence";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
