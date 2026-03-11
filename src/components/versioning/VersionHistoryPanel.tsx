@@ -297,7 +297,7 @@ export function VersionHistoryPanel({
     restoreVersion,
     renameVersion,
     updateNote,
-  } = useAssetVersions(assetType, assetId);
+  } = useAssetVersions(assetType, assetId, tenantId);
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saving, setSaving] = useState(false);

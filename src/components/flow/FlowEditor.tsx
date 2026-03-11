@@ -114,11 +114,13 @@ function FlowEditorInner() {
   const reactFlowInstance = useReactFlow();
   const initialLoadDone = useRef(false);
 
+  const { tenantId } = useWorkspace();
   const { loadFlow, debouncedSave, saveStatus, isLoading } = useFlowPersistence({
     flowId: flowIdParam,
     onFlowIdChange: (id) => {
       setSearchParams({ id }, { replace: true });
     },
+    tenantId,
   });
 
   const {

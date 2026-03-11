@@ -14,6 +14,7 @@ interface FlowStart {
 
 export default function StartsPage() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const [flows, setFlows] = useState<{ id: string; name: string; created_at: string; nodes: unknown }[]>([]);
   const [loading, setLoading] = useState(true);
 
