@@ -25,6 +25,9 @@ interface NodeConfigPanelProps {
   onClose: () => void;
   onDelete: (id: string) => void;
   channel?: string;
+  isPinnedStart?: boolean;
+  onPinAsStart?: (nodeId: string) => void;
+  onUnpinStart?: () => void;
   availableEntities?: AvailableEntity[];
 }
 
