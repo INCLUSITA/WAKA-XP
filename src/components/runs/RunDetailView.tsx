@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
+import { ChannelBadge } from "./ChannelBadge";
+import { channelFromUrn } from "@/lib/channelUtils";
 import { useFlowRunSteps } from "@/hooks/useFlowRuns";
 import type { FlowRun, FlowRunStep } from "@/hooks/useFlowRuns";
 import { cn } from "@/lib/utils";
