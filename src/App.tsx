@@ -31,6 +31,7 @@ import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import WakaFlowPreview from "./pages/WakaFlowPreview";
 import ShareDemo from "./pages/ShareDemo";
+import RunsPage from "./pages/RunsPage";
 
 import NotFound from "./pages/NotFound";
 
