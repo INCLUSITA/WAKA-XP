@@ -184,6 +184,17 @@ export default function IntegrationsPage() {
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-3xl mx-auto space-y-8">
+          {/* Explanation banner */}
+          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">Connections</span> is where you configure which channels are available for your flows.
+              To see how flows execute on each channel, visit{" "}
+              <a href="/runs" className="font-medium text-primary underline underline-offset-2 hover:text-primary/80">
+                Runs
+              </a>.
+            </p>
+          </div>
+
           {/* Active Connections */}
           {activeProviders.length > 0 && (
             <section>

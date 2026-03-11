@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
+import { ChannelBadge } from "./ChannelBadge";
+import { channelFromUrn } from "@/lib/channelUtils";
 import type { FlowRun } from "@/hooks/useFlowRuns";
 
 function formatRelative(iso: string) {
@@ -81,6 +83,7 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
             <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
               <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-6 py-3">Flow</th>
+                <th className="px-6 py-3">Channel</th>
                 <th className="px-6 py-3">Contact</th>
                 <th className="px-6 py-3 text-center">Status</th>
                 <th className="px-6 py-3">Reason</th>
@@ -98,8 +101,11 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
                     <span className="text-sm font-medium text-primary">{run.flow_name}</span>
                   </td>
                   <td className="px-6 py-3">
+                    <ChannelBadge channel={channelFromUrn(run.contact_urn)} />
+                  </td>
+                  <td className="px-6 py-3">
                     <span className="text-sm text-muted-foreground font-mono">
-                      {run.contact_urn || "—"}
+                      {run.contact_urn?.split(":").slice(1).join(":") || "—"}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-center">
