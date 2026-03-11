@@ -12,7 +12,7 @@ export function RemoveGroupNode({ data, selected }: NodeProps) {
         selected ? "border-primary shadow-lg ring-2 ring-primary/20" : "border-orange-500/40"
       }`}
     >
-      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} />}
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} pinned={d._isPinnedStart} />}
       <Handle type="target" position={Position.Top} className="!bg-orange-500 !w-2.5 !h-2.5" />
       <div className="flex items-center gap-2">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/15">
