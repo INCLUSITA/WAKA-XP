@@ -4,12 +4,15 @@ import {
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
   Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
+import { Node, Edge } from "@xyflow/react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { getTriggerReadiness } from "@/lib/flowValidation";
+import { TriggerReadinessBadge } from "./TriggerReadinessBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
