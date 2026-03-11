@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
 import { ChannelBadge } from "./ChannelBadge";
 import { channelFromUrn } from "@/lib/channelUtils";
+import { isWindowPolicyError, WindowPolicyBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
 import type { FlowRun } from "@/hooks/useFlowRuns";
 
 function formatRelative(iso: string) {
