@@ -272,6 +272,7 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
         reason: "Entry Send Message has no text or template configured",
         entryNodeId: entry.id,
         entryNodeType: entry.type,
+        rootNodeIds,
       };
     }
   }
