@@ -181,6 +181,107 @@ export type Database = {
           },
         ]
       }
+      flow_run_steps: {
+        Row: {
+          created_at: string
+          elapsed_ms: number | null
+          id: string
+          input: Json
+          node_label: string | null
+          node_type: string
+          node_uuid: string
+          output: Json
+          run_id: string
+        }
+        Insert: {
+          created_at?: string
+          elapsed_ms?: number | null
+          id?: string
+          input?: Json
+          node_label?: string | null
+          node_type?: string
+          node_uuid?: string
+          output?: Json
+          run_id: string
+        }
+        Update: {
+          created_at?: string
+          elapsed_ms?: number | null
+          id?: string
+          input?: Json
+          node_label?: string | null
+          node_type?: string
+          node_uuid?: string
+          output?: Json
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_run_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "flow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_runs: {
+        Row: {
+          contact_urn: string
+          context_snapshot: Json
+          created_at: string
+          ended_at: string | null
+          flow_id: string | null
+          id: string
+          started_at: string
+          status: Database["public"]["Enums"]["run_status"]
+          tenant_id: string
+          terminal_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_urn?: string
+          context_snapshot?: Json
+          created_at?: string
+          ended_at?: string | null
+          flow_id?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["run_status"]
+          tenant_id: string
+          terminal_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_urn?: string
+          context_snapshot?: Json
+          created_at?: string
+          ended_at?: string | null
+          flow_id?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["run_status"]
+          tenant_id?: string
+          terminal_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_runs_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flow_versions: {
         Row: {
           created_at: string
@@ -724,6 +825,7 @@ export type Database = {
       app_role: "admin" | "editor" | "viewer"
       asset_type: "experience" | "demo" | "flow" | "production_candidate"
       flow_status: "draft" | "active" | "archived"
+      run_status: "waiting" | "active" | "completed" | "expired" | "errored"
       version_environment: "draft" | "sandbox" | "production"
       version_status: "draft" | "validated" | "candidate" | "live" | "archived"
       webhook_direction: "inbound" | "outbound"
@@ -857,6 +959,7 @@ export const Constants = {
       app_role: ["admin", "editor", "viewer"],
       asset_type: ["experience", "demo", "flow", "production_candidate"],
       flow_status: ["draft", "active", "archived"],
+      run_status: ["waiting", "active", "completed", "expired", "errored"],
       version_environment: ["draft", "sandbox", "production"],
       version_status: ["draft", "validated", "candidate", "live", "archived"],
       webhook_direction: ["inbound", "outbound"],

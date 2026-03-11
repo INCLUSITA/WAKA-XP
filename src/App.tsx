@@ -31,6 +31,7 @@ import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import WakaFlowPreview from "./pages/WakaFlowPreview";
 import ShareDemo from "./pages/ShareDemo";
+import RunsPage from "./pages/RunsPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="/simulator" element={<PhoneSimulator />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
+              <Route path="/runs" element={<RunsPage />} />
               {/* Assets & Resources */}
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/demos" element={<Demos />} />

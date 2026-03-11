@@ -3,7 +3,7 @@ import {
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
   Plug, Building2, Settings, MessageSquare, 
   Archive, Globe as GlobIcon, Clock, Webhook,
-  Download, ShieldCheck,
+  Download, ShieldCheck, ServerCog,
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -27,6 +27,7 @@ const principalItems = [
   { title: "Builder", url: "/editor", icon: Hammer },
   { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
+  { title: "Runs", url: "/runs", icon: ServerCog },
 ];
 
 const assetsItems = [
