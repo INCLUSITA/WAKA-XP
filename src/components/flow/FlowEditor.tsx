@@ -975,16 +975,21 @@ function FlowEditorInner() {
           <>
           <ReactFlow
             nodes={(() => {
-              const readiness = getTriggerReadiness(nodes, edges);
+              const readiness = getTriggerReadiness(nodes, edges, pinnedStartNodeId);
               const rootSet = new Set(readiness.rootNodeIds);
-              const isAmbiguous = rootSet.size > 1;
-              if (rootSet.size === 0 && !readiness.entryNodeId) return nodes;
+              const isAmbiguous = !pinnedStartNodeId && rootSet.size > 1;
+              const effectiveEntryId = pinnedStartNodeId || readiness.entryNodeId;
+              if (rootSet.size === 0 && !effectiveEntryId) return nodes;
               return nodes.map((n) => {
-                if (n.id === readiness.entryNodeId || rootSet.has(n.id)) {
+                const isPinned = pinnedStartNodeId === n.id;
+                if (isPinned) {
+                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: false, _entryAmbiguous: false, _isPinnedStart: true } };
+                }
+                if (!pinnedStartNodeId && (n.id === readiness.entryNodeId || rootSet.has(n.id))) {
                   return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous } };
                 }
-                if (n.data?._isEntryNode) {
-                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false } };
+                if (n.data?._isEntryNode || n.data?._isPinnedStart) {
+                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false, _isPinnedStart: false } };
                 }
                 return n;
               });
