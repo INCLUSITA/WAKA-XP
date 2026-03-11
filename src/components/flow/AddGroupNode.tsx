@@ -1,15 +1,18 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Users } from "lucide-react";
+import { EntryNodeMarker } from "./EntryNodeMarker";
 
 export function AddGroupNode({ data, selected }: NodeProps) {
-  const groupName = (data as any).groupName || "Group";
+  const d = data as any;
+  const groupName = d.groupName || "Group";
 
   return (
     <div
-      className={`min-w-[180px] rounded-xl border-2 bg-card px-3 py-2.5 shadow-md transition-shadow ${
+      className={`relative min-w-[180px] rounded-xl border-2 bg-card px-3 py-2.5 shadow-md transition-shadow ${
         selected ? "border-primary shadow-lg ring-2 ring-primary/20" : "border-emerald-500/40"
       }`}
     >
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} />}
       <Handle type="target" position={Position.Top} className="!bg-emerald-500 !w-2.5 !h-2.5" />
       <div className="flex items-center gap-2">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15">

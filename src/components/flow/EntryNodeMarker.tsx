@@ -1,10 +1,21 @@
-import { Play } from "lucide-react";
+import { Play, AlertTriangle } from "lucide-react";
 
 /**
  * Lightweight "START" marker rendered above the entry node's top handle.
- * Drop this inside any node component when `data._isEntryNode` is true.
+ * Shows green for clear entry, amber for ambiguous root nodes.
  */
-export function EntryNodeMarker({ inferred }: { inferred?: boolean }) {
+export function EntryNodeMarker({ inferred, ambiguous }: { inferred?: boolean; ambiguous?: boolean }) {
+  if (ambiguous) {
+    return (
+      <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 shadow-sm z-10">
+        <AlertTriangle className="h-2.5 w-2.5 text-amber-600" />
+        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600">
+          Root
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 shadow-sm z-10">
       <Play className="h-2.5 w-2.5 text-primary fill-primary" />

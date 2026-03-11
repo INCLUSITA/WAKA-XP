@@ -963,14 +963,18 @@ function FlowEditorInner() {
           <ReactFlow
             nodes={(() => {
               const readiness = getTriggerReadiness(nodes, edges);
-              if (!readiness.entryNodeId) return nodes;
-              return nodes.map((n) =>
-                n.id === readiness.entryNodeId
-                  ? { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true } }
-                  : n.data?._isEntryNode
-                    ? { ...n, data: { ...n.data, _isEntryNode: false } }
-                    : n
-              );
+              const rootSet = new Set(readiness.rootNodeIds);
+              const isAmbiguous = rootSet.size > 1;
+              if (rootSet.size === 0 && !readiness.entryNodeId) return nodes;
+              return nodes.map((n) => {
+                if (n.id === readiness.entryNodeId || rootSet.has(n.id)) {
+                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous } };
+                }
+                if (n.data?._isEntryNode) {
+                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false } };
+                }
+                return n;
+              });
             })()}
             edges={edges}
             onNodesChange={onNodesChange}
