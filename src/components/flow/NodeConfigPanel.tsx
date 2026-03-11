@@ -310,7 +310,7 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     </div>
   );
 }
-export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, availableEntities = [] }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, isPinnedStart, onPinAsStart, onUnpinStart, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
   const update = useCallback(
