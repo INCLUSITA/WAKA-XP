@@ -1,6 +1,5 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles } from "lucide-react";
-import { WhatsAppPolicyNote } from "@/components/whatsapp/WhatsAppPolicyHints";
+import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles, FileCheck } from "lucide-react";
 
 function AttachmentIcon({ mime }: { mime?: string }) {
   const cls = "h-3 w-3 text-muted-foreground";
@@ -14,7 +13,7 @@ function AttachmentIcon({ mime }: { mime?: string }) {
 
 export function SendMsgNode({ data, selected }: NodeProps) {
   const d = data as any;
-
+  const isTemplate = d.message_type === "template";
   // Normalize attachments (legacy string[] or new object[])
   const attachments: { url: string; name?: string; mime?: string }[] = (d.attachments || []).map((a: any) =>
     typeof a === "string" ? { url: a } : a
@@ -45,9 +44,19 @@ export function SendMsgNode({ data, selected }: NodeProps) {
 
       {/* Body */}
       <div className="px-3 py-2.5">
-        <p className="text-[13px] leading-relaxed text-foreground line-clamp-4 whitespace-pre-wrap">
-          {d.text || "No message configured"}
-        </p>
+        {isTemplate ? (
+          <div className="flex items-center gap-1.5">
+            <FileCheck className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[12px] font-medium text-foreground">{d.template_name || "No template"}</span>
+            {d.template_language && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase">{d.template_language}</span>
+            )}
+          </div>
+        ) : (
+          <p className="text-[13px] leading-relaxed text-foreground line-clamp-4 whitespace-pre-wrap">
+            {d.text || "No message configured"}
+          </p>
+        )}
 
         {/* Attachment badges */}
         {attachments.length > 0 && (
