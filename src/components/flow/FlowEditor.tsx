@@ -43,7 +43,7 @@ import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
 
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
-import { validateFlow, ValidationError } from "@/lib/flowValidation";
+import { validateFlow, ValidationError, getTriggerReadiness } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
@@ -91,6 +91,7 @@ const defaultEdgeOptions = {
 };
 
 function FlowEditorInner() {
+  // We'll compute enriched nodes with _isEntryNode below
   const [searchParams, setSearchParams] = useSearchParams();
   const flowIdParam = searchParams.get("id");
 
@@ -960,7 +961,17 @@ function FlowEditorInner() {
       <div className="relative flex-1">
         {viewMode === "canvas" ? (
           <ReactFlow
-            nodes={nodes}
+            nodes={(() => {
+              const readiness = getTriggerReadiness(nodes, edges);
+              if (!readiness.entryNodeId) return nodes;
+              return nodes.map((n) =>
+                n.id === readiness.entryNodeId
+                  ? { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true } }
+                  : n.data?._isEntryNode
+                    ? { ...n, data: { ...n.data, _isEntryNode: false } }
+                    : n
+              );
+            })()}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
