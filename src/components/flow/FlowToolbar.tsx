@@ -1,6 +1,6 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
-  ShieldCheck, Play, Languages, ChevronDown, History,
+  ShieldCheck, Play, Languages, ChevronDown, History, Search,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
   Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
@@ -52,6 +52,7 @@ interface FlowToolbarProps {
   onChannelChange: (ch: string) => void;
   nodes?: Node[];
   edges?: Edge[];
+  onSearch?: () => void;
 }
 
 const actionNodes = [
@@ -107,6 +108,7 @@ export function FlowToolbar({
   onChannelChange,
   nodes = [],
   edges = [],
+  onSearch,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges);
@@ -278,6 +280,12 @@ export function FlowToolbar({
 
       {/* Right side actions */}
       <div className="ml-auto flex gap-1">
+        {onSearch && (
+          <Button variant="outline" size="sm" onClick={onSearch} className="h-7 text-[11px] gap-1">
+            <Search className="h-3 w-3" />
+            <kbd className="hidden sm:inline rounded border border-border bg-muted px-1 py-px text-[8px] font-mono text-muted-foreground">⌘K</kbd>
+          </Button>
+        )}
         {onPromoteToCandidate && (
           <Button variant="outline" size="sm" onClick={onPromoteToCandidate} className="border-amber-500/30 text-amber-600 hover:bg-amber-500/5 text-[11px] h-7">
             <Rocket className="mr-1 h-3 w-3" /> Promote

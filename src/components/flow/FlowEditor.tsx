@@ -54,6 +54,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
+import { NodeSearchPanel } from "./NodeSearchPanel";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
@@ -111,6 +112,7 @@ function FlowEditorInner() {
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const [channel, setChannel] = useState("whatsapp");
   const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
+  const [showNodeSearch, setShowNodeSearch] = useState(false);
   const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
   const navigate = useNavigate();
   const reactFlowInstance = useReactFlow();
@@ -530,6 +532,13 @@ function FlowEditorInner() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K / Cmd+K — node search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowNodeSearch((v) => !v);
+        return;
+      }
+
       // Don't intercept when typing in inputs
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
@@ -948,6 +957,7 @@ function FlowEditorInner() {
         onChannelChange={setChannel}
         nodes={nodes}
         edges={edges}
+        onSearch={() => setShowNodeSearch((v) => !v)}
       />
 
       <input
@@ -960,6 +970,7 @@ function FlowEditorInner() {
 
       <div className="relative flex-1">
         {viewMode === "canvas" ? (
+          <>
           <ReactFlow
             nodes={(() => {
               const readiness = getTriggerReadiness(nodes, edges);
@@ -995,15 +1006,25 @@ function FlowEditorInner() {
           >
             <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
             <MiniMap
-              className="!border-border !bg-card !shadow-lg"
+              className="!border-border !bg-card !shadow-lg !rounded-lg"
+              style={{ width: 200, height: 140 }}
+              pannable
+              zoomable
               nodeColor={(n) => {
+                if ((n.data as any)?._isEntryNode) return "hsl(142, 76%, 36%)";
                 switch (n.type) {
                   case "sendMsg": return "hsl(160, 84%, 39%)";
                   case "waitResponse": return "hsl(220, 80%, 55%)";
-                  case "splitExpression": return "hsl(260, 60%, 55%)";
+                  case "splitExpression":
+                  case "splitContactField":
+                  case "splitResult":
+                  case "splitRandom":
+                  case "splitGroup":
+                    return "hsl(260, 60%, 55%)";
                   case "webhook": return "hsl(30, 90%, 55%)";
+                  case "callAI": return "hsl(270, 70%, 55%)";
                   case "moduleGroup": return (n.data?.color as string) || "hsl(160, 84%, 39%)";
-                  default: return "hsl(220, 14%, 92%)";
+                  default: return "hsl(220, 14%, 85%)";
                 }
               }}
             />
@@ -1020,6 +1041,19 @@ function FlowEditorInner() {
               </Panel>
             )}
           </ReactFlow>
+
+          {/* Node search overlay */}
+          {showNodeSearch && (
+            <NodeSearchPanel
+              nodes={nodes}
+              onFocusNode={(nodeId) => {
+                handleFocusNodeInCanvas(nodeId);
+                setShowNodeSearch(false);
+              }}
+              onClose={() => setShowNodeSearch(false)}
+            />
+          )}
+          </>
         ) : (
           <StructuredView
             nodes={nodes}
