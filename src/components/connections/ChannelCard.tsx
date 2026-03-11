@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity } from "lucide-react";
+import { WhatsAppPolicyNote } from "@/components/whatsapp/WhatsAppPolicyHints";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
