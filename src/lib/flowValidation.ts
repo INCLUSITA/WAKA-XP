@@ -213,3 +213,70 @@ export function validateFlow(nodes: Node[], edges: Edge[], channel?: string): Va
 
   return errors;
 }
+
+// ─── Trigger readiness ───────────────────────────────────────────
+
+export interface TriggerReadiness {
+  ready: boolean;
+  reason: string;
+  entryNodeId?: string;
+  entryNodeType?: string;
+}
+
+/**
+ * Determines whether a flow has a clear, valid entry point
+ * and is therefore trigger-ready across any channel.
+ */
+export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadiness {
+  const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
+
+  if (executableNodes.length === 0) {
+    return { ready: false, reason: "Flow has no nodes" };
+  }
+
+  const connectedAsTarget = new Set(edges.map((e) => e.target));
+  const rootNodes = executableNodes.filter((n) => !connectedAsTarget.has(n.id));
+
+  if (rootNodes.length === 0) {
+    return { ready: false, reason: "No clear entry point — all nodes have incoming connections" };
+  }
+
+  if (rootNodes.length > 1) {
+    return { ready: false, reason: `Ambiguous entry — ${rootNodes.length} root nodes detected` };
+  }
+
+  const entry = rootNodes[0];
+  const data = entry.data as Record<string, any>;
+
+  // Entry node must be a conversational type (sendMsg, waitResponse) or have meaningful config
+  const validEntryTypes = ["sendMsg", "waitResponse", "splitExpression", "splitContactField", "splitResult", "splitRandom", "splitGroup", "callAI"];
+  if (entry.type && !validEntryTypes.includes(entry.type)) {
+    return {
+      ready: false,
+      reason: `Entry node type "${entry.type}" is not a valid trigger start`,
+      entryNodeId: entry.id,
+      entryNodeType: entry.type,
+    };
+  }
+
+  // For sendMsg, check it has text or template configured
+  if (entry.type === "sendMsg") {
+    const hasText = !!(data.text || "").trim();
+    const hasTemplate = data.message_type === "template" && !!(data.template_name || "").trim();
+    if (!hasText && !hasTemplate) {
+      return {
+        ready: false,
+        reason: "Entry Send Message has no text or template configured",
+        entryNodeId: entry.id,
+        entryNodeType: entry.type,
+      };
+    }
+  }
+
+  return {
+    ready: true,
+    reason: "Flow has a valid entry point",
+    entryNodeId: entry.id,
+    entryNodeType: entry.type,
+  };
+}

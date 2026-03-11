@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Copy, Archive, Trash2, Loader2, Sparkles, Link2, Rocket } from "lucide-react";
+import { getTriggerReadiness } from "@/lib/flowValidation";
+import { TriggerReadinessBadge } from "@/components/flow/TriggerReadinessBadge";
+import { Node, Edge } from "@xyflow/react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -198,12 +201,17 @@ export default function FlowDashboard() {
             {flows.map((flow) => {
               const expName = getExperienceName(flow.experience_id);
               const candCount = candidateCountMap[flow.id] || 0;
+              const readiness = getTriggerReadiness(
+                (flow.nodes as unknown as Node[]) || [],
+                (flow.edges as unknown as Edge[]) || []
+              );
               return (
                 <Card key={flow.id} className="group relative transition-shadow hover:shadow-md">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
                       <div className="flex gap-1 items-center">
+                        <TriggerReadinessBadge readiness={readiness} compact />
                         {candCount > 0 && (
                           <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-600 px-1.5">
                             <Rocket className="h-2.5 w-2.5 mr-0.5" /> {candCount}

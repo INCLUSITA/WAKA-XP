@@ -4,12 +4,15 @@ import {
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
   Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
+import { Node, Edge } from "@xyflow/react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { getTriggerReadiness } from "@/lib/flowValidation";
+import { TriggerReadinessBadge } from "./TriggerReadinessBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +50,8 @@ interface FlowToolbarProps {
   moduleTemplates: string[];
   channel: string;
   onChannelChange: (ch: string) => void;
+  nodes?: Node[];
+  edges?: Edge[];
 }
 
 const actionNodes = [
@@ -100,8 +105,11 @@ export function FlowToolbar({
   moduleTemplates,
   channel,
   onChannelChange,
+  nodes = [],
+  edges = [],
 }: FlowToolbarProps) {
   const navigate = useNavigate();
+  const triggerReadiness = getTriggerReadiness(nodes, edges);
   return (
     <div className="flex items-center gap-1.5 border-b border-border bg-card px-2 py-1.5">
       <SidebarTrigger className="mr-0.5" />
@@ -115,6 +123,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
+      <TriggerReadinessBadge readiness={triggerReadiness} />
 
       {/* Experience link */}
       {experienceName && (
