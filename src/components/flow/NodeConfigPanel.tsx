@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle } from "lucide-react";
+import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle, Pin, PinOff } from "lucide-react";
 import { NodeEffectsEditor, NodeEffect, AvailableEntity } from "./NodeEffectsEditor";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,9 @@ interface NodeConfigPanelProps {
   onClose: () => void;
   onDelete: (id: string) => void;
   channel?: string;
+  isPinnedStart?: boolean;
+  onPinAsStart?: (nodeId: string) => void;
+  onUnpinStart?: () => void;
   availableEntities?: AvailableEntity[];
 }
 
@@ -307,7 +310,7 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     </div>
   );
 }
-export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, availableEntities = [] }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, isPinnedStart, onPinAsStart, onUnpinStart, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
   const update = useCallback(
@@ -384,9 +387,31 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
           </h3>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{node.id.slice(0, 12)}…</p>
         </div>
-        <button onClick={onClose} className="rounded-md p-1 hover:bg-muted">
-          <X className="h-4 w-4 text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-1">
+          {isPinnedStart ? (
+            <button
+              onClick={() => onUnpinStart?.()}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors"
+              title="Unpin Start Flow"
+            >
+              <Pin className="h-3 w-3" />
+              Start
+              <PinOff className="h-2.5 w-2.5 ml-0.5 opacity-60" />
+            </button>
+          ) : (
+            <button
+              onClick={() => onPinAsStart?.(node.id)}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground border border-border hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-colors"
+              title="Set as Start Flow"
+            >
+              <Pin className="h-3 w-3" />
+              Set Start
+            </button>
+          )}
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-muted">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}

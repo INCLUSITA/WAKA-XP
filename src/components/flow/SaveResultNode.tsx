@@ -10,7 +10,7 @@ export function SaveResultNode({ data, selected }: NodeProps) {
         selected ? "ring-2 ring-[hsl(45,80%,50%)]/50 shadow-lg" : "border-border/60"
       }`}
     >
-      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} />}
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} pinned={d._isPinnedStart} />}
       <div className="flex items-center gap-2 rounded-t-lg px-3 py-1.5" style={{ background: "hsl(45, 80%, 50%)" }}>
         <Save className="h-3.5 w-3.5 text-white" />
         <span className="text-xs font-bold tracking-wide text-white uppercase">Save Flow Result</span>

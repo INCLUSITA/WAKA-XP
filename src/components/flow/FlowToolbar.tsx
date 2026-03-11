@@ -54,6 +54,8 @@ interface FlowToolbarProps {
   edges?: Edge[];
   onSearch?: () => void;
   onFocusNode?: (nodeId: string) => void;
+  pinnedStartNodeId?: string | null;
+  onPinStartNode?: (nodeId: string | null) => void;
 }
 
 const actionNodes = [
@@ -111,9 +113,11 @@ export function FlowToolbar({
   edges = [],
   onSearch,
   onFocusNode,
+  pinnedStartNodeId,
+  onPinStartNode,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
-  const triggerReadiness = getTriggerReadiness(nodes, edges);
+  const triggerReadiness = getTriggerReadiness(nodes, edges, pinnedStartNodeId);
   return (
     <div className="flex items-center gap-1.5 border-b border-border bg-card px-2 py-1.5">
       <SidebarTrigger className="mr-0.5" />
@@ -127,7 +131,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
-      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} />
+      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} pinnedStartNodeId={pinnedStartNodeId} onPinStartNode={onPinStartNode} />
 
       {/* Experience link */}
       {experienceName && (
