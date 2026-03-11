@@ -50,6 +50,8 @@ interface FlowToolbarProps {
   moduleTemplates: string[];
   channel: string;
   onChannelChange: (ch: string) => void;
+  nodes?: Node[];
+  edges?: Edge[];
 }
 
 const actionNodes = [
