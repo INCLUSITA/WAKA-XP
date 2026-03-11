@@ -6,6 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 export type AppRole = "superadmin" | "tenant_admin" | "editor" | "viewer";
 export type Environment = "draft" | "sandbox" | "production";
 
+export type ContextStatus =
+  | "loading"
+  | "no_profile"
+  | "no_tenant"
+  | "no_workspace"
+  | "ready";
+
 export interface TenantInfo {
   id: string;
   name: string;
@@ -26,32 +33,21 @@ export interface UserInfo {
 }
 
 export interface WorkspaceContextValue {
-  // Auth user
   user: UserInfo | null;
-
-  // Tenant
   tenant: TenantInfo | null;
   setTenant: (t: TenantInfo) => void;
   tenantId: string;
-
-  // Workspace
   workspace: WorkspaceInfo | null;
   setWorkspace: (w: WorkspaceInfo) => void;
-
-  // Environment
   environment: Environment;
   setEnvironment: (e: Environment) => void;
-
-  // Role (simulated for now)
   role: AppRole;
   setRole: (r: AppRole) => void;
-
-  // Convenience
   isSuperadmin: boolean;
   isAdmin: boolean;
-
-  // Loading
   contextReady: boolean;
+  contextStatus: ContextStatus;
+  reloadContext: () => Promise<void>;
 }
 
 // ── Context ──
@@ -64,89 +60,99 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [environment, setEnvironment] = useState<Environment>("draft");
   const [role, setRole] = useState<AppRole>("superadmin");
-  const [contextReady, setContextReady] = useState(false);
+  const [contextStatus, setContextStatus] = useState<ContextStatus>("loading");
 
-  // Resolve tenant and workspace from authenticated user
-  useEffect(() => {
-    const resolveContext = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setContextReady(true);
-        return;
-      }
+  const resolveContext = async () => {
+    setContextStatus("loading");
 
-      const authUser = session.user;
-      setUser({
-        id: authUser.id,
-        email: authUser.email || "",
-        fullName: null,
-      });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setUser(null);
+      setTenant(null);
+      setWorkspace(null);
+      setContextStatus("ready"); // not authed – AuthGuard handles redirect
+      return;
+    }
 
-      // Load profile to get tenant_id
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, tenant_id")
-        .eq("id", authUser.id)
+    const authUser = session.user;
+    setUser({
+      id: authUser.id,
+      email: authUser.email || "",
+      fullName: null,
+    });
+
+    // 1. Load profile
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("full_name, tenant_id")
+      .eq("id", authUser.id)
+      .single();
+
+    if (profileErr || !profile) {
+      setContextStatus("no_profile");
+      return;
+    }
+
+    if (profile.full_name) {
+      setUser(prev => prev ? { ...prev, fullName: profile.full_name } : prev);
+    }
+
+    // 2. Check tenant assignment
+    const tenantId = profile.tenant_id;
+    if (!tenantId) {
+      setContextStatus("no_tenant");
+      return;
+    }
+
+    // 3. Load tenant
+    const { data: tenantData } = await supabase
+      .from("tenants")
+      .select("id, name, display_name, slug")
+      .eq("id", tenantId)
+      .single();
+
+    if (!tenantData) {
+      setContextStatus("no_tenant");
+      return;
+    }
+
+    setTenant({
+      id: tenantData.id,
+      name: tenantData.name,
+      displayName: tenantData.display_name,
+      slug: tenantData.slug,
+    });
+
+    // 4. Load workspace
+    const { data: wsData } = await supabase
+      .from("workspaces")
+      .select("id, name, slug")
+      .eq("tenant_id", tenantId)
+      .eq("is_default", true)
+      .single();
+
+    if (wsData) {
+      setWorkspace({ id: wsData.id, name: wsData.name, slug: wsData.slug });
+    } else {
+      const { data: anyWs } = await supabase
+        .from("workspaces")
+        .select("id, name, slug")
+        .eq("tenant_id", tenantId)
+        .limit(1)
         .single();
 
-      if (profile?.full_name) {
-        setUser(prev => prev ? { ...prev, fullName: profile.full_name } : prev);
+      if (anyWs) {
+        setWorkspace({ id: anyWs.id, name: anyWs.name, slug: anyWs.slug });
+      } else {
+        setContextStatus("no_workspace");
+        return;
       }
+    }
 
-      const tenantId = profile?.tenant_id;
-      if (tenantId) {
-        // Load tenant info
-        const { data: tenantData } = await supabase
-          .from("tenants")
-          .select("id, name, display_name, slug")
-          .eq("id", tenantId)
-          .single();
+    setContextStatus("ready");
+  };
 
-        if (tenantData) {
-          setTenant({
-            id: tenantData.id,
-            name: tenantData.name,
-            displayName: tenantData.display_name,
-            slug: tenantData.slug,
-          });
-        }
-
-        // Load default workspace
-        const { data: wsData } = await supabase
-          .from("workspaces")
-          .select("id, name, slug")
-          .eq("tenant_id", tenantId)
-          .eq("is_default", true)
-          .single();
-
-        if (wsData) {
-          setWorkspace({
-            id: wsData.id,
-            name: wsData.name,
-            slug: wsData.slug,
-          });
-        } else {
-          // Fallback: first workspace
-          const { data: anyWs } = await supabase
-            .from("workspaces")
-            .select("id, name, slug")
-            .eq("tenant_id", tenantId)
-            .limit(1)
-            .single();
-
-          if (anyWs) {
-            setWorkspace({
-              id: anyWs.id,
-              name: anyWs.name,
-              slug: anyWs.slug,
-            });
-          }
-        }
-      }
-
-      setContextReady(true);
-    };
-
+  useEffect(() => {
     resolveContext();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -154,7 +160,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setTenant(null);
         setWorkspace(null);
-        setContextReady(true);
+        setContextStatus("ready");
+      } else {
+        // Re-resolve on sign-in
+        resolveContext();
       }
     });
 
@@ -174,7 +183,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setRole,
     isSuperadmin: role === "superadmin",
     isAdmin: role === "superadmin" || role === "tenant_admin",
-    contextReady,
+    contextReady: contextStatus === "ready",
+    contextStatus,
+    reloadContext: resolveContext,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
