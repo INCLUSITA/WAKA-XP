@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
 import { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -10,9 +9,10 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 interface UseFlowPersistenceOptions {
   flowId: string | null;
   onFlowIdChange: (id: string) => void;
+  tenantId: string;
 }
 
-export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenceOptions) {
+export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlowPersistenceOptions) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,10 +48,14 @@ export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenc
 
   const saveFlow = useCallback(
     async (nodes: Node[], edges: Edge[], name: string) => {
+      if (!tenantId) {
+        setSaveStatus("error");
+        toast.error("No tenant context available");
+        return;
+      }
       setSaveStatus("saving");
       try {
         if (currentFlowId.current) {
-          // UPDATE existing flow
           const { error } = await supabase
             .from("flows")
             .update({
@@ -63,14 +67,13 @@ export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenc
 
           if (error) throw error;
         } else {
-          // INSERT new flow
           const { data, error } = await supabase
             .from("flows")
             .insert({
               nodes: nodes as unknown as Json,
               edges: edges as unknown as Json,
               name,
-              tenant_id: DEMO_TENANT_ID,
+              tenant_id: tenantId,
             })
             .select("id")
             .single();
@@ -85,7 +88,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenc
         setSaveStatus("error");
       }
     },
-    [onFlowIdChange]
+    [onFlowIdChange, tenantId]
   );
 
   const debouncedSave = useCallback(
@@ -99,7 +102,6 @@ export function useFlowPersistence({ flowId, onFlowIdChange }: UseFlowPersistenc
     [saveFlow]
   );
 
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

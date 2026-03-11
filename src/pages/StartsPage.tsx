@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Loader2 } from "lucide-react";
 
 interface FlowStart {

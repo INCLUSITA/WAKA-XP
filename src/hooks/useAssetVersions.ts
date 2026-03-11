@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
 import { toast } from "sonner";
 
 export type AssetType = "experience" | "demo" | "flow" | "production_candidate";
@@ -35,7 +34,7 @@ interface CreateVersionParams {
   parentVersionId?: string;
 }
 
-export function useAssetVersions(assetType: AssetType, assetId: string | null) {
+export function useAssetVersions(assetType: AssetType, assetId: string | null, tenantId: string) {
   const [versions, setVersions] = useState<AssetVersion[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -59,7 +58,11 @@ export function useAssetVersions(assetType: AssetType, assetId: string | null) {
   }, [assetType, assetId]);
 
   const createVersion = useCallback(async (params: CreateVersionParams) => {
-    // Get next version number
+    if (!tenantId) {
+      toast.error("No tenant context available");
+      return null;
+    }
+
     const { data: nextNum } = await supabase.rpc("next_asset_version_number", {
       _asset_type: params.assetType,
       _asset_id: params.assetId,
@@ -79,7 +82,7 @@ export function useAssetVersions(assetType: AssetType, assetId: string | null) {
         snapshot_data: params.snapshotData as any,
         status: params.status || "draft",
         environment: params.environment || "draft",
-        tenant_id: DEMO_TENANT_ID,
+        tenant_id: tenantId,
         is_current: true,
         parent_version_id: params.parentVersionId || null,
       })
@@ -92,13 +95,12 @@ export function useAssetVersions(assetType: AssetType, assetId: string | null) {
       return null;
     }
 
-    // Mark as current
     await supabase.rpc("set_current_version", { _version_id: data.id });
 
     toast.success(`Versión ${defaultName} guardada`);
     await fetchVersions();
     return data as unknown as AssetVersion;
-  }, [fetchVersions]);
+  }, [fetchVersions, tenantId]);
 
   const restoreVersion = useCallback(async (
     versionId: string,
@@ -107,7 +109,6 @@ export function useAssetVersions(assetType: AssetType, assetId: string | null) {
     const version = versions.find((v) => v.id === versionId);
     if (!version) return;
 
-    // Create a new version from the restored one
     await createVersion({
       assetType: version.asset_type,
       assetId: version.asset_id,
