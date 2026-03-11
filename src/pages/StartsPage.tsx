@@ -22,7 +22,7 @@ export default function StartsPage() {
       const { data } = await supabase
         .from("flows")
         .select("id, name, created_at, nodes")
-        .eq("tenant_id", DEMO_TENANT_ID)
+        .eq("tenant_id", tenantId)
         .neq("status", "archived")
         .order("created_at", { ascending: false });
       setFlows(data || []);
