@@ -105,8 +105,11 @@ export function FlowToolbar({
   moduleTemplates,
   channel,
   onChannelChange,
+  nodes = [],
+  edges = [],
 }: FlowToolbarProps) {
   const navigate = useNavigate();
+  const triggerReadiness = getTriggerReadiness(nodes, edges);
   return (
     <div className="flex items-center gap-1.5 border-b border-border bg-card px-2 py-1.5">
       <SidebarTrigger className="mr-0.5" />
@@ -120,6 +123,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
+      <TriggerReadinessBadge readiness={triggerReadiness} />
 
       {/* Experience link */}
       {experienceName && (
