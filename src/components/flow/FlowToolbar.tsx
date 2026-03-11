@@ -108,6 +108,7 @@ export function FlowToolbar({
   onChannelChange,
   nodes = [],
   edges = [],
+  onSearch,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges);
