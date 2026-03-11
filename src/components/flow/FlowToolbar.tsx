@@ -54,6 +54,8 @@ interface FlowToolbarProps {
   edges?: Edge[];
   onSearch?: () => void;
   onFocusNode?: (nodeId: string) => void;
+  pinnedStartNodeId?: string | null;
+  onPinStartNode?: (nodeId: string | null) => void;
 }
 
 const actionNodes = [
