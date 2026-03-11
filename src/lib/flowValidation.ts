@@ -258,6 +258,7 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
       reason: `Entry node type "${entry.type}" is not a valid trigger start`,
       entryNodeId: entry.id,
       entryNodeType: entry.type,
+      rootNodeIds,
     };
   }
 
