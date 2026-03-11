@@ -1,11 +1,11 @@
-import { Play, AlertTriangle } from "lucide-react";
+import { Play, AlertTriangle, Pin } from "lucide-react";
 
 /**
  * Lightweight "START" marker rendered above the entry node's top handle.
- * Shows green for clear entry, amber for ambiguous root nodes.
+ * Shows green for clear/pinned entry, amber for ambiguous root nodes.
  */
-export function EntryNodeMarker({ inferred, ambiguous }: { inferred?: boolean; ambiguous?: boolean }) {
-  if (ambiguous) {
+export function EntryNodeMarker({ inferred, ambiguous, pinned }: { inferred?: boolean; ambiguous?: boolean; pinned?: boolean }) {
+  if (ambiguous && !pinned) {
     return (
       <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 shadow-sm z-10">
         <AlertTriangle className="h-2.5 w-2.5 text-amber-600" />
@@ -18,11 +18,15 @@ export function EntryNodeMarker({ inferred, ambiguous }: { inferred?: boolean; a
 
   return (
     <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 shadow-sm z-10">
-      <Play className="h-2.5 w-2.5 text-primary fill-primary" />
+      {pinned ? (
+        <Pin className="h-2.5 w-2.5 text-primary" />
+      ) : (
+        <Play className="h-2.5 w-2.5 text-primary fill-primary" />
+      )}
       <span className="text-[9px] font-bold uppercase tracking-wider text-primary">
         Start
       </span>
-      {inferred && (
+      {inferred && !pinned && (
         <span className="text-[8px] text-primary/60 font-medium">(inferred)</span>
       )}
     </div>
