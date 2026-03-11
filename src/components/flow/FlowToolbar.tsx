@@ -110,6 +110,7 @@ export function FlowToolbar({
   nodes = [],
   edges = [],
   onSearch,
+  onFocusNode,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges);
