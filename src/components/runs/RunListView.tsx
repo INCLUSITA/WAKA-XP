@@ -83,6 +83,7 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
             <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
               <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-6 py-3">Flow</th>
+                <th className="px-6 py-3">Channel</th>
                 <th className="px-6 py-3">Contact</th>
                 <th className="px-6 py-3 text-center">Status</th>
                 <th className="px-6 py-3">Reason</th>
