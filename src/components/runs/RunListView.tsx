@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
+import { ChannelBadge } from "./ChannelBadge";
+import { channelFromUrn } from "@/lib/channelUtils";
 import type { FlowRun } from "@/hooks/useFlowRuns";
 
 function formatRelative(iso: string) {
