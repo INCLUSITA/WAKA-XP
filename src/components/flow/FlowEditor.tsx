@@ -1039,6 +1039,18 @@ function FlowEditorInner() {
               </Panel>
             )}
           </ReactFlow>
+
+          {/* Node search overlay */}
+          {showNodeSearch && (
+            <NodeSearchPanel
+              nodes={nodes}
+              onFocusNode={(nodeId) => {
+                handleFocusNodeInCanvas(nodeId);
+                setShowNodeSearch(false);
+              }}
+              onClose={() => setShowNodeSearch(false)}
+            />
+          )}
         ) : (
           <StructuredView
             nodes={nodes}
