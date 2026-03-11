@@ -22,10 +22,11 @@ export function SendMsgNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`min-w-[220px] max-w-[320px] rounded-lg border bg-white shadow-md transition-all ${
+      className={`relative min-w-[220px] max-w-[320px] rounded-lg border bg-white shadow-md transition-all ${
         selected ? "ring-2 ring-node-send/50 shadow-lg" : "border-border/60"
       }`}
     >
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} />}
       {/* Header pill */}
       <div className="flex items-center gap-2 rounded-t-lg bg-node-send px-3 py-1.5">
         <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />

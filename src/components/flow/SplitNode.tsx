@@ -18,10 +18,11 @@ export function SplitNode({ data, selected, type }: NodeProps) {
 
   return (
     <div
-      className={`min-w-[220px] max-w-[300px] rounded-lg border bg-card shadow-md transition-all ${
+      className={`relative min-w-[220px] max-w-[300px] rounded-lg border bg-card shadow-md transition-all ${
         selected ? "ring-2 ring-node-split/50 shadow-lg" : "border-border/60"
       }`}
     >
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} />}
       {/* Header */}
       <div className="flex items-center gap-2 rounded-t-lg bg-node-split px-3 py-1.5">
         <GitBranch className="h-3.5 w-3.5 text-primary-foreground" />
