@@ -194,6 +194,7 @@ export function FlowToolbar({
             {ch === "whatsapp" ? "WA" : ch === "sms" ? "SMS" : "TG"}
           </button>
         ))}
+        <span className="text-[9px] text-muted-foreground mr-1 hidden lg:inline">channel</span>
       </div>
 
       <Separator orientation="vertical" className="mx-1 h-7" />

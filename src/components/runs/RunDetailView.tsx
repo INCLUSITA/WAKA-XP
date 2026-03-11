@@ -116,6 +116,16 @@ export function RunDetailView({ run, onBack }: Props) {
           <div className="flex-1 space-y-2">
             <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
               <div>
+                <span className="text-muted-foreground">Channel</span>
+                <div className="mt-0.5">
+                  <ChannelBadge channel={channelFromUrn(run.contact_urn)} size="md" />
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Duration</span>
+                <p className="font-medium text-foreground text-xs">{durationLabel(run.started_at, run.ended_at)}</p>
+              </div>
+              <div>
                 <span className="text-muted-foreground">Started</span>
                 <p className="font-mono text-foreground text-xs">{formatTimestamp(run.started_at)}</p>
               </div>
@@ -123,11 +133,7 @@ export function RunDetailView({ run, onBack }: Props) {
                 <span className="text-muted-foreground">Ended</span>
                 <p className="font-mono text-foreground text-xs">{formatTimestamp(run.ended_at)}</p>
               </div>
-              <div>
-                <span className="text-muted-foreground">Duration</span>
-                <p className="font-medium text-foreground text-xs">{durationLabel(run.started_at, run.ended_at)}</p>
-              </div>
-              <div>
+              <div className="col-span-2">
                 <span className="text-muted-foreground">Terminal reason</span>
                 <p className="font-medium text-foreground text-xs">{run.terminal_reason || "—"}</p>
               </div>
