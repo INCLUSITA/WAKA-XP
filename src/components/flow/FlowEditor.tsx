@@ -969,6 +969,7 @@ function FlowEditorInner() {
 
       <div className="relative flex-1">
         {viewMode === "canvas" ? (
+          <>
           <ReactFlow
             nodes={(() => {
               const readiness = getTriggerReadiness(nodes, edges);
