@@ -1,15 +1,37 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { WorkspaceContextBar } from "@/components/WorkspaceContextBar";
+import { UserMenu } from "@/components/UserMenu";
+import { Loader2 } from "lucide-react";
 
 export default function AppLayout() {
+  const { contextReady, tenant } = useWorkspace();
+
+  if (!contextReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-10 flex items-center border-b border-border/30 bg-background/80 backdrop-blur-sm shrink-0">
-            <SidebarTrigger className="ml-2 text-muted-foreground hover:text-foreground" />
+          <header className="h-11 flex items-center border-b border-border/30 bg-background/80 backdrop-blur-sm shrink-0 px-2 gap-2">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            <div className="flex-1 min-w-0">
+              {tenant ? (
+                <WorkspaceContextBar compact />
+              ) : (
+                <span className="text-xs text-destructive">No tenant assigned</span>
+              )}
+            </div>
+            <UserMenu />
           </header>
           <main className="flex-1 overflow-auto">
             <Outlet />
