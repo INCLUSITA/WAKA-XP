@@ -945,6 +945,8 @@ function FlowEditorInner() {
         moduleTemplates={MODULE_TEMPLATES}
         channel={channel}
         onChannelChange={setChannel}
+        nodes={nodes}
+        edges={edges}
       />
 
       <input
