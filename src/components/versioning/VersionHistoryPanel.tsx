@@ -289,6 +289,7 @@ export function VersionHistoryPanel({
   onRestore,
   onClose,
 }: VersionHistoryPanelProps) {
+  const { tenantId } = useWorkspace();
   const {
     versions,
     loading,
