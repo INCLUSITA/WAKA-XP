@@ -1004,15 +1004,25 @@ function FlowEditorInner() {
           >
             <Controls className="!border-border !bg-card !shadow-lg [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground" />
             <MiniMap
-              className="!border-border !bg-card !shadow-lg"
+              className="!border-border !bg-card !shadow-lg !rounded-lg"
+              style={{ width: 200, height: 140 }}
+              pannable
+              zoomable
               nodeColor={(n) => {
+                if ((n.data as any)?._isEntryNode) return "hsl(142, 76%, 36%)";
                 switch (n.type) {
                   case "sendMsg": return "hsl(160, 84%, 39%)";
                   case "waitResponse": return "hsl(220, 80%, 55%)";
-                  case "splitExpression": return "hsl(260, 60%, 55%)";
+                  case "splitExpression":
+                  case "splitContactField":
+                  case "splitResult":
+                  case "splitRandom":
+                  case "splitGroup":
+                    return "hsl(260, 60%, 55%)";
                   case "webhook": return "hsl(30, 90%, 55%)";
+                  case "callAI": return "hsl(270, 70%, 55%)";
                   case "moduleGroup": return (n.data?.color as string) || "hsl(160, 84%, 39%)";
-                  default: return "hsl(220, 14%, 92%)";
+                  default: return "hsl(220, 14%, 85%)";
                 }
               }}
             />
