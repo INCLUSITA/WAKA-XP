@@ -395,49 +395,83 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, av
         {/* ─── SEND MESSAGE ─── */}
         {node.type === "sendMsg" && (() => {
           const constraints = getChannelConstraints(channel);
+          const msgType = data.message_type || "text";
           const textLen = (data.text || "").length;
           const qrCount = (data.quick_replies || []).filter((r: string) => r.trim()).length;
           const warnings: string[] = [];
-          if (textLen > constraints.maxTextLength) warnings.push(`Texto excede ${constraints.maxTextLength} chars (${textLen})`);
-          if (qrCount > constraints.maxQuickReplies) warnings.push(`${qrCount} quick replies exceden el límite de ${constraints.maxQuickReplies}`);
+          if (msgType === "text" && textLen > constraints.maxTextLength) warnings.push(`Texto excede ${constraints.maxTextLength} chars (${textLen})`);
+          if (msgType === "text" && qrCount > constraints.maxQuickReplies) warnings.push(`${qrCount} quick replies exceden el límite de ${constraints.maxQuickReplies}`);
           return (
             <>
-          {/* Channel inline warnings */}
-              {warnings.length > 0 && (
-                <div className="space-y-1">
-                  {warnings.map((w, i) => (
-                    <div key={i} className="flex items-start gap-2 rounded-md border border-amber-500/15 bg-amber-500/5 px-2.5 py-2 text-[11px] text-foreground/80">
-                      <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
-                      <span>{w} <span className="text-muted-foreground">· {channel || "default"}</span></span>
-                    </div>
-                  ))}
-                </div>
+              {/* Message type selector */}
+              <div className="space-y-2">
+                <Label className="text-foreground">Message Type</Label>
+                <Select value={msgType} onValueChange={(v) => update("message_type", v)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Free-form text</SelectItem>
+                    <SelectItem value="interactive_buttons">Interactive buttons</SelectItem>
+                    <SelectItem value="template">HSM Template</SelectItem>
+                  </SelectContent>
+                </Select>
+                {msgType === "template" && (
+                  <p className="text-[10px] text-muted-foreground">Use pre-approved templates for outbound outside the 24h window.</p>
+                )}
+              </div>
+
+              {/* Template picker (only for template type) */}
+              {msgType === "template" && (
+                <TemplatePicker
+                  templateName={data.template_name || ""}
+                  templateLanguage={data.template_language || "en"}
+                  templateParameters={data.template_parameters || []}
+                  onUpdate={update}
+                />
               )}
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-foreground">Message Text</Label>
-                  <span className={`text-[10px] ${textLen > constraints.maxTextLength ? "text-amber-600 font-semibold" : "text-muted-foreground"}`}>
-                    {textLen}/{constraints.maxTextLength}
-                  </span>
-                </div>
-                <ExpressionInput
-                  value={data.text || ""}
-                  onChange={(v) => update("text", v)}
-                  placeholder="Type your message here... Use @contact.name for variables"
-                  className="min-h-[120px]"
-                  multiline
-                />
-              </div>
-              {renderListEditor("quick_replies", "Quick Replies", "Option")}
-              {qrCount > 0 && constraints.maxQuickReplies > 0 && (
-                <p className="text-[10px] text-muted-foreground">{qrCount}/{constraints.maxQuickReplies} para {channel || "default"}</p>
+              {/* Standard text fields (for text & interactive) */}
+              {msgType !== "template" && (
+                <>
+                  {/* Channel inline warnings */}
+                  {warnings.length > 0 && (
+                    <div className="space-y-1">
+                      {warnings.map((w, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-md border border-amber-500/15 bg-amber-500/5 px-2.5 py-2 text-[11px] text-foreground/80">
+                          <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
+                          <span>{w} <span className="text-muted-foreground">· {channel || "default"}</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-foreground">Message Text</Label>
+                      <span className={`text-[10px] ${textLen > constraints.maxTextLength ? "text-amber-600 font-semibold" : "text-muted-foreground"}`}>
+                        {textLen}/{constraints.maxTextLength}
+                      </span>
+                    </div>
+                    <ExpressionInput
+                      value={data.text || ""}
+                      onChange={(v) => update("text", v)}
+                      placeholder="Type your message here... Use @contact.name for variables"
+                      className="min-h-[120px]"
+                      multiline
+                    />
+                  </div>
+                  {renderListEditor("quick_replies", "Quick Replies", "Option")}
+                  {qrCount > 0 && constraints.maxQuickReplies > 0 && (
+                    <p className="text-[10px] text-muted-foreground">{qrCount}/{constraints.maxQuickReplies} para {channel || "default"}</p>
+                  )}
+                  <AttachmentsEditor
+                    attachments={data.attachments || []}
+                    onChange={(attachments) => update("attachments", attachments)}
+                    channel={channel}
+                  />
+                </>
               )}
-              <AttachmentsEditor
-                attachments={data.attachments || []}
-                onChange={(attachments) => update("attachments", attachments)}
-                channel={channel}
-              />
             </>
           );
         })()}
