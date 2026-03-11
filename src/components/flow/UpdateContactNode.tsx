@@ -1,14 +1,16 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { UserCog } from "lucide-react";
+import { EntryNodeMarker } from "./EntryNodeMarker";
 
 export function UpdateContactNode({ data, selected }: NodeProps) {
   const d = data as any;
   return (
     <div
-      className={`min-w-[200px] max-w-[280px] rounded-lg border bg-white shadow-md transition-all ${
+      className={`relative min-w-[200px] max-w-[280px] rounded-lg border bg-white shadow-md transition-all ${
         selected ? "ring-2 ring-[hsl(200,70%,50%)]/50 shadow-lg" : "border-border/60"
       }`}
     >
+      {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} />}
       <div className="flex items-center gap-2 rounded-t-lg px-3 py-1.5" style={{ background: "hsl(200, 70%, 50%)" }}>
         <UserCog className="h-3.5 w-3.5 text-white" />
         <span className="text-xs font-bold tracking-wide text-white uppercase">Update Contact</span>
