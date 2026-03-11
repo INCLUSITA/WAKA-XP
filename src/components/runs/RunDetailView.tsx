@@ -36,7 +36,9 @@ function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
   const colorClass = nodeTypeColors[step.node_type] ?? "bg-muted text-muted-foreground border-border";
   const hasOutput = Object.keys(step.output).length > 0;
   const outputStr = hasOutput ? JSON.stringify(step.output) : "";
-  const windowIssue = step.node_type === "send_msg" && isWindowPolicyError(outputStr);
+  const isSend = step.node_type === "send_msg";
+  const windowIssue = isSend && isWindowPolicyError(outputStr);
+  const templateIssue = isSend && !windowIssue && isTemplatePolicyError(outputStr);
 
   return (
     <div className="flex gap-3">
