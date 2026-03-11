@@ -85,6 +85,9 @@ export type Database = {
           config: Json
           created_at: string
           display_name: string
+          health_checked_at: string | null
+          health_error: string | null
+          health_status: string
           id: string
           provider: string
           status: string
@@ -96,6 +99,9 @@ export type Database = {
           config?: Json
           created_at?: string
           display_name?: string
+          health_checked_at?: string | null
+          health_error?: string | null
+          health_status?: string
           id?: string
           provider: string
           status?: string
@@ -107,6 +113,9 @@ export type Database = {
           config?: Json
           created_at?: string
           display_name?: string
+          health_checked_at?: string | null
+          health_error?: string | null
+          health_status?: string
           id?: string
           provider?: string
           status?: string
