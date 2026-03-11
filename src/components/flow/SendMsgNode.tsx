@@ -13,7 +13,7 @@ function AttachmentIcon({ mime }: { mime?: string }) {
 
 export function SendMsgNode({ data, selected }: NodeProps) {
   const d = data as any;
-
+  const isTemplate = d.message_type === "template";
   // Normalize attachments (legacy string[] or new object[])
   const attachments: { url: string; name?: string; mime?: string }[] = (d.attachments || []).map((a: any) =>
     typeof a === "string" ? { url: a } : a
