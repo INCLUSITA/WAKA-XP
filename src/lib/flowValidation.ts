@@ -228,7 +228,7 @@ export interface TriggerReadiness {
  * Determines whether a flow has a clear, valid entry point
  * and is therefore trigger-ready across any channel.
  */
-export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadiness {
+export function getTriggerReadiness(nodes: Node[], edges: Edge[], pinnedStartNodeId?: string | null): TriggerReadiness {
   const executableNodes = nodes.filter((n) => n.type !== "moduleGroup");
 
   if (executableNodes.length === 0) {
@@ -238,6 +238,48 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
   const connectedAsTarget = new Set(edges.map((e) => e.target));
   const rootNodes = executableNodes.filter((n) => !connectedAsTarget.has(n.id));
   const rootNodeIds = rootNodes.map((n) => n.id);
+
+  // If a node is explicitly pinned as Start, use it
+  if (pinnedStartNodeId) {
+    const pinnedNode = executableNodes.find((n) => n.id === pinnedStartNodeId);
+    if (pinnedNode) {
+      const data = pinnedNode.data as Record<string, any>;
+      const validEntryTypes = ["sendMsg", "waitResponse", "splitExpression", "splitContactField", "splitResult", "splitRandom", "splitGroup", "callAI"];
+      
+      if (pinnedNode.type && !validEntryTypes.includes(pinnedNode.type)) {
+        return {
+          ready: false,
+          reason: `Pinned start node type "${pinnedNode.type}" is not a valid trigger start`,
+          entryNodeId: pinnedNode.id,
+          entryNodeType: pinnedNode.type,
+          rootNodeIds,
+        };
+      }
+
+      if (pinnedNode.type === "sendMsg") {
+        const hasText = !!(data.text || "").trim();
+        const hasTemplate = data.message_type === "template" && !!(data.template_name || "").trim();
+        if (!hasText && !hasTemplate) {
+          return {
+            ready: false,
+            reason: "Pinned Start node has no text or template configured",
+            entryNodeId: pinnedNode.id,
+            entryNodeType: pinnedNode.type,
+            rootNodeIds,
+          };
+        }
+      }
+
+      return {
+        ready: true,
+        reason: "Start node explicitly pinned",
+        entryNodeId: pinnedNode.id,
+        entryNodeType: pinnedNode.type,
+        rootNodeIds,
+      };
+    }
+    // Pinned node no longer exists — fall through to normal logic
+  }
 
   if (rootNodes.length === 0) {
     return { ready: false, reason: "No clear entry point — all nodes have incoming connections", rootNodeIds: [] };
@@ -250,7 +292,6 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
   const entry = rootNodes[0];
   const data = entry.data as Record<string, any>;
 
-  // Entry node must be a conversational type (sendMsg, waitResponse) or have meaningful config
   const validEntryTypes = ["sendMsg", "waitResponse", "splitExpression", "splitContactField", "splitResult", "splitRandom", "splitGroup", "callAI"];
   if (entry.type && !validEntryTypes.includes(entry.type)) {
     return {
@@ -262,7 +303,6 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
     };
   }
 
-  // For sendMsg, check it has text or template configured
   if (entry.type === "sendMsg") {
     const hasText = !!(data.text || "").trim();
     const hasTemplate = data.message_type === "template" && !!(data.template_name || "").trim();
