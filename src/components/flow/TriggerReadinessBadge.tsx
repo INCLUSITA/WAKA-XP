@@ -1,7 +1,8 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Zap, ZapOff, Navigation, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Zap, ZapOff, Navigation, AlertTriangle, CheckCircle2, Pin, PinOff } from "lucide-react";
 import { TriggerReadiness } from "@/lib/flowValidation";
 import { Node } from "@xyflow/react";
+import { toast } from "sonner";
 
 interface RootNodeInfo {
   id: string;
@@ -14,6 +15,8 @@ interface TriggerReadinessBadgeProps {
   compact?: boolean;
   nodes?: Node[];
   onFocusNode?: (nodeId: string) => void;
+  pinnedStartNodeId?: string | null;
+  onPinStartNode?: (nodeId: string | null) => void;
 }
 
 function getNodeLabel(node: Node): string {
@@ -21,7 +24,7 @@ function getNodeLabel(node: Node): string {
   return d.text?.slice(0, 30) || d.label || d.resultName || d.flowName || d.topic || d.url || d.prompt?.slice(0, 30) || node.type || node.id.slice(0, 8);
 }
 
-export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], onFocusNode }: TriggerReadinessBadgeProps) {
+export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], onFocusNode, pinnedStartNodeId, onPinStartNode }: TriggerReadinessBadgeProps) {
   const Icon = readiness.ready ? Zap : ZapOff;
 
   const rootNodes: RootNodeInfo[] = readiness.rootNodeIds
@@ -31,6 +34,16 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
       return { id, type: node.type || "unknown", label: getNodeLabel(node) };
     })
     .filter(Boolean) as RootNodeInfo[];
+
+  const handlePin = (nodeId: string) => {
+    onPinStartNode?.(nodeId);
+    toast.success("Start Flow pinned", { description: "This node is now the explicit entry point." });
+  };
+
+  const handleUnpin = () => {
+    onPinStartNode?.(null);
+    toast.info("Start Flow unpinned", { description: "Entry point will be inferred automatically." });
+  };
 
   return (
     <Popover>
@@ -44,6 +57,7 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
         >
           <Icon className="h-3 w-3" />
           {!compact && (readiness.ready ? "Trigger-ready" : "Not launchable")}
+          {pinnedStartNodeId && <Pin className="h-2.5 w-2.5 ml-0.5" />}
         </button>
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="w-72 p-0">
@@ -66,36 +80,68 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
           <p className="text-xs text-muted-foreground">{readiness.reason}</p>
         </div>
 
+        {/* Pinned start info */}
+        {pinnedStartNodeId && (
+          <div className="px-3 py-2 border-b border-border/50 bg-primary/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Pin className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-semibold text-primary">Start pinned</span>
+              </div>
+              <button
+                onClick={handleUnpin}
+                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <PinOff className="h-2.5 w-2.5" />
+                Unpin
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Root nodes list */}
         {rootNodes.length > 0 && (
           <div className="px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-              {rootNodes.length === 1 ? "Entry node" : `${rootNodes.length} root nodes (disconnected)`}
+              {rootNodes.length === 1 ? "Entry node" : `${rootNodes.length} root nodes`}
             </p>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {rootNodes.map((rn) => (
-                <button
-                  key={rn.id}
-                  onClick={() => onFocusNode?.(rn.id)}
-                  className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-left text-xs hover:bg-accent/10 transition-colors group"
-                >
-                  <Navigation className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium text-foreground">{rn.label}</span>
-                    <span className="ml-1.5 text-[10px] text-muted-foreground font-mono">{rn.type}</span>
-                  </div>
-                </button>
+                <div key={rn.id} className="flex items-center gap-1">
+                  <button
+                    onClick={() => onFocusNode?.(rn.id)}
+                    className="flex items-center gap-2 flex-1 min-w-0 rounded-md px-2 py-1.5 text-left text-xs hover:bg-accent/10 transition-colors group"
+                  >
+                    <Navigation className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-foreground">{rn.label}</span>
+                      <span className="ml-1.5 text-[10px] text-muted-foreground font-mono">{rn.type}</span>
+                    </div>
+                    {pinnedStartNodeId === rn.id && (
+                      <Pin className="h-2.5 w-2.5 text-primary shrink-0" />
+                    )}
+                  </button>
+                  {pinnedStartNodeId !== rn.id && onPinStartNode && (
+                    <button
+                      onClick={() => handlePin(rn.id)}
+                      className="rounded-md p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                      title="Set as Start Flow"
+                    >
+                      <Pin className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
         )}
 
         {/* Guidance */}
-        {!readiness.ready && (
+        {!readiness.ready && !pinnedStartNodeId && (
           <div className="px-3 py-2 border-t border-border/50 bg-muted/30">
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               {rootNodes.length > 1
-                ? "💡 Connect the extra root nodes to the main flow so only one entry point remains."
+                ? "💡 Pin one node as Start, or connect the extras to the main flow."
                 : rootNodes.length === 0
                 ? "💡 Add a first node or disconnect a node from incoming edges to define the entry point."
                 : "💡 Configure this node with valid content to make the flow launchable."}
