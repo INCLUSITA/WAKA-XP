@@ -139,7 +139,10 @@ export function RunDetailView({ run, onBack }: Props) {
               </div>
               <div className="col-span-2">
                 <span className="text-muted-foreground">Terminal reason</span>
-                <p className="font-medium text-foreground text-xs">{run.terminal_reason || "—"}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="font-medium text-foreground text-xs">{run.terminal_reason || "—"}</p>
+                  {isWindowPolicyError(run.terminal_reason) && <WindowPolicyBadge />}
+                </div>
               </div>
             </div>
           </div>
