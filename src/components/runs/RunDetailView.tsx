@@ -95,7 +95,9 @@ export function RunDetailView({ run, onBack }: Props) {
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <span className="font-medium text-primary">{run.flow_name}</span>
             <ChevronRight className="h-3 w-3" />
-            <span className="font-mono">{run.contact_urn || "no contact"}</span>
+            <ChannelBadge channel={channelFromUrn(run.contact_urn)} size="md" />
+            <ChevronRight className="h-3 w-3" />
+            <span className="font-mono">{run.contact_urn?.split(":").slice(1).join(":") || "no contact"}</span>
           </div>
         </div>
         <RunStatusBadge status={run.status} />
