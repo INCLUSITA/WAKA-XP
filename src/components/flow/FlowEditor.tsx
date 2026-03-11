@@ -957,6 +957,7 @@ function FlowEditorInner() {
         onChannelChange={setChannel}
         nodes={nodes}
         edges={edges}
+        onSearch={() => setShowNodeSearch((v) => !v)}
       />
 
       <input
