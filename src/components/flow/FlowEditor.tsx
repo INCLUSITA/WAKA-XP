@@ -43,7 +43,7 @@ import { NodeConfigPanel } from "./NodeConfigPanel";
 import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
 
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
-import { validateFlow, ValidationError } from "@/lib/flowValidation";
+import { validateFlow, ValidationError, getTriggerReadiness } from "@/lib/flowValidation";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
