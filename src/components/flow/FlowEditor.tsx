@@ -91,6 +91,7 @@ const defaultEdgeOptions = {
 };
 
 function FlowEditorInner() {
+  // We'll compute enriched nodes with _isEntryNode below
   const [searchParams, setSearchParams] = useSearchParams();
   const flowIdParam = searchParams.get("id");
 
