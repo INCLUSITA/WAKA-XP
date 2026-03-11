@@ -8,7 +8,7 @@ import { channelFromUrn } from "@/lib/channelUtils";
 import { useFlowRunSteps } from "@/hooks/useFlowRuns";
 import type { FlowRun, FlowRunStep } from "@/hooks/useFlowRuns";
 import { cn } from "@/lib/utils";
-import { isWindowPolicyError, WindowPolicyBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
+import { isWindowPolicyError, WindowPolicyBadge, isTemplatePolicyError, TemplateBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
 
 function formatTimestamp(iso: string | null) {
   if (!iso) return "—";
