@@ -14,12 +14,17 @@ import {
 import { ChannelCard } from "@/components/connections/ChannelCard";
 import { ChannelConfigDialog } from "@/components/connections/ChannelConfigDialog";
 import { ProviderCatalog } from "@/components/connections/ProviderCatalog";
+import { useConnectionHealth, type HealthStatus } from "@/hooks/useConnectionHealth";
 
 interface ConnectionData {
+  id?: string;
   status: ConnectionStatus;
   config: Record<string, string>;
   webhook_url?: string;
   display_name?: string;
+  health_status?: HealthStatus;
+  health_checked_at?: string | null;
+  health_error?: string | null;
 }
 
 export default function IntegrationsPage() {
@@ -29,6 +34,7 @@ export default function IntegrationsPage() {
   const [configProvider, setConfigProvider] = useState<ChannelProviderDef | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { checking, runHealthCheck } = useConnectionHealth();
 
   // ── Load connections ──────────────────────────────────────────
   useEffect(() => {
@@ -42,10 +48,14 @@ export default function IntegrationsPage() {
         const map: Record<string, ConnectionData> = {};
         data.forEach((row: any) => {
           map[row.provider] = {
+            id: row.id,
             status: row.status as ConnectionStatus,
             config: (row.config || {}) as Record<string, string>,
             webhook_url: row.webhook_url ?? undefined,
             display_name: row.display_name,
+            health_status: (row.health_status as HealthStatus) || "unknown",
+            health_checked_at: row.health_checked_at,
+            health_error: row.health_error,
           };
         });
         setConnections(map);
@@ -73,7 +83,7 @@ export default function IntegrationsPage() {
       );
       setConnections((prev) => ({
         ...prev,
-        [provider.id]: { status: "connected", config: {}, webhook_url: webhookUrl },
+        [provider.id]: { status: "connected", config: {}, webhook_url: webhookUrl, health_status: "unknown" },
       }));
     });
   }, [tenantId, connections]);
@@ -93,7 +103,7 @@ export default function IntegrationsPage() {
     setConfigOpen(true);
   };
 
-  // ── Save handler (generic for all providers) ──────────────────
+  // ── Save handler ──────────────────────────────────────────────
   const handleSave = async (
     provider: ChannelProviderDef,
     displayName: string,
@@ -123,6 +133,7 @@ export default function IntegrationsPage() {
           config,
           webhook_url: webhookUrl,
           display_name: displayName,
+          health_status: "unknown",
         },
       }));
       toast({ title: `${provider.label} connected` });
@@ -154,6 +165,24 @@ export default function IntegrationsPage() {
     toast({ title: `${provider.label} disconnected` });
   };
 
+  // ── Test connection handler ───────────────────────────────────
+  const handleTestConnection = async (provider: ChannelProviderDef) => {
+    const conn = connections[provider.id];
+    if (!conn?.id) return;
+    const result = await runHealthCheck(conn.id);
+    if (result) {
+      setConnections((prev) => ({
+        ...prev,
+        [provider.id]: {
+          ...prev[provider.id],
+          health_status: result.status,
+          health_checked_at: result.checkedAt || null,
+          health_error: result.error || null,
+        },
+      }));
+    }
+  };
+
   // ── Split: active vs available ────────────────────────────────
   const activeProviders = CHANNEL_PROVIDERS.filter(
     (p) => getStatus(p) === "connected"
@@ -162,7 +191,6 @@ export default function IntegrationsPage() {
     (p) => getStatus(p) !== "connected"
   );
   const connectedIds = new Set(activeProviders.map((p) => p.id));
-
   const activeCount = activeProviders.length;
 
   return (
@@ -203,18 +231,26 @@ export default function IntegrationsPage() {
                 <Badge variant="default" className="text-[10px]">{activeCount}</Badge>
               </h2>
               <div className="space-y-3">
-                {activeProviders.map((provider) => (
-                  <ChannelCard
-                    key={provider.id}
-                    provider={provider}
-                    status="connected"
-                    webhookUrl={connections[provider.id]?.webhook_url}
-                    onConfigure={() => openConfig(provider)}
-                    onDisconnect={
-                      provider.configurable ? () => handleDisconnect(provider) : undefined
-                    }
-                  />
-                ))}
+                {activeProviders.map((provider) => {
+                  const conn = connections[provider.id];
+                  return (
+                    <ChannelCard
+                      key={provider.id}
+                      provider={provider}
+                      status="connected"
+                      webhookUrl={conn?.webhook_url}
+                      healthStatus={(conn?.health_status as HealthStatus) || "unknown"}
+                      healthCheckedAt={conn?.health_checked_at}
+                      healthError={conn?.health_error}
+                      onConfigure={() => openConfig(provider)}
+                      onDisconnect={
+                        provider.configurable ? () => handleDisconnect(provider) : undefined
+                      }
+                      onTestConnection={() => handleTestConnection(provider)}
+                      testing={!!conn?.id && !!checking[conn.id]}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}

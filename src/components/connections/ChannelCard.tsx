@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
@@ -9,6 +9,8 @@ import { toast } from "@/hooks/use-toast";
 import type { ChannelProviderDef, ConnectionStatus } from "@/lib/channelProviders";
 import { STATUS_CONFIG } from "@/lib/channelProviders";
 import { getProviderIcon } from "./providerIcons";
+import { HealthIndicator } from "./HealthIndicator";
+import type { HealthStatus } from "@/hooks/useConnectionHealth";
 
 const statusIcons: Record<ConnectionStatus, React.ReactNode> = {
   connected: <CheckCircle2 className="h-3.5 w-3.5" />,
@@ -21,11 +23,20 @@ interface ChannelCardProps {
   provider: ChannelProviderDef;
   status: ConnectionStatus;
   webhookUrl?: string;
+  healthStatus?: HealthStatus;
+  healthCheckedAt?: string | null;
+  healthError?: string | null;
   onConfigure: () => void;
   onDisconnect?: () => void;
+  onTestConnection?: () => void;
+  testing?: boolean;
 }
 
-export function ChannelCard({ provider, status, webhookUrl, onConfigure, onDisconnect }: ChannelCardProps) {
+export function ChannelCard({
+  provider, status, webhookUrl,
+  healthStatus, healthCheckedAt, healthError,
+  onConfigure, onDisconnect, onTestConnection, testing,
+}: ChannelCardProps) {
   const sc = STATUS_CONFIG[status];
   const isComing = status === "coming_soon";
   const isConnected = status === "connected";
@@ -52,6 +63,13 @@ export function ChannelCard({ provider, status, webhookUrl, onConfigure, onDisco
               {statusIcons[status]}
               {sc.label}
             </Badge>
+            {isConnected && healthStatus && (
+              <HealthIndicator
+                status={healthStatus}
+                checkedAt={healthCheckedAt}
+                error={healthError}
+              />
+            )}
           </div>
           <CardDescription className="mt-1">{provider.description}</CardDescription>
         </div>
@@ -74,7 +92,7 @@ export function ChannelCard({ provider, status, webhookUrl, onConfigure, onDisco
           )}
 
           {/* Kebab menu for connected configurable providers */}
-          {isConnected && provider.configurable && (
+          {isConnected && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-8 w-8">
@@ -82,10 +100,18 @@ export function ChannelCard({ provider, status, webhookUrl, onConfigure, onDisco
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onConfigure}>
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reconfigure
-                </DropdownMenuItem>
+                {onTestConnection && (
+                  <DropdownMenuItem onClick={onTestConnection} disabled={testing}>
+                    <Activity className="h-4 w-4 mr-2" />
+                    {testing ? "Checking…" : "Test Connection"}
+                  </DropdownMenuItem>
+                )}
+                {provider.configurable && (
+                  <DropdownMenuItem onClick={onConfigure}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reconfigure
+                  </DropdownMenuItem>
+                )}
                 {onDisconnect && (
                   <DropdownMenuItem onClick={onDisconnect} className="text-destructive">
                     <Trash2 className="h-4 w-4 mr-2" />
