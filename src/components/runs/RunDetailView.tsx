@@ -58,6 +58,7 @@ function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
             {step.node_type}
           </Badge>
           {windowIssue && <WindowPolicyBadge />}
+          {templateIssue && <TemplateBadge variant="missing" />}
           {step.elapsed_ms != null && (
             <span className="text-[10px] text-muted-foreground ml-auto">{step.elapsed_ms}ms</span>
           )}
