@@ -1,5 +1,5 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Zap, ZapOff, Navigation, AlertTriangle, CheckCircle2, Pin, PinOff } from "lucide-react";
+import { Zap, ZapOff, Navigation, AlertTriangle, CheckCircle2, Pin, PinOff, Radio, ArrowRightLeft, RotateCw } from "lucide-react";
 import { TriggerReadiness } from "@/lib/flowValidation";
 import { Node } from "@xyflow/react";
 import { toast } from "sonner";
@@ -17,15 +17,23 @@ interface TriggerReadinessBadgeProps {
   onFocusNode?: (nodeId: string) => void;
   pinnedStartNodeId?: string | null;
   onPinStartNode?: (nodeId: string | null) => void;
+  channel?: string;
 }
+
+const CHANNEL_LABELS: Record<string, string> = {
+  whatsapp: "WhatsApp",
+  sms: "SMS",
+  telegram: "Telegram",
+};
 
 function getNodeLabel(node: Node): string {
   const d = node.data as Record<string, any>;
   return d.text?.slice(0, 30) || d.label || d.resultName || d.flowName || d.topic || d.url || d.prompt?.slice(0, 30) || node.type || node.id.slice(0, 8);
 }
 
-export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], onFocusNode, pinnedStartNodeId, onPinStartNode }: TriggerReadinessBadgeProps) {
+export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], onFocusNode, pinnedStartNodeId, onPinStartNode, channel }: TriggerReadinessBadgeProps) {
   const Icon = readiness.ready ? Zap : ZapOff;
+  const channelLabel = CHANNEL_LABELS[channel || ""] || "channel";
 
   const rootNodes: RootNodeInfo[] = readiness.rootNodeIds
     .map((id) => {
@@ -45,6 +53,10 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
     toast.info("Start Flow unpinned", { description: "Entry point will be inferred automatically." });
   };
 
+  // Determine entry node type for trigger behavior hint
+  const entryNode = readiness.entryNodeId ? nodes.find((n) => n.id === readiness.entryNodeId) : null;
+  const entryIsWait = entryNode?.type === "waitResponse";
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -60,7 +72,7 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
           {pinnedStartNodeId && <Pin className="h-2.5 w-2.5 ml-0.5" />}
         </button>
       </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-72 p-0">
+      <PopoverContent side="bottom" align="start" className="w-80 p-0">
         {/* Header */}
         <div className={`flex items-center gap-2 px-3 py-2 border-b ${
           readiness.ready ? "bg-primary/5 border-primary/10" : "bg-destructive/5 border-destructive/10"
@@ -79,6 +91,60 @@ export function TriggerReadinessBadge({ readiness, compact = false, nodes = [], 
         <div className="px-3 py-2 border-b border-border/50">
           <p className="text-xs text-muted-foreground">{readiness.reason}</p>
         </div>
+
+        {/* ── Trigger behavior section ── */}
+        {readiness.ready && (
+          <div className="px-3 py-2.5 border-b border-border/50 bg-muted/20">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Trigger behavior
+            </p>
+            <div className="space-y-1.5">
+              {/* New run */}
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 flex h-4 w-4 items-center justify-center rounded bg-primary/10">
+                  <Radio className="h-2.5 w-2.5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-foreground">
+                    Inbound {channelLabel} → <span className="text-primary">New run</span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    {entryIsWait
+                      ? "A matching inbound message starts the flow and is captured by the entry Wait node."
+                      : "A matching inbound event launches this flow from the Start node."}
+                  </p>
+                </div>
+              </div>
+              {/* Resume */}
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 flex h-4 w-4 items-center justify-center rounded bg-accent/10">
+                  <RotateCw className="h-2.5 w-2.5 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-foreground">
+                    Inbound {channelLabel} → <span className="text-accent">Resume run</span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    If a run is already waiting for a response, the inbound message resumes it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Not ready — trigger explanation */}
+        {!readiness.ready && (
+          <div className="px-3 py-2.5 border-b border-border/50 bg-muted/20">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Why it matters
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              A trigger-ready flow can be launched automatically when an inbound {channelLabel} event matches.
+              Resolve the issues below to make this flow launchable.
+            </p>
+          </div>
+        )}
 
         {/* Pinned start info */}
         {pinnedStartNodeId && (

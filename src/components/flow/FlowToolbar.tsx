@@ -131,7 +131,7 @@ export function FlowToolbar({
       />
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
-      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} pinnedStartNodeId={pinnedStartNodeId} onPinStartNode={onPinStartNode} />
+      <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} pinnedStartNodeId={pinnedStartNodeId} onPinStartNode={onPinStartNode} channel={channel} />
 
       {/* Experience link */}
       {experienceName && (
