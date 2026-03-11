@@ -52,6 +52,7 @@ interface FlowToolbarProps {
   onChannelChange: (ch: string) => void;
   nodes?: Node[];
   edges?: Edge[];
+  onSearch?: () => void;
 }
 
 const actionNodes = [
