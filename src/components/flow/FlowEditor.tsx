@@ -985,13 +985,13 @@ function FlowEditorInner() {
               return nodes.map((n) => {
                 const isPinned = pinnedStartNodeId === n.id;
                 if (isPinned) {
-                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: false, _entryAmbiguous: false, _isPinnedStart: true } };
+                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: false, _entryAmbiguous: false, _isPinnedStart: true, _triggerReady: readiness.ready } };
                 }
                 if (!pinnedStartNodeId && (n.id === readiness.entryNodeId || rootSet.has(n.id))) {
-                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous } };
+                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous, _triggerReady: readiness.ready && !isAmbiguous } };
                 }
                 if (n.data?._isEntryNode || n.data?._isPinnedStart) {
-                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false, _isPinnedStart: false } };
+                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false, _isPinnedStart: false, _triggerReady: false } };
                 }
                 return n;
               });
