@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
 import { ChannelBadge } from "./ChannelBadge";
 import { channelFromUrn } from "@/lib/channelUtils";
+import { isWindowPolicyError, WindowPolicyBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
 import type { FlowRun } from "@/hooks/useFlowRuns";
 
 function formatRelative(iso: string) {
@@ -112,9 +113,12 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
                     <RunStatusBadge status={run.status} />
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-sm text-muted-foreground truncate block max-w-[200px]">
-                      {run.terminal_reason || "—"}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-muted-foreground truncate block max-w-[200px]">
+                        {run.terminal_reason || "—"}
+                      </span>
+                      {isWindowPolicyError(run.terminal_reason) && <WindowPolicyBadge />}
+                    </div>
                   </td>
                   <td className="px-6 py-3 text-right text-sm text-muted-foreground">
                     {formatRelative(run.started_at)}

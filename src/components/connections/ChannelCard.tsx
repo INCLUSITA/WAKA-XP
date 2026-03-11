@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity } from "lucide-react";
+import { WhatsAppPolicyNote } from "@/components/whatsapp/WhatsAppPolicyHints";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
@@ -125,8 +126,12 @@ export function ChannelCard({
       </CardHeader>
 
       {/* Webhook URL row */}
-      {webhookUrl && isConnected && (
-        <CardContent className="pt-0">
+      {isConnected && (provider.id === "360dialog" || webhookUrl) && (
+        <CardContent className="pt-0 space-y-2">
+          {provider.id === "360dialog" && (
+            <WhatsAppPolicyNote />
+          )}
+          {webhookUrl && (
           <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-xs font-mono">
             <span className="text-muted-foreground shrink-0">Webhook:</span>
             <span className="truncate text-foreground">{webhookUrl}</span>
@@ -139,6 +144,7 @@ export function ChannelCard({
               <Copy className="h-3 w-3" />
             </Button>
           </div>
+          )}
         </CardContent>
       )}
     </Card>
