@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Clock, AlertTriangle, Info } from "lucide-react";
+import { Clock, AlertTriangle, Info, FileText } from "lucide-react";
 
 /**
  * Detects if a step output or terminal reason indicates a WhatsApp
@@ -11,12 +11,28 @@ export function isWindowPolicyError(text?: string | null): boolean {
   const lower = text.toLowerCase();
   return (
     lower.includes("window") ||
-    lower.includes("template") ||
-    lower.includes("hsm") ||
     lower.includes("re-engage") ||
     lower.includes("131047") || // Meta error code for outside window
     lower.includes("outside the allowed window") ||
     lower.includes("message failed to send because more than 24 hours")
+  );
+}
+
+/**
+ * Detects if a step output or terminal reason indicates a template-required
+ * or template-missing issue.
+ */
+export function isTemplatePolicyError(text?: string | null): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("template") ||
+    lower.includes("hsm") ||
+    lower.includes("template_name") ||
+    lower.includes("missing template") ||
+    lower.includes("template not found") ||
+    lower.includes("requires a template") ||
+    lower.includes("1013") // Meta error for template not found
   );
 }
 
@@ -50,6 +66,51 @@ export function WindowPolicyBadge() {
           If a send failed with a window error, the customer hasn't messaged recently 
           enough for free-form delivery.
         </p>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
+/**
+ * Small inline badge shown when a template was required or missing.
+ */
+export function TemplateBadge({ variant = "required" }: { variant?: "required" | "missing" }) {
+  const isMissing = variant === "missing";
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Badge
+          variant="outline"
+          className={`gap-1 text-[10px] cursor-help ${
+            isMissing
+              ? "border-destructive/40 text-destructive bg-destructive/8"
+              : "border-blue-400 text-blue-600 bg-blue-500/8"
+          }`}
+        >
+          <FileText className="h-3 w-3" />
+          {isMissing ? "Template missing" : "Template required"}
+        </Badge>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-72 text-xs space-y-2" side="top">
+        <p className="font-semibold flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 text-blue-500" />
+          WhatsApp Message Templates (HSM)
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          Outside the 24h customer care window, WhatsApp requires a 
+          <strong> pre-approved message template</strong> to initiate contact.
+        </p>
+        {isMissing ? (
+          <p className="text-muted-foreground leading-relaxed">
+            This send failed because no template was provided or the specified 
+            template was not found in your WhatsApp Business Account.
+          </p>
+        ) : (
+          <p className="text-muted-foreground leading-relaxed">
+            This send used — or attempted to use — a template. Ensure the 
+            template name and parameters match what's approved in your WABA.
+          </p>
+        )}
       </HoverCardContent>
     </HoverCard>
   );

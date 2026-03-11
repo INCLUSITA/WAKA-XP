@@ -62,6 +62,31 @@ serve(async (req) => {
           action: { buttons: actionButtons },
         },
       };
+    } else if (message_type === "template") {
+      const { template_name, template_language, template_parameters } = body;
+      if (!template_name) {
+        return new Response(
+          JSON.stringify({ error: "template_name is required for message_type 'template'" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const templateObj: Record<string, unknown> = {
+        name: template_name,
+        language: { code: template_language || "en" },
+      };
+      if (template_parameters?.length) {
+        templateObj.components = [{
+          type: "body",
+          parameters: template_parameters.map((p: string) => ({ type: "text", text: p })),
+        }];
+      }
+      waPayload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "template",
+        template: templateObj,
+      };
     } else {
       return new Response(
         JSON.stringify({ error: `Unsupported message_type: ${message_type}` }),

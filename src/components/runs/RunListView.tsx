@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RunStatusBadge } from "./RunStatusBadge";
 import { ChannelBadge } from "./ChannelBadge";
 import { channelFromUrn } from "@/lib/channelUtils";
-import { isWindowPolicyError, WindowPolicyBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
+import { isWindowPolicyError, WindowPolicyBadge, isTemplatePolicyError, TemplateBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
 import type { FlowRun } from "@/hooks/useFlowRuns";
 
 function formatRelative(iso: string) {
@@ -118,6 +118,7 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
                         {run.terminal_reason || "—"}
                       </span>
                       {isWindowPolicyError(run.terminal_reason) && <WindowPolicyBadge />}
+                      {!isWindowPolicyError(run.terminal_reason) && isTemplatePolicyError(run.terminal_reason) && <TemplateBadge variant="missing" />}
                     </div>
                   </td>
                   <td className="px-6 py-3 text-right text-sm text-muted-foreground">
