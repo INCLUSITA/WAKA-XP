@@ -221,6 +221,7 @@ export interface TriggerReadiness {
   reason: string;
   entryNodeId?: string;
   entryNodeType?: string;
+  rootNodeIds: string[];
 }
 
 /**
