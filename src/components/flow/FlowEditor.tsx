@@ -1051,6 +1051,7 @@ function FlowEditorInner() {
               onClose={() => setShowNodeSearch(false)}
             />
           )}
+        </>
         ) : (
           <StructuredView
             nodes={nodes}
