@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   AssetVersion,
   AssetType,
@@ -289,6 +290,7 @@ export function VersionHistoryPanel({
   onRestore,
   onClose,
 }: VersionHistoryPanelProps) {
+  const { tenantId } = useWorkspace();
   const {
     versions,
     loading,
@@ -297,7 +299,7 @@ export function VersionHistoryPanel({
     restoreVersion,
     renameVersion,
     updateNote,
-  } = useAssetVersions(assetType, assetId);
+  } = useAssetVersions(assetType, assetId, tenantId);
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saving, setSaving] = useState(false);

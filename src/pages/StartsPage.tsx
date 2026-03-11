@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_TENANT_ID } from "@/lib/constants";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Loader2 } from "lucide-react";
 
 interface FlowStart {
@@ -14,6 +14,7 @@ interface FlowStart {
 
 export default function StartsPage() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const [flows, setFlows] = useState<{ id: string; name: string; created_at: string; nodes: unknown }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +23,7 @@ export default function StartsPage() {
       const { data } = await supabase
         .from("flows")
         .select("id, name, created_at, nodes")
-        .eq("tenant_id", DEMO_TENANT_ID)
+        .eq("tenant_id", tenantId)
         .neq("status", "archived")
         .order("created_at", { ascending: false });
       setFlows(data || []);
