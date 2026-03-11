@@ -101,8 +101,11 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
                     <span className="text-sm font-medium text-primary">{run.flow_name}</span>
                   </td>
                   <td className="px-6 py-3">
+                    <ChannelBadge channel={channelFromUrn(run.contact_urn)} />
+                  </td>
+                  <td className="px-6 py-3">
                     <span className="text-sm text-muted-foreground font-mono">
-                      {run.contact_urn || "—"}
+                      {run.contact_urn?.split(":").slice(1).join(":") || "—"}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-center">
