@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getChannelConstraints } from "@/lib/flowValidation";
 import { ExpressionInput } from "./ExpressionInput";
+import { TemplatePicker } from "./TemplatePicker";
+import { Separator as Sep2 } from "@/components/ui/separator";
 
 interface NodeConfigPanelProps {
   node: Node;
