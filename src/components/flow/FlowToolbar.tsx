@@ -113,9 +113,11 @@ export function FlowToolbar({
   edges = [],
   onSearch,
   onFocusNode,
+  pinnedStartNodeId,
+  onPinStartNode,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
-  const triggerReadiness = getTriggerReadiness(nodes, edges);
+  const triggerReadiness = getTriggerReadiness(nodes, edges, pinnedStartNodeId);
   return (
     <div className="flex items-center gap-1.5 border-b border-border bg-card px-2 py-1.5">
       <SidebarTrigger className="mr-0.5" />
