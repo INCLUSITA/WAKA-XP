@@ -53,6 +53,7 @@ interface FlowToolbarProps {
   nodes?: Node[];
   edges?: Edge[];
   onSearch?: () => void;
+  onFocusNode?: (nodeId: string) => void;
 }
 
 const actionNodes = [
