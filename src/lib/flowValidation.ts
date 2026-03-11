@@ -282,5 +282,6 @@ export function getTriggerReadiness(nodes: Node[], edges: Edge[]): TriggerReadin
     reason: "Flow has a valid entry point",
     entryNodeId: entry.id,
     entryNodeType: entry.type,
+    rootNodeIds,
   };
 }
