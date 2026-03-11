@@ -144,6 +144,7 @@ export function ChannelCard({
               <Copy className="h-3 w-3" />
             </Button>
           </div>
+          )}
         </CardContent>
       )}
     </Card>
