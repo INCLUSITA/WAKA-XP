@@ -27,13 +27,16 @@ interface Props {
 
 export function RunListView({ runs, isLoading, onSelectRun }: Props) {
   const [search, setSearch] = useState("");
+  const [channelFilter, setChannelFilter] = useState<string | null>(null);
 
-  const filtered = runs.filter(
-    (r) =>
+  const filtered = runs.filter((r) => {
+    const matchesSearch =
       (r.flow_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
       r.contact_urn.toLowerCase().includes(search.toLowerCase()) ||
-      r.status.includes(search.toLowerCase())
-  );
+      r.status.includes(search.toLowerCase());
+    const matchesChannel = !channelFilter || r.contact_urn.toLowerCase().startsWith(channelFilter + ":");
+    return matchesSearch && matchesChannel;
+  });
 
   return (
     <div className="flex h-full flex-col bg-background">
