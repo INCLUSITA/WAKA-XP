@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getTriggerReadiness } from "@/lib/flowValidation";
 import { TriggerReadinessBadge } from "./TriggerReadinessBadge";
+import { TriggerRulesPanel } from "./TriggerRulesPanel";
+import { TriggerRule } from "@/lib/triggerRules";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +58,8 @@ interface FlowToolbarProps {
   onFocusNode?: (nodeId: string) => void;
   pinnedStartNodeId?: string | null;
   onPinStartNode?: (nodeId: string | null) => void;
+  triggerRules?: TriggerRule[];
+  onTriggerRulesChange?: (rules: TriggerRule[]) => void;
 }
 
 const actionNodes = [
@@ -115,6 +119,8 @@ export function FlowToolbar({
   onFocusNode,
   pinnedStartNodeId,
   onPinStartNode,
+  triggerRules = [],
+  onTriggerRulesChange,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges, pinnedStartNodeId);
@@ -132,6 +138,9 @@ export function FlowToolbar({
 
       {saveStatus && <SaveStatusIndicator status={saveStatus} />}
       <TriggerReadinessBadge readiness={triggerReadiness} nodes={nodes} onFocusNode={onFocusNode} pinnedStartNodeId={pinnedStartNodeId} onPinStartNode={onPinStartNode} channel={channel} />
+      {onTriggerRulesChange && (
+        <TriggerRulesPanel rules={triggerRules} onRulesChange={onTriggerRulesChange} readiness={triggerReadiness} channel={channel} />
+      )}
 
       {/* Experience link */}
       {experienceName && (
