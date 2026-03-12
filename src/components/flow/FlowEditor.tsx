@@ -115,6 +115,7 @@ function FlowEditorInner() {
   const [channel, setChannel] = useState("whatsapp");
   const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
   const [showNodeSearch, setShowNodeSearch] = useState(false);
+  const [showRuns, setShowRuns] = useState(false);
   const [pinnedStartNodeId, setPinnedStartNodeId] = useState<string | null>(null);
   const [triggerRules, setTriggerRules] = useState<TriggerRule[]>([]);
   const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
