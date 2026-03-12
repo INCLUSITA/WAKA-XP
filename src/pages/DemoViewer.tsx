@@ -4,7 +4,7 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2 } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Loader2, Copy, Check } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
@@ -14,6 +14,12 @@ import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
 import { toast } from "@/hooks/use-toast";
 import GuidedTourOverlay from "@/components/demos/GuidedTourOverlay";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SandboxPanel = "none" | "ai" | "structure";
 
