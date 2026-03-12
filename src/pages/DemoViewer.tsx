@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
 
 type SandboxPanel = "none" | "ai" | "structure";
 
@@ -65,7 +66,7 @@ function QuickShareButton({ demoTitle, demoId }: { demoTitle: string; demoId: st
         .single();
 
       if (error) throw error;
-      const url = `${window.location.origin}/shared/${data.token}`;
+      const url = `${PUBLIC_SHARE_ORIGIN}/shared/${data.token}`;
       setShareUrl(url);
       navigator.clipboard.writeText(url);
       setCopied(true);

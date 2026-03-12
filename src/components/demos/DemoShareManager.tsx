@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Copy, ExternalLink, Power, Trash2, Eye, Clock, Link2 } from "lucide-react";
+import { PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
 
 interface DemoShareForm {
   title: string;
@@ -84,7 +85,7 @@ export default function DemoShareManager() {
       queryClient.invalidateQueries({ queryKey: ["demo-shares"] });
       setDialogOpen(false);
       setForm(INITIAL_FORM);
-      const shareUrl = `${window.location.origin}/shared/${data.token}`;
+      const shareUrl = `${PUBLIC_SHARE_ORIGIN}/shared/${data.token}`;
       navigator.clipboard.writeText(shareUrl);
       toast.success("Link creado y copiado al portapapeles", { description: shareUrl });
     },
@@ -116,7 +117,7 @@ export default function DemoShareManager() {
   });
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/shared/${token}`;
+    const url = `${PUBLIC_SHARE_ORIGIN}/shared/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiado");
   };
@@ -279,7 +280,7 @@ export default function DemoShareManager() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => window.open(`/shared/${share.token}`, "_blank")}
+                        onClick={() => window.open(`${PUBLIC_SHARE_ORIGIN}/shared/${share.token}`, "_blank")}
                         title="Abrir"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
