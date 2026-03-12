@@ -4,7 +4,7 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2 } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Loader2, Copy, Check } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
@@ -14,6 +14,12 @@ import type { SandboxVersion } from "@/components/demos/SandboxVersionBar";
 import type { StructuralBlock } from "@/types/structuralBlocks";
 import { toast } from "@/hooks/use-toast";
 import GuidedTourOverlay from "@/components/demos/GuidedTourOverlay";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SandboxPanel = "none" | "ai" | "structure";
 
@@ -26,11 +32,132 @@ const LoadingFallback = () => (
   </div>
 );
 
+// ── Quick Share Button ──
+function QuickShareButton({ demoTitle, demoId }: { demoTitle: string; demoId: string }) {
+  const { tenant, user } = useWorkspace();
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [demoType, setDemoType] = useState("iframe");
+  const [expiresDays, setExpiresDays] = useState<string>("");
+
+  const handleCreate = async () => {
+    if (!user) return;
+    setCreating(true);
+    try {
+      const demoUrl = `${window.location.origin}/demo/${demoId}`;
+      const expiresAt = expiresDays
+        ? new Date(Date.now() + Number(expiresDays) * 86400000).toISOString()
+        : null;
+
+      const { data, error } = await (supabase as any)
+        .from("demo_shares")
+        .insert({
+          title: demoTitle,
+          demo_url: demoUrl,
+          demo_type: demoType,
+          expires_at: expiresAt,
+          created_by: user.id,
+          tenant_id: tenant?.id || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      const url = `${window.location.origin}/shared/${data.token}`;
+      setShareUrl(url);
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => { setOpen(true); setShareUrl(null); }}
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/50 border border-white/10 hover:bg-white/5 hover:text-white/80 transition-all"
+      >
+        <Share2 className="h-3.5 w-3.5" />
+        Compartir
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Compartir "{demoTitle}"</DialogTitle>
+          </DialogHeader>
+          {shareUrl ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Link público creado y copiado:</p>
+              <div className="flex items-center gap-2">
+                <Input value={shareUrl} readOnly className="text-xs font-mono" />
+                <Button size="icon" variant="outline" className="shrink-0 h-9 w-9" onClick={handleCopy}>
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(false)}>
+                Cerrar
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Tipo</label>
+                  <Select value={demoType} onValueChange={setDemoType}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iframe">iFrame</SelectItem>
+                      <SelectItem value="redirect">Redirección</SelectItem>
+                      <SelectItem value="link">Link externo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Expira en (días)</label>
+                  <Input
+                    type="number"
+                    value={expiresDays}
+                    onChange={(e) => setExpiresDays(e.target.value)}
+                    placeholder="∞"
+                    min={1}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+              <Button size="sm" className="w-full" onClick={handleCreate} disabled={creating}>
+                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Share2 className="h-3.5 w-3.5 mr-1" />}
+                {creating ? "Generando..." : "Generar link público"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ── Status Bar ──
 function DemoStatusBar({
-  status, title, sourceName, isSandboxDemo, activePanel, onSetPanel,
+  status, title, sourceName, isSandboxDemo, activePanel, onSetPanel, demoId,
 }: {
   status: DemoStatus; title: string; sourceName?: string; isSandboxDemo: boolean;
-  activePanel: SandboxPanel; onSetPanel: (p: SandboxPanel) => void;
+  activePanel: SandboxPanel; onSetPanel: (p: SandboxPanel) => void; demoId: string;
 }) {
   const cfg = DEMO_STATUS_CONFIG[status];
   const isSandbox = status === "sandbox" || status === "draft";
@@ -53,34 +180,38 @@ function DemoStatusBar({
         </>
       )}
 
-      {isSandboxDemo && (
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => onSetPanel(activePanel === "structure" ? "none" : "structure")}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all shadow-lg ${
-              activePanel === "structure"
-                ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white border border-teal-400/40 shadow-teal-500/30"
-                : "bg-white/5 text-white/50 border border-white/10 hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/30 hover:shadow-teal-500/20"
-            }`}
-          >
-            <Layers className="h-4 w-4" />
-            Structure
-          </button>
+      <div className="ml-auto flex items-center gap-2">
+        <QuickShareButton demoTitle={title} demoId={demoId} />
 
-          <button
-            onClick={() => onSetPanel(activePanel === "ai" ? "none" : "ai")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
-              activePanel === "ai"
-                ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white border border-violet-400/40 shadow-violet-500/30"
-                : "bg-gradient-to-r from-violet-600/80 to-purple-600/80 text-white border border-violet-500/30 shadow-violet-500/20 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40 hover:scale-105"
-            }`}
-          >
-            <Sparkles className="h-4 w-4" />
-            Waka AI
-            {activePanel === "ai" ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-          </button>
-        </div>
-      )}
+        {isSandboxDemo && (
+          <>
+            <button
+              onClick={() => onSetPanel(activePanel === "structure" ? "none" : "structure")}
+              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all shadow-lg ${
+                activePanel === "structure"
+                  ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white border border-teal-400/40 shadow-teal-500/30"
+                  : "bg-white/5 text-white/50 border border-white/10 hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/30 hover:shadow-teal-500/20"
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              Structure
+            </button>
+
+            <button
+              onClick={() => onSetPanel(activePanel === "ai" ? "none" : "ai")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-lg ${
+                activePanel === "ai"
+                  ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white border border-violet-400/40 shadow-violet-500/30"
+                  : "bg-gradient-to-r from-violet-600/80 to-purple-600/80 text-white border border-violet-500/30 shadow-violet-500/20 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40 hover:scale-105"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              Waka AI
+              {activePanel === "ai" ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -300,6 +431,7 @@ export default function DemoViewer() {
         isSandboxDemo={isSandboxDemo}
         activePanel={activePanel}
         onSetPanel={setActivePanel}
+        demoId={id || ""}
       />
       {isSandboxDemo && versions.length > 1 && (
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
