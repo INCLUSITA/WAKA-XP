@@ -116,7 +116,21 @@ function FlowEditorInner() {
   const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
   const [showNodeSearch, setShowNodeSearch] = useState(false);
   const [showRuns, setShowRuns] = useState(false);
-  const [pinnedStartNodeId, setPinnedStartNodeId] = useState<string | null>(null);
+  const [pinnedStartNodeId, _setPinnedStartNodeId] = useState<string | null>(null);
+
+  // Wrap setPinnedStartNodeId to also persist isStart flag in node data
+  const setPinnedStartNodeId = useCallback((nodeId: string | null) => {
+    _setPinnedStartNodeId(nodeId);
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          isStart: n.id === nodeId ? true : undefined,
+        },
+      }))
+    );
+  }, [setNodes]);
   const [triggerRules, setTriggerRules] = useState<TriggerRule[]>([]);
   const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
   const navigate = useNavigate();
@@ -197,16 +211,22 @@ function FlowEditorInner() {
           setEdges(result.edges);
           setFlowName(result.name);
 
+          // Restore pinned start node from saved node data
+          const pinnedNode = (result.nodes as Node[]).find(
+            (n) => (n.data as Record<string, any>)?.isStart === true
+          );
+          if (pinnedNode) setPinnedStartNodeId(pinnedNode.id);
+
           // Smart initial view: focus on entry node area after render
           setTimeout(() => {
             const loadedNodes = result.nodes as Node[];
             const loadedEdges = result.edges as Edge[];
             if (loadedNodes.length === 0) return;
 
-            // Find root nodes (no incoming edges)
+            // Prefer pinned start node, then root nodes
             const hasParent = new Set(loadedEdges.map((e) => e.target));
             const roots = loadedNodes.filter((n) => !hasParent.has(n.id));
-            const entryNode = roots.length > 0 ? roots[0] : loadedNodes[0];
+            const entryNode = pinnedNode || (roots.length > 0 ? roots[0] : loadedNodes[0]);
 
             // Center on entry node with enough zoom to show surrounding structure
             try {
