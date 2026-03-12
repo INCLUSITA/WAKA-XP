@@ -331,6 +331,11 @@ export function FlowToolbar({
             <History className="mr-1 h-3 w-3" />
           </Button>
         )}
+        {onRuns && (
+          <Button variant="outline" size="sm" onClick={onRuns} className="border-blue-500/40 text-blue-600 hover:bg-blue-500/10 h-7 text-[11px]">
+            <Radio className="mr-1 h-3 w-3" /> Runs
+          </Button>
+        )}
         {onLoadSample && (
           <Button variant="outline" size="sm" onClick={onLoadSample} className="h-7 text-[11px]">
             <FileDown className="mr-1 h-3 w-3" />
