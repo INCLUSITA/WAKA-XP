@@ -35,6 +35,7 @@ interface FlowToolbarProps {
   onExport: () => void;
   onImport: () => void;
   onClear: () => void;
+  onAutoLayout?: () => void;
   onLoadSample?: () => void;
   onValidate?: () => void;
   onSimulate?: () => void;
