@@ -23,6 +23,19 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
   const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string> } | null>(null);
   const [loading, setLoading] = useState(!demo);
 
+  // Log view for tracking
+  useEffect(() => {
+    if (!id) return;
+    (supabase as any)
+      .from("demo_share_views")
+      .insert({
+        demo_id: id,
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || null,
+      })
+      .then(() => {});
+  }, [id]);
+
   useEffect(() => {
     if (demo || !id) return;
     (supabase as any)
