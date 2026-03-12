@@ -133,6 +133,30 @@ export type Database = {
           },
         ]
       }
+      demo_share_views: {
+        Row: {
+          demo_id: string
+          id: string
+          referrer: string | null
+          user_agent: string | null
+          viewed_at: string
+        }
+        Insert: {
+          demo_id: string
+          id?: string
+          referrer?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          demo_id?: string
+          id?: string
+          referrer?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       demo_shares: {
         Row: {
           created_at: string
