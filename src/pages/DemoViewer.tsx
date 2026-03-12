@@ -33,123 +33,44 @@ const LoadingFallback = () => (
   </div>
 );
 
-// ── Quick Share Button ──
-function QuickShareButton({ demoTitle, demoId }: { demoTitle: string; demoId: string }) {
-  const { tenant, user } = useWorkspace();
-  const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+// ── Quick Share Button — one click to copy public URL ──
+function QuickShareButton({ demoId }: { demoId: string }) {
   const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [demoType, setDemoType] = useState("iframe");
-  const [expiresDays, setExpiresDays] = useState<string>("");
+  const [viewCount, setViewCount] = useState<number | null>(null);
 
-  const handleCreate = async () => {
-    if (!user) return;
-    setCreating(true);
-    try {
-      const demoUrl = `${PUBLIC_SHARE_ORIGIN}/share/${demoId}`;
-      const expiresAt = expiresDays
-        ? new Date(Date.now() + Number(expiresDays) * 86400000).toISOString()
-        : null;
+  const shareUrl = `https://wakaxp.wakacore.com/share/${demoId}`;
 
-      const { data, error } = await (supabase as any)
-        .from("demo_shares")
-        .insert({
-          title: demoTitle,
-          demo_url: demoUrl,
-          demo_type: demoType,
-          expires_at: expiresAt,
-          created_by: user.id,
-          tenant_id: tenant?.id || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      const url = `${PUBLIC_SHARE_ORIGIN}/shared/${data.token}`;
-      setShareUrl(url);
-      navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err: any) {
-      console.error(err);
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setCreating(false);
-    }
-  };
+  useEffect(() => {
+    (supabase as any)
+      .from("demo_share_views")
+      .select("id", { count: "exact", head: true })
+      .eq("demo_id", demoId)
+      .then(({ count }: any) => {
+        if (typeof count === "number") setViewCount(count);
+      });
+  }, [demoId]);
 
   const handleCopy = () => {
-    if (!shareUrl) return;
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
+    toast({ title: "Link copiado", description: shareUrl });
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <>
-      <button
-        onClick={() => { setOpen(true); setShareUrl(null); }}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/50 border border-white/10 hover:bg-white/5 hover:text-white/80 transition-all"
-      >
-        <Share2 className="h-3.5 w-3.5" />
-        Compartir
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-sm">Compartir "{demoTitle}"</DialogTitle>
-          </DialogHeader>
-          {shareUrl ? (
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Link público creado y copiado:</p>
-              <div className="flex items-center gap-2">
-                <Input value={shareUrl} readOnly className="text-xs font-mono" />
-                <Button size="icon" variant="outline" className="shrink-0 h-9 w-9" onClick={handleCopy}>
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                </Button>
-              </div>
-              <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(false)}>
-                Cerrar
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Tipo</label>
-                  <Select value={demoType} onValueChange={setDemoType}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="iframe">iFrame</SelectItem>
-                      <SelectItem value="redirect">Redirección</SelectItem>
-                      <SelectItem value="link">Link externo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Expira en (días)</label>
-                  <Input
-                    type="number"
-                    value={expiresDays}
-                    onChange={(e) => setExpiresDays(e.target.value)}
-                    placeholder="∞"
-                    min={1}
-                    className="h-8 text-xs"
-                  />
-                </div>
-              </div>
-              <Button size="sm" className="w-full" onClick={handleCreate} disabled={creating}>
-                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Share2 className="h-3.5 w-3.5 mr-1" />}
-                {creating ? "Generando..." : "Generar link público"}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/50 border border-white/10 hover:bg-white/5 hover:text-white/80 transition-all"
+      title={shareUrl}
+    >
+      {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
+      {copied ? "¡Copiado!" : "Compartir"}
+      {viewCount !== null && viewCount > 0 && (
+        <span className="ml-1 text-[10px] text-white/30 flex items-center gap-0.5">
+          <Eye className="h-3 w-3" />{viewCount}
+        </span>
+      )}
+    </button>
   );
 }
 
