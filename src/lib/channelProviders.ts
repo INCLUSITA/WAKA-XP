@@ -45,6 +45,8 @@ export interface ChannelProviderDef {
   category: "messaging" | "voice" | "email" | "multi";
   /** Tags for filtering */
   tags?: string[];
+  /** Delivery hint shown in runtime surfaces */
+  deliveryHint?: string;
 }
 
 export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
@@ -98,11 +100,11 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
   {
     id: "azure_cs",
     label: "Azure Communication Services",
-    description: "SMS, voz y email a través de Azure Communication Services.",
+    description: "SMS y voz a través de Azure Communication Services.",
     icon: "Phone",
     color: "hsl(210 60% 50%)",
-    configurable: false,
-    defaultStatus: "coming_soon",
+    configurable: true,
+    defaultStatus: "not_configured",
     fields: [
       {
         key: "connection_string",
@@ -110,6 +112,7 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
         type: "password",
         placeholder: "endpoint=https://...;accesskey=...",
         required: true,
+        helpText: "Se encuentra en el portal de Azure → Communication Services → Keys.",
       },
       {
         key: "sender_phone",
@@ -117,10 +120,14 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
         type: "text",
         placeholder: "+1234567890",
         required: true,
+        helpText: "Número SMS habilitado en tu recurso ACS.",
       },
     ],
-    category: "multi",
-    tags: ["sms", "voice", "email", "azure"],
+    helpUrl: "https://learn.microsoft.com/azure/communication-services/quickstarts/sms/send",
+    category: "messaging",
+    tags: ["sms", "voice", "azure"],
+    /** Hint shown in runtime surfaces for delivery expectations */
+    deliveryHint: "SMS delivery may take seconds to minutes. Carrier-level delivery receipts are asynchronous.",
   },
   {
     id: "vonage",
@@ -156,6 +163,7 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
     helpUrl: "https://developer.vonage.com/getting-started",
     category: "messaging",
     tags: ["sms", "nexmo"],
+    deliveryHint: "SMS delivery may take seconds to minutes. Carrier-level delivery receipts are asynchronous.",
   },
   {
     id: "mailgun",
