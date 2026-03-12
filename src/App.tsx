@@ -67,6 +67,7 @@ const App = () => {
               {/* Assets & Resources */}
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/demos" element={<Demos />} />
+              <Route path="/demo-shares" element={<DemoSharesPage />} />
               <Route path="/demo/:id" element={<DemoViewer />} />
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/import" element={<ImportPage />} />
