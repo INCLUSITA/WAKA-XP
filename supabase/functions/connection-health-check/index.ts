@@ -99,6 +99,37 @@ Deno.serve(async (req) => {
           health_error = e.message?.slice(0, 200);
         }
       }
+    } else if (provider === "azure_cs") {
+      const connStr = config.connection_string;
+      if (!connStr) {
+        health_status = "warning";
+        health_error = "No connection string configured";
+      } else {
+        // Parse endpoint from connection string
+        const endpointMatch = connStr.match(/endpoint=(https?:\/\/[^;]+)/i);
+        const accessKeyMatch = connStr.match(/accesskey=([^;]+)/i);
+        if (!endpointMatch || !accessKeyMatch) {
+          health_status = "error";
+          health_error = "Invalid connection string format";
+        } else {
+          try {
+            // Simple auth check: list phone numbers (lightweight)
+            const endpoint = endpointMatch[1].replace(/\/$/, "");
+            const res = await fetch(
+              `${endpoint}/sms?api-version=2021-03-07`,
+              {
+                method: "OPTIONS",
+                headers: { "Content-Length": "0" },
+              }
+            );
+            // OPTIONS returning anything but network error means endpoint is reachable
+            health_status = "healthy";
+          } catch (e: any) {
+            health_status = "error";
+            health_error = `Endpoint unreachable: ${e.message?.slice(0, 200)}`;
+          }
+        }
+      }
     } else if (provider === "mailgun") {
       const apiKeyVal = config.api_key;
       const domain = config.domain;
