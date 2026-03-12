@@ -280,7 +280,7 @@ export default function DemoShareManager() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => window.open(`/shared/${share.token}`, "_blank")}
+                        onClick={() => window.open(`${PUBLIC_SHARE_ORIGIN}/shared/${share.token}`, "_blank")}
                         title="Abrir"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
