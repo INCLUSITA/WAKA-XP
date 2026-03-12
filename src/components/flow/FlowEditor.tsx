@@ -197,6 +197,12 @@ function FlowEditorInner() {
           setEdges(result.edges);
           setFlowName(result.name);
 
+          // Restore pinned start node from saved node data
+          const pinnedNode = (result.nodes as Node[]).find(
+            (n) => (n.data as Record<string, any>)?.isStart === true
+          );
+          if (pinnedNode) setPinnedStartNodeId(pinnedNode.id);
+
           // Smart initial view: focus on entry node area after render
           setTimeout(() => {
             const loadedNodes = result.nodes as Node[];
