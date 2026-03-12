@@ -50,6 +50,7 @@ const App = () => {
           <Routes>
             {/* Public routes */}
             <Route path="/share/:id" element={<ShareDemo />} />
+            <Route path="/shared/:token" element={<SharedDemo />} />
             <Route path="/login" element={<LoginPage />} />
 
             {/* Protected routes */}
