@@ -57,6 +57,7 @@ import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
 import { FlowRunsPanel } from "./FlowRunsPanel";
+import { autoLayoutFlow } from "@/lib/flowAutoLayout";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
@@ -941,6 +942,12 @@ function FlowEditorInner() {
         onExport={handleExport}
         onImport={handleImport}
         onClear={handleClear}
+        onAutoLayout={() => {
+          const { nodes: layouted } = autoLayoutFlow(nodes, edges);
+          setNodes(layouted);
+          setTimeout(() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 }), 50);
+          toast.success("Nodos reorganizados");
+        }}
         onLoadSample={handleLoadSample}
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
