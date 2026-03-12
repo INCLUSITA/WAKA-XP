@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity, Radio, RotateCw, Send, Zap } from "lucide-react";
 import { WhatsAppPolicyNote } from "@/components/whatsapp/WhatsAppPolicyHints";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -125,13 +125,58 @@ export function ChannelCard({
         </div>
       </CardHeader>
 
-      {/* Webhook URL row */}
-      {isConnected && (provider.id === "360dialog" || webhookUrl) && (
+      {/* Runtime capabilities — shown for connected messaging channels */}
+      {isConnected && provider.category === "messaging" && (
         <CardContent className="pt-0 space-y-2">
-          {provider.id === "360dialog" && (
-            <WhatsAppPolicyNote />
-          )}
+          {provider.id === "360dialog" && <WhatsAppPolicyNote />}
+
+          {/* Runtime capability hints */}
+          <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Radio className="h-3 w-3 text-primary" />
+              Launch via triggers
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <RotateCw className="h-3 w-3 text-accent" />
+              Resume waiting runs
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Send className="h-3 w-3" style={{ color: provider.color }} />
+              Outbound delivery
+            </span>
+          </div>
+
+          {/* Webhook URL */}
           {webhookUrl && (
+            <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-xs font-mono">
+              <span className="text-muted-foreground shrink-0">Webhook:</span>
+              <span className="truncate text-foreground">{webhookUrl}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 shrink-0"
+                onClick={() => copyToClipboard(webhookUrl)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+
+          {/* Quick link to Runs */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild className="h-6 text-[10px] text-muted-foreground hover:text-primary gap-1 px-1.5">
+              <a href="/runs">
+                <Activity className="h-3 w-3" />
+                View runs →
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      )}
+
+      {/* Non-messaging connected channels — just webhook */}
+      {isConnected && provider.category !== "messaging" && webhookUrl && (
+        <CardContent className="pt-0">
           <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2 text-xs font-mono">
             <span className="text-muted-foreground shrink-0">Webhook:</span>
             <span className="truncate text-foreground">{webhookUrl}</span>
@@ -144,7 +189,6 @@ export function ChannelCard({
               <Copy className="h-3 w-3" />
             </Button>
           </div>
-          )}
         </CardContent>
       )}
     </Card>
