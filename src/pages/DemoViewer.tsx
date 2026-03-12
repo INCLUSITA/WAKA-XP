@@ -103,7 +103,7 @@ function DemoStatusBar({
       )}
 
       <div className="ml-auto flex items-center gap-2">
-        <QuickShareButton demoTitle={title} demoId={demoId} />
+        <QuickShareButton demoId={demoId} />
 
         {isSandboxDemo && (
           <>
