@@ -34,6 +34,16 @@ const statusColors: Record<string, string> = {
   archived: "bg-destructive/15 text-destructive",
 };
 
+function formatRelative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 export default function FlowDashboard() {
   const { tenantId } = useWorkspace();
   const [flows, setFlows] = useState<Flow[]>([]);
@@ -41,6 +51,9 @@ export default function FlowDashboard() {
   const [candidateCountMap, setCandidateCountMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const flowIds = flows.map((f) => f.id);
+  const { data: runStats } = useFlowRunStats(flowIds);
 
   const fetchData = async () => {
     setLoading(true);
@@ -63,13 +76,12 @@ export default function FlowDashboard() {
       console.error(flowsRes.error);
     } else {
       setFlows(flowsRes.data || []);
-      // Fetch candidate counts per flow
-      const flowIds = (flowsRes.data || []).map(f => f.id);
-      if (flowIds.length > 0) {
+      const ids = (flowsRes.data || []).map(f => f.id);
+      if (ids.length > 0) {
         const { data: candData } = await supabase
           .from("production_candidates")
           .select("id, flow_id")
-          .in("flow_id", flowIds)
+          .in("flow_id", ids)
           .neq("status", "archived");
         if (candData) {
           const counts: Record<string, number> = {};
@@ -94,11 +106,7 @@ export default function FlowDashboard() {
       .insert({ name: "Nuevo Flujo", tenant_id: tenantId, nodes: [] as unknown as Json, edges: [] as unknown as Json })
       .select("id")
       .single();
-
-    if (error) {
-      toast.error("Error al crear flujo");
-      return;
-    }
+    if (error) { toast.error("Error al crear flujo"); return; }
     navigate(`/editor?id=${data.id}`);
   };
 
@@ -116,48 +124,28 @@ export default function FlowDashboard() {
       })
       .select("id")
       .single();
-
-    if (error) {
-      toast.error("Error al duplicar");
-      return;
-    }
+    if (error) { toast.error("Error al duplicar"); return; }
     toast.success("Flujo duplicado");
     fetchData();
   };
 
   const archiveFlow = async (id: string) => {
-    const { error } = await supabase
-      .from("flows")
-      .update({ status: "archived" as const })
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Error al archivar");
-      return;
-    }
+    const { error } = await supabase.from("flows").update({ status: "archived" as const }).eq("id", id);
+    if (error) { toast.error("Error al archivar"); return; }
     toast.success("Flujo archivado");
     fetchData();
   };
 
   const deleteFlow = async (id: string) => {
     const { error } = await supabase.from("flows").delete().eq("id", id);
-    if (error) {
-      toast.error("Error al eliminar");
-      return;
-    }
+    if (error) { toast.error("Error al eliminar"); return; }
     toast.success("Flujo eliminado");
     fetchData();
   };
 
   const assignExperience = async (flowId: string, experienceId: string | null) => {
-    const { error } = await supabase
-      .from("flows")
-      .update({ experience_id: experienceId })
-      .eq("id", flowId);
-    if (error) {
-      toast.error("Error assigning experience");
-      return;
-    }
+    const { error } = await supabase.from("flows").update({ experience_id: experienceId }).eq("id", flowId);
+    if (error) { toast.error("Error assigning experience"); return; }
     toast.success(experienceId ? "Experience linked" : "Experience unlinked");
     fetchData();
   };
@@ -198,18 +186,86 @@ export default function FlowDashboard() {
             </Button>
           </div>
         ) : (
-          <FlowCardsGrid
-            flows={flows}
-            experiences={experiences}
-            candidateCountMap={candidateCountMap}
-            getExperienceName={getExperienceName}
-            assignExperience={assignExperience}
-            navigate={navigate}
-            duplicateFlow={duplicateFlow}
-            archiveFlow={archiveFlow}
-            deleteFlow={deleteFlow}
-            tenantId={tenantId}
-          />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {flows.map((flow) => {
+              const candCount = candidateCountMap[flow.id] || 0;
+              const readiness = getTriggerReadiness(
+                (flow.nodes as unknown as Node[]) || [],
+                (flow.edges as unknown as Edge[]) || []
+              );
+              const stats = runStats?.[flow.id];
+              return (
+                <Card key={flow.id} className="group relative transition-shadow hover:shadow-md">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
+                      <div className="flex gap-1 items-center">
+                        <TriggerReadinessBadge readiness={readiness} compact />
+                        {candCount > 0 && (
+                          <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-600 px-1.5">
+                            <Rocket className="h-2.5 w-2.5 mr-0.5" /> {candCount}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>{flow.status}</Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-2 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Actualizado {format(new Date(flow.updated_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{(flow.nodes as unknown as any[])?.length || 0} nodos</p>
+
+                    {/* Runtime stats */}
+                    {stats && stats.total > 0 && (
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Activity className="h-3 w-3" />
+                          <span>{stats.total} runs</span>
+                        </div>
+                        {stats.errored > 0 && (
+                          <div className="flex items-center gap-1 text-[11px] text-destructive">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>{stats.errored} failed</span>
+                          </div>
+                        )}
+                        {stats.last_started_at && (
+                          <span className="text-[10px] text-muted-foreground ml-auto">
+                            {formatRelative(stats.last_started_at)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Experience assignment */}
+                    <div className="flex items-center gap-1.5">
+                      <Link2 className="h-3 w-3 text-muted-foreground/50" />
+                      <Select
+                        value={flow.experience_id || "__none__"}
+                        onValueChange={(val) => assignExperience(flow.id, val === "__none__" ? null : val)}
+                      >
+                        <SelectTrigger className="h-7 text-[11px] border-border/50 bg-transparent w-full">
+                          <SelectValue placeholder="No experience" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__" className="text-xs text-muted-foreground">No experience</SelectItem>
+                          {experiences.map((exp) => (
+                            <SelectItem key={exp.id} value={exp.id} className="text-xs">{exp.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="gap-1 pt-0">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/editor?id=${flow.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => duplicateFlow(flow)}><Copy className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => archiveFlow(flow.id)}><Archive className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteFlow(flow.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
