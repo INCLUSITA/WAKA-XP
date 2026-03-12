@@ -130,6 +130,14 @@ export function ChannelCard({
         <CardContent className="pt-0 space-y-2">
           {provider.id === "360dialog" && <WhatsAppPolicyNote />}
 
+          {/* Delivery hint for SMS/async channels */}
+          {provider.deliveryHint && (
+            <div className="flex items-start gap-2 rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
+              <span>{provider.deliveryHint}</span>
+            </div>
+          )}
+
           {/* Runtime capability hints */}
           <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
