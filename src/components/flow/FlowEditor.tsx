@@ -116,7 +116,21 @@ function FlowEditorInner() {
   const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
   const [showNodeSearch, setShowNodeSearch] = useState(false);
   const [showRuns, setShowRuns] = useState(false);
-  const [pinnedStartNodeId, setPinnedStartNodeId] = useState<string | null>(null);
+  const [pinnedStartNodeId, _setPinnedStartNodeId] = useState<string | null>(null);
+
+  // Wrap setPinnedStartNodeId to also persist isStart flag in node data
+  const setPinnedStartNodeId = useCallback((nodeId: string | null) => {
+    _setPinnedStartNodeId(nodeId);
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          isStart: n.id === nodeId ? true : undefined,
+        },
+      }))
+    );
+  }, [setNodes]);
   const [triggerRules, setTriggerRules] = useState<TriggerRule[]>([]);
   const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
   const navigate = useNavigate();
