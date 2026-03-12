@@ -57,14 +57,36 @@ export function RunListView({ runs, isLoading, onSelectRun }: Props) {
             {runs.length} runs
           </Badge>
         </div>
-        <div className="mt-3 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by flow, contact or status..."
-            className="pl-9"
-          />
+        <div className="mt-3 flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by flow, contact or status..."
+              className="pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5">
+            {[
+              { key: null, label: "All" },
+              { key: "whatsapp", label: "WA" },
+              { key: "telegram", label: "TG" },
+              { key: "sms", label: "SMS" },
+            ].map(({ key, label }) => (
+              <button
+                key={label}
+                onClick={() => setChannelFilter(key)}
+                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                  channelFilter === key
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
