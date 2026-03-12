@@ -98,6 +98,7 @@ export function FlowToolbar({
   onExport,
   onImport,
   onClear,
+  onAutoLayout,
   onLoadSample,
   onValidate,
   onSimulate,
