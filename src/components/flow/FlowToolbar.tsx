@@ -299,6 +299,11 @@ export function FlowToolbar({
 
       {/* Right side actions */}
       <div className="ml-auto flex gap-1">
+        {onAutoLayout && viewMode === "canvas" && (
+          <Button variant="outline" size="sm" onClick={onAutoLayout} className="h-7 text-[11px] gap-1" title="Auto-layout nodes">
+            <AlignVerticalSpaceAround className="h-3 w-3" />
+          </Button>
+        )}
         {onSearch && (
           <Button variant="outline" size="sm" onClick={onSearch} className="h-7 text-[11px] gap-1">
             <Search className="h-3 w-3" />
