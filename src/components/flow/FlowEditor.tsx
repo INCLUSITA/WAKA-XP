@@ -44,6 +44,7 @@ import { FlowToolbar, EditorViewMode } from "./FlowToolbar";
 
 import { exportToTextIt, downloadJson } from "@/lib/flowExport";
 import { validateFlow, ValidationError, getTriggerReadiness } from "@/lib/flowValidation";
+import { TriggerRule } from "@/lib/triggerRules";
 import { ValidationPanel } from "./ValidationPanel";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { TranslatorPanel } from "./TranslatorPanel";
