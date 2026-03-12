@@ -1161,6 +1161,13 @@ function FlowEditorInner() {
             />
           </div>
         )}
+
+        {showRuns && (
+          <FlowRunsPanel
+            flowId={flowIdParam}
+            onClose={() => setShowRuns(false)}
+          />
+        )}
       </div>
 
       {/* Drop-to-create node menu */}
