@@ -133,6 +133,65 @@ export type Database = {
           },
         ]
       }
+      demo_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          demo_type: string
+          demo_url: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_views: number | null
+          tenant_id: string | null
+          title: string
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          demo_type?: string
+          demo_url: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_views?: number | null
+          tenant_id?: string | null
+          title: string
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          demo_type?: string
+          demo_url?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_views?: number | null
+          tenant_id?: string | null
+          title?: string
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_shares_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiences: {
         Row: {
           created_at: string
@@ -867,6 +926,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_demo_share_view: {
+        Args: { share_token: string }
+        Returns: undefined
       }
       next_asset_version_number: {
         Args: {
