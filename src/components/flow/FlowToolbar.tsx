@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getTriggerReadiness } from "@/lib/flowValidation";
 import { TriggerReadinessBadge } from "./TriggerReadinessBadge";
+import { TriggerRulesPanel } from "./TriggerRulesPanel";
+import { TriggerRule } from "@/lib/triggerRules";
 import {
   DropdownMenu,
   DropdownMenuContent,
