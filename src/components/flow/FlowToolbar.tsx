@@ -58,6 +58,8 @@ interface FlowToolbarProps {
   onFocusNode?: (nodeId: string) => void;
   pinnedStartNodeId?: string | null;
   onPinStartNode?: (nodeId: string | null) => void;
+  triggerRules?: TriggerRule[];
+  onTriggerRulesChange?: (rules: TriggerRule[]) => void;
 }
 
 const actionNodes = [
