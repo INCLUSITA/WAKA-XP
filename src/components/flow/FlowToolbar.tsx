@@ -102,6 +102,7 @@ export function FlowToolbar({
   onSimulate,
   onTranslate,
   onVersions,
+  onRuns,
   onPromoteToCandidate,
   saveStatus,
   experienceName,
