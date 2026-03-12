@@ -964,6 +964,8 @@ function FlowEditorInner() {
         onFocusNode={handleFocusNodeInCanvas}
         pinnedStartNodeId={pinnedStartNodeId}
         onPinStartNode={setPinnedStartNodeId}
+        triggerRules={triggerRules}
+        onTriggerRulesChange={setTriggerRules}
       />
 
       <input
