@@ -57,6 +57,7 @@ import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
 import { FlowRunsPanel } from "./FlowRunsPanel";
+import { autoLayoutFlow } from "@/lib/flowAutoLayout";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
