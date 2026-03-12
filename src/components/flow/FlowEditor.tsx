@@ -57,7 +57,6 @@ import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
 import { FlowRunsPanel } from "./FlowRunsPanel";
-import { autoLayoutFlow } from "@/lib/flowAutoLayout";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
@@ -197,6 +196,30 @@ function FlowEditorInner() {
           setNodes(result.nodes);
           setEdges(result.edges);
           setFlowName(result.name);
+
+          // Smart initial view: focus on entry node area after render
+          setTimeout(() => {
+            const loadedNodes = result.nodes as Node[];
+            const loadedEdges = result.edges as Edge[];
+            if (loadedNodes.length === 0) return;
+
+            // Find root nodes (no incoming edges)
+            const hasParent = new Set(loadedEdges.map((e) => e.target));
+            const roots = loadedNodes.filter((n) => !hasParent.has(n.id));
+            const entryNode = roots.length > 0 ? roots[0] : loadedNodes[0];
+
+            // Center on entry node with enough zoom to show surrounding structure
+            try {
+              reactFlowInstance.setCenter(
+                entryNode.position.x + 130,
+                entryNode.position.y + 200,
+                { zoom: 0.85, duration: 300 }
+              );
+            } catch {
+              reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
+            }
+          }, 150);
+
           const { data } = await supabase
             .from("flows")
             .select("experience_id")
@@ -942,12 +965,6 @@ function FlowEditorInner() {
         onExport={handleExport}
         onImport={handleImport}
         onClear={handleClear}
-        onAutoLayout={() => {
-          const { nodes: layouted } = autoLayoutFlow(nodes, edges);
-          setNodes(layouted);
-          setTimeout(() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 }), 50);
-          toast.success("Nodos reorganizados");
-        }}
         onLoadSample={handleLoadSample}
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}

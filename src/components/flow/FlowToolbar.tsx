@@ -1,6 +1,6 @@
 import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
-  ShieldCheck, Play, Languages, ChevronDown, History, Search, AlignVerticalSpaceAround,
+  ShieldCheck, Play, Languages, ChevronDown, History, Search,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
   Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
 } from "lucide-react";
@@ -35,7 +35,6 @@ interface FlowToolbarProps {
   onExport: () => void;
   onImport: () => void;
   onClear: () => void;
-  onAutoLayout?: () => void;
   onLoadSample?: () => void;
   onValidate?: () => void;
   onSimulate?: () => void;
@@ -98,7 +97,6 @@ export function FlowToolbar({
   onExport,
   onImport,
   onClear,
-  onAutoLayout,
   onLoadSample,
   onValidate,
   onSimulate,
@@ -299,11 +297,6 @@ export function FlowToolbar({
 
       {/* Right side actions */}
       <div className="ml-auto flex gap-1">
-        {onAutoLayout && viewMode === "canvas" && (
-          <Button variant="outline" size="sm" onClick={onAutoLayout} className="h-7 text-[11px] gap-1" title="Auto-layout nodes">
-            <AlignVerticalSpaceAround className="h-3 w-3" />
-          </Button>
-        )}
         {onSearch && (
           <Button variant="outline" size="sm" onClick={onSearch} className="h-7 text-[11px] gap-1">
             <Search className="h-3 w-3" />
