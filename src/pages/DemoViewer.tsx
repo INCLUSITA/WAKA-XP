@@ -65,7 +65,7 @@ function QuickShareButton({ demoTitle, demoId }: { demoTitle: string; demoId: st
         .single();
 
       if (error) throw error;
-      const url = `${window.location.origin}/shared/${data.token}`;
+      const url = `${PUBLIC_SHARE_ORIGIN}/shared/${data.token}`;
       setShareUrl(url);
       navigator.clipboard.writeText(url);
       setCopied(true);

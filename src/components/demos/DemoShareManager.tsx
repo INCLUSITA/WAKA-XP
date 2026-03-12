@@ -116,7 +116,7 @@ export default function DemoShareManager() {
   });
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/shared/${token}`;
+    const url = `${PUBLIC_SHARE_ORIGIN}/shared/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiado");
   };
