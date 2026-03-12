@@ -198,11 +198,17 @@ export default function FlowDashboard() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {flows.map((flow) => {
-              const expName = getExperienceName(flow.experience_id);
-              const candCount = candidateCountMap[flow.id] || 0;
-              const readiness = getTriggerReadiness(
+          <FlowCards
+            flows={flows}
+            experiences={experiences}
+            candidateCountMap={candidateCountMap}
+            getExperienceName={getExperienceName}
+            assignExperience={assignExperience}
+            navigate={navigate}
+            duplicateFlow={duplicateFlow}
+            archiveFlow={archiveFlow}
+            deleteFlow={deleteFlow}
+          />
                 (flow.nodes as unknown as Node[]) || [],
                 (flow.edges as unknown as Edge[]) || []
               );
