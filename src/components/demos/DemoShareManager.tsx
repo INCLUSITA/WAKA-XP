@@ -84,7 +84,7 @@ export default function DemoShareManager() {
       queryClient.invalidateQueries({ queryKey: ["demo-shares"] });
       setDialogOpen(false);
       setForm(INITIAL_FORM);
-      const shareUrl = `${window.location.origin}/shared/${data.token}`;
+      const shareUrl = `${PUBLIC_SHARE_ORIGIN}/shared/${data.token}`;
       navigator.clipboard.writeText(shareUrl);
       toast.success("Link creado y copiado al portapapeles", { description: shareUrl });
     },
