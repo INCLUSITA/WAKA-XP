@@ -45,6 +45,8 @@ export interface ChannelProviderDef {
   category: "messaging" | "voice" | "email" | "multi";
   /** Tags for filtering */
   tags?: string[];
+  /** Delivery hint shown in runtime surfaces */
+  deliveryHint?: string;
 }
 
 export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
