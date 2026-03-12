@@ -40,6 +40,7 @@ interface FlowToolbarProps {
   onSimulate?: () => void;
   onTranslate?: () => void;
   onVersions?: () => void;
+  onRuns?: () => void;
   onPromoteToCandidate?: () => void;
   saveStatus?: SaveStatus;
   experienceName?: string | null;
