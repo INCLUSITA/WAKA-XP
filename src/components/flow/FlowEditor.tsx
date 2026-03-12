@@ -223,10 +223,10 @@ function FlowEditorInner() {
             const loadedEdges = result.edges as Edge[];
             if (loadedNodes.length === 0) return;
 
-            // Find root nodes (no incoming edges)
+            // Prefer pinned start node, then root nodes
             const hasParent = new Set(loadedEdges.map((e) => e.target));
             const roots = loadedNodes.filter((n) => !hasParent.has(n.id));
-            const entryNode = roots.length > 0 ? roots[0] : loadedNodes[0];
+            const entryNode = pinnedNode || (roots.length > 0 ? roots[0] : loadedNodes[0]);
 
             // Center on entry node with enough zoom to show surrounding structure
             try {
