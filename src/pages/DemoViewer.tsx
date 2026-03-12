@@ -47,7 +47,7 @@ function QuickShareButton({ demoTitle, demoId }: { demoTitle: string; demoId: st
     if (!user) return;
     setCreating(true);
     try {
-      const demoUrl = `${window.location.origin}/demo/${demoId}`;
+      const demoUrl = `${PUBLIC_SHARE_ORIGIN}/share/${demoId}`;
       const expiresAt = expiresDays
         ? new Date(Date.now() + Number(expiresDays) * 86400000).toISOString()
         : null;
