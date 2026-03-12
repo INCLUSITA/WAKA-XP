@@ -119,6 +119,8 @@ export function FlowToolbar({
   onFocusNode,
   pinnedStartNodeId,
   onPinStartNode,
+  triggerRules = [],
+  onTriggerRulesChange,
 }: FlowToolbarProps) {
   const navigate = useNavigate();
   const triggerReadiness = getTriggerReadiness(nodes, edges, pinnedStartNodeId);
