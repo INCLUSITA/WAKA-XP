@@ -163,6 +163,7 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
     helpUrl: "https://developer.vonage.com/getting-started",
     category: "messaging",
     tags: ["sms", "nexmo"],
+    deliveryHint: "SMS delivery may take seconds to minutes. Carrier-level delivery receipts are asynchronous.",
   },
   {
     id: "mailgun",
