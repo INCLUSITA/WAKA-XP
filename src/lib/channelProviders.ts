@@ -42,7 +42,7 @@ export interface ChannelProviderDef {
   /** External help link */
   helpUrl?: string;
   /** Category for grouping */
-  category: "messaging" | "voice" | "email" | "sms" | "multi";
+  category: "messaging" | "voice" | "email" | "multi";
   /** Tags for filtering */
   tags?: string[];
 }
@@ -154,7 +154,7 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
       },
     ],
     helpUrl: "https://developer.vonage.com/getting-started",
-    category: "sms",
+    category: "messaging",
     tags: ["sms", "nexmo"],
   },
   {
