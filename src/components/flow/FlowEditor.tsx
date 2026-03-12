@@ -946,6 +946,7 @@ function FlowEditorInner() {
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
+        onRuns={() => setShowRuns((v) => !v)}
         onPromoteToCandidate={flowIdParam ? handlePromoteToCandidate : undefined}
         saveStatus={saveStatus}
         experienceName={experienceName}
