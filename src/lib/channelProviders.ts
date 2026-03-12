@@ -42,7 +42,7 @@ export interface ChannelProviderDef {
   /** External help link */
   helpUrl?: string;
   /** Category for grouping */
-  category: "messaging" | "voice" | "email" | "sms" | "multi";
+  category: "messaging" | "voice" | "email" | "multi";
   /** Tags for filtering */
   tags?: string[];
 }
