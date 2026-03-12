@@ -31,6 +31,8 @@ import TenantsPage from "./pages/TenantsPage";
 import ExperienceStudioPage from "./pages/ExperienceStudioPage";
 import WakaFlowPreview from "./pages/WakaFlowPreview";
 import ShareDemo from "./pages/ShareDemo";
+import SharedDemo from "./pages/SharedDemo";
+import DemoSharesPage from "./pages/DemoSharesPage";
 import RunsPage from "./pages/RunsPage";
 
 import NotFound from "./pages/NotFound";
@@ -48,6 +50,7 @@ const App = () => {
           <Routes>
             {/* Public routes */}
             <Route path="/share/:id" element={<ShareDemo />} />
+            <Route path="/shared/:token" element={<SharedDemo />} />
             <Route path="/login" element={<LoginPage />} />
 
             {/* Protected routes */}
@@ -64,6 +67,7 @@ const App = () => {
               {/* Assets & Resources */}
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/demos" element={<Demos />} />
+              <Route path="/demo-shares" element={<DemoSharesPage />} />
               <Route path="/demo/:id" element={<DemoViewer />} />
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/import" element={<ImportPage />} />
