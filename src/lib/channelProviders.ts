@@ -154,7 +154,7 @@ export const CHANNEL_PROVIDERS: ChannelProviderDef[] = [
       },
     ],
     helpUrl: "https://developer.vonage.com/getting-started",
-    category: "sms",
+    category: "messaging",
     tags: ["sms", "nexmo"],
   },
   {
