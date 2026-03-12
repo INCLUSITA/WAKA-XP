@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity, Radio, RotateCw, Send, Zap } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Settings, ExternalLink, Copy, MoreVertical, RotateCcw, Trash2, Activity, Radio, RotateCw, Send, Zap, Info } from "lucide-react";
 import { WhatsAppPolicyNote } from "@/components/whatsapp/WhatsAppPolicyHints";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
