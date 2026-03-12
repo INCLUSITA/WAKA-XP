@@ -40,6 +40,7 @@ interface FlowToolbarProps {
   onSimulate?: () => void;
   onTranslate?: () => void;
   onVersions?: () => void;
+  onRuns?: () => void;
   onPromoteToCandidate?: () => void;
   saveStatus?: SaveStatus;
   experienceName?: string | null;
@@ -101,6 +102,7 @@ export function FlowToolbar({
   onSimulate,
   onTranslate,
   onVersions,
+  onRuns,
   onPromoteToCandidate,
   saveStatus,
   experienceName,
@@ -327,6 +329,11 @@ export function FlowToolbar({
         {onVersions && (
           <Button variant="outline" size="sm" onClick={onVersions} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10 h-7 text-[11px]">
             <History className="mr-1 h-3 w-3" />
+          </Button>
+        )}
+        {onRuns && (
+          <Button variant="outline" size="sm" onClick={onRuns} className="border-blue-500/40 text-blue-600 hover:bg-blue-500/10 h-7 text-[11px]">
+            <Radio className="mr-1 h-3 w-3" /> Runs
           </Button>
         )}
         {onLoadSample && (

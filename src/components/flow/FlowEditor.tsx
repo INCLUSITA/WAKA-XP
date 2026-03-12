@@ -56,6 +56,7 @@ import { useFlowModules } from "@/hooks/useFlowModules";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
+import { FlowRunsPanel } from "./FlowRunsPanel";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
@@ -114,6 +115,7 @@ function FlowEditorInner() {
   const [channel, setChannel] = useState("whatsapp");
   const [dropMenu, setDropMenu] = useState<DropMenuPosition | null>(null);
   const [showNodeSearch, setShowNodeSearch] = useState(false);
+  const [showRuns, setShowRuns] = useState(false);
   const [pinnedStartNodeId, setPinnedStartNodeId] = useState<string | null>(null);
   const [triggerRules, setTriggerRules] = useState<TriggerRule[]>([]);
   const connectStartRef = useRef<{ nodeId: string; handleId?: string | null } | null>(null);
@@ -944,6 +946,7 @@ function FlowEditorInner() {
         onSimulate={() => setShowSimulator(true)}
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
+        onRuns={() => setShowRuns((v) => !v)}
         onPromoteToCandidate={flowIdParam ? handlePromoteToCandidate : undefined}
         saveStatus={saveStatus}
         experienceName={experienceName}
@@ -1158,6 +1161,13 @@ function FlowEditorInner() {
               onClose={() => setShowVersions(false)}
             />
           </div>
+        )}
+
+        {showRuns && (
+          <FlowRunsPanel
+            flowId={flowIdParam}
+            onClose={() => setShowRuns(false)}
+          />
         )}
       </div>
 
