@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Copy, ExternalLink, Power, Trash2, Eye, Clock, Link2 } from "lucide-react";
+import { PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
 
 interface DemoShareForm {
   title: string;
