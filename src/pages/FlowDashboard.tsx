@@ -195,7 +195,7 @@ export default function FlowDashboard() {
               );
               const stats = runStats?.[flow.id];
               return (
-                <Card key={flow.id} className="group relative transition-shadow hover:shadow-md">
+                <Card key={flow.id} className="group relative transition-shadow hover:shadow-md cursor-pointer" onClick={() => navigate(`/editor?id=${flow.id}`)}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
