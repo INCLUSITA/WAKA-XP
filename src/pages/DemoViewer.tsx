@@ -431,6 +431,7 @@ export default function DemoViewer() {
         isSandboxDemo={isSandboxDemo}
         activePanel={activePanel}
         onSetPanel={setActivePanel}
+        demoId={id || ""}
       />
       {isSandboxDemo && versions.length > 1 && (
         <SandboxVersionBar versions={versions} currentIndex={versionIndex} onNavigate={handleVersionNavigate} onRestore={handleVersionRestore} />
