@@ -198,7 +198,7 @@ export default function FlowDashboard() {
             </Button>
           </div>
         ) : (
-          <FlowCards
+          <FlowCardsGrid
             flows={flows}
             experiences={experiences}
             candidateCountMap={candidateCountMap}
@@ -208,61 +208,8 @@ export default function FlowDashboard() {
             duplicateFlow={duplicateFlow}
             archiveFlow={archiveFlow}
             deleteFlow={deleteFlow}
+            tenantId={tenantId}
           />
-                (flow.nodes as unknown as Node[]) || [],
-                (flow.edges as unknown as Edge[]) || []
-              );
-              return (
-                <Card key={flow.id} className="group relative transition-shadow hover:shadow-md">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
-                      <div className="flex gap-1 items-center">
-                        <TriggerReadinessBadge readiness={readiness} compact />
-                        {candCount > 0 && (
-                          <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-600 px-1.5">
-                            <Rocket className="h-2.5 w-2.5 mr-0.5" /> {candCount}
-                          </Badge>
-                        )}
-                        <Badge variant="secondary" className={`text-[10px] ${statusColors[flow.status] || ""}`}>{flow.status}</Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-2 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      Actualizado {format(new Date(flow.updated_at), "dd MMM yyyy, HH:mm", { locale: es })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{(flow.nodes as unknown as any[])?.length || 0} nodos</p>
-
-                    {/* Experience assignment */}
-                    <div className="flex items-center gap-1.5">
-                      <Link2 className="h-3 w-3 text-muted-foreground/50" />
-                      <Select
-                        value={flow.experience_id || "__none__"}
-                        onValueChange={(val) => assignExperience(flow.id, val === "__none__" ? null : val)}
-                      >
-                        <SelectTrigger className="h-7 text-[11px] border-border/50 bg-transparent w-full">
-                          <SelectValue placeholder="No experience" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__" className="text-xs text-muted-foreground">No experience</SelectItem>
-                          {experiences.map((exp) => (
-                            <SelectItem key={exp.id} value={exp.id} className="text-xs">{exp.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="gap-1 pt-0">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/editor?id=${flow.id}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => duplicateFlow(flow)}><Copy className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => archiveFlow(flow.id)}><Archive className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteFlow(flow.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
         )}
       </div>
     </div>
