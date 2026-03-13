@@ -387,6 +387,8 @@ export function WakaSovereignPlayer({
   onRate,
   onModuleClick,
   onSlideAction,
+  onCreditAction,
+  onMomoAction,
   status = "online",
   statusBar,
   dataMode: externalMode,
