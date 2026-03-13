@@ -468,7 +468,7 @@ export default function WakaPlayerDemo() {
     <div className="flex h-full flex-col bg-background">
       {/* Page Header */}
       <div className="flex items-center gap-3 border-b border-border px-6 py-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
