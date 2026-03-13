@@ -291,8 +291,8 @@ function FlowEditorInner() {
     }
     changeCount.current++;
     if (changeCount.current <= 2) return;
-    debouncedSave(nodes, edges, flowName);
-  }, [nodes, edges, flowName, debouncedSave]);
+    debouncedSave(nodes, edges, flowName, triggerRules);
+  }, [nodes, edges, flowName, triggerRules, debouncedSave]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
