@@ -732,6 +732,9 @@ export default function WakaPlayerDemo() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* ── Lifecycle ── */}
             <div className="space-y-2">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ciclo de vida</h3>
               <div className="space-y-1.5">
