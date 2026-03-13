@@ -92,7 +92,7 @@ interface Props {
   onOpenTimeline?: () => void;
 }
 
-export function RunDetailView({ run, onBack }: Props) {
+export function RunDetailView({ run, onBack, onOpenTimeline }: Props) {
   const { data: steps, isLoading: stepsLoading } = useFlowRunSteps(run.id);
   const [realtimeSteps, setRealtimeSteps] = useState<FlowRunStep[]>([]);
   const [newStepIds, setNewStepIds] = useState<Set<string>>(new Set());
