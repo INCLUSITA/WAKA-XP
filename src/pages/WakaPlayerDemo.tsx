@@ -63,6 +63,7 @@ const MODE_COLORS: Record<DataMode, string> = {
 
 export default function WakaPlayerDemo() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
