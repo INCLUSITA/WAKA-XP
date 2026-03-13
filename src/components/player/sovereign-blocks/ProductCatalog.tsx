@@ -34,18 +34,18 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
 
   if (mode === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(160,30%,85%)] bg-white px-3 py-2 max-w-[90%]">
-        {title && <p className="text-[11px] font-bold text-[hsl(160,50%,25%)] mb-1">{title}</p>}
-        {products.map((p, i) => (
+      <div className="rounded-lg border border-[hsl(270,20%,88%)] bg-white px-3 py-2 max-w-[90%]">
+        {title && <p className="text-[11px] font-bold text-[hsl(270,40%,35%)] mb-1">{title}</p>}
+        {products.map((p) => (
           <button
             key={p.id}
-            onClick={() => onProductClick?.(p)}
-            className="flex items-center justify-between w-full py-1.5 text-left border-t border-[hsl(160,20%,92%)] first:border-0"
+            onClick={() => (onProductClick ?? onAddToCart)?.(p)}
+            className="flex items-center justify-between w-full py-1.5 text-left border-t border-[hsl(270,15%,93%)] first:border-0"
           >
             <span className="text-[11px] text-[hsl(220,15%,20%)]">
               {p.emoji || "•"} {p.name}
             </span>
-            <span className="text-[10px] font-bold text-[hsl(160,60%,30%)]">{p.price}</span>
+            <span className="text-[10px] font-bold text-[hsl(270,45%,40%)]">{p.price}</span>
           </button>
         ))}
       </div>
