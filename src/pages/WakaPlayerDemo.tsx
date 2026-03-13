@@ -5,9 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen, GitBranch, Phone, User } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -16,10 +14,11 @@ import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-b
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
 import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
+import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
@@ -64,6 +63,7 @@ const MODE_COLORS: Record<DataMode, string> = {
 
 export default function WakaPlayerDemo() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
@@ -79,6 +79,7 @@ export default function WakaPlayerDemo() {
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("https://avatar.waka.africa/agent");
+  const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
 
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
@@ -108,6 +109,7 @@ export default function WakaPlayerDemo() {
       setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
+      setActiveScenarioConfig(full.scenarioConfig || {});
       toast.success(`Flujo "${full.name}" cargado`);
     });
   }, [flowIdParam, loadFlowFull]);
@@ -497,6 +499,18 @@ export default function WakaPlayerDemo() {
     navigate(`/player/live?flow=${flowId}`);
   }, [navigate, flowIdParam]);
 
+  const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
+    if (result.conversation.length > 0) {
+      setMessages(result.conversation);
+    }
+    if (result.config) {
+      setActiveScenarioConfig(result.config);
+      if (result.config.systemPrompt) {
+        setFlowContext(result.config.systemPrompt);
+      }
+    }
+  }, [setFlowContext]);
+
   const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
     if (flowContext && flowName) {
       setFlowContext(flowContext);
@@ -620,159 +634,23 @@ export default function WakaPlayerDemo() {
         </div>
       </div>
 
-      {/* ─── Right: Persistent Toolbox Panel ─── */}
-      <div className="w-[320px] border-l border-border bg-card flex flex-col shrink-0">
-        {/* Toolbox Header */}
-        <div className="px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            Panel de control
-          </h2>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Herramientas de iteración y producción
-          </p>
-        </div>
-
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-4">
-            {/* ── Session Info ── */}
-            <div className="space-y-2">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Sesión</h3>
-              <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">Mensajes</span>
-                  <Badge variant="secondary" className="text-[9px] gap-1">
-                    <Database className="h-2.5 w-2.5" />
-                    {messageCount}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">Modo datos</span>
-                  <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
-                    {MODE_LABELS[dataMode]}
-                  </Badge>
-                </div>
-                {activeFlowContextName && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">Contexto IA</span>
-                    <Badge variant="outline" className="text-[9px] gap-1 max-w-[140px] truncate">
-                      <GitBranch className="h-2.5 w-2.5 shrink-0" />
-                      {activeFlowContextName}
-                    </Badge>
-                  </div>
-                )}
-                {activeFlowTitle && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">Flujo activo</span>
-                    <Badge variant="outline" className="text-[9px] border-primary/30 text-primary max-w-[140px] truncate">
-                      {activeFlowTitle}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── Iteration Tools ── */}
-            <div className="space-y-2">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Iteración</h3>
-              <div className="space-y-1.5">
-                <Button
-                  variant={activeFlowContextName ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowFlowContextSelector(true)}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <GitBranch className="h-3.5 w-3.5" />
-                  {activeFlowContextName ? "Cambiar contexto IA" : "Cargar contexto IA"}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNewConversation}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Nueva conversación
-                </Button>
-              </div>
-            </div>
-
-            {/* ── WAKA VOICE & Avatar ── */}
-            <div className="space-y-2">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Canales interactivos</h3>
-              <div className="space-y-1.5">
-                <Button
-                  variant={showVoiceCall ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowVoiceCall(true)}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Llamar WAKA VOICE
-                </Button>
-
-                <Button
-                  variant={showAvatar ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowAvatar(true)}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  Abrir Avatar
-                </Button>
-
-                <div className="pt-1">
-                  <label className="text-[10px] text-muted-foreground block mb-1">URL del avatar</label>
-                  <Input
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://avatar.waka.africa/agent"
-                    className="h-7 text-[10px]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* ── Lifecycle ── */}
-            <div className="space-y-2">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ciclo de vida</h3>
-              <div className="space-y-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSaveDialog(true)}
-                  disabled={messages.length <= 2}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  Guardar como flujo
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFlowsPanel(true)}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  Ver flujos guardados
-                </Button>
-              </div>
-            </div>
-
-            {/* ── Saved Flows Quick List ── */}
-            <div className="space-y-2">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Flujos recientes</h3>
-              <SavedFlowsPanel
-                onLoad={handleLoadFlow}
-                onClose={() => {}}
-                activeFlowId={activeFlowId}
-                compact
-              />
-            </div>
-          </div>
-        </ScrollArea>
+      {/* ─── Right: Player Workbench ─── */}
+      <div className="w-[360px] border-l border-border bg-card flex flex-col shrink-0">
+        <PlayerWorkbench
+          flowId={activeFlowId}
+          flowTitle={activeFlowTitle}
+          scenarioConfig={activeScenarioConfig}
+          messageCount={messageCount}
+          tenantId={tenantId || ""}
+          onInstructionsSent={handleWorkbenchResult}
+          onNewConversation={handleNewConversation}
+          onSave={() => setShowSaveDialog(true)}
+          onOpenFlows={() => setShowFlowsPanel(true)}
+          onStartVoiceCall={() => setShowVoiceCall(true)}
+          onStartAvatar={() => setShowAvatar(true)}
+          avatarUrl={avatarUrl}
+          onAvatarUrlChange={setAvatarUrl}
+        />
       </div>
 
       {/* Save Flow Dialog */}
