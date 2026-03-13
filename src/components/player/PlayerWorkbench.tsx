@@ -52,7 +52,6 @@ interface UploadedAsset {
 export function PlayerWorkbench({
   flowId, flowTitle, scenarioConfig, messageCount, tenantId,
   onInstructionsSent, onNewConversation, onSave, onOpenFlows,
-  onStartVoiceCall, onStartAvatar, avatarUrl, onAvatarUrlChange,
 }: PlayerWorkbenchProps) {
   const [instructions, setInstructions] = useState(scenarioConfig?.systemPrompt || "");
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
