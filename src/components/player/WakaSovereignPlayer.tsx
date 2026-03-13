@@ -62,6 +62,14 @@ export interface PlayerMessage {
   menuTitle?: string;
   /** Emoji reaction on this message */
   reaction?: string;
+  /** Sovereign blocks — capabilities beyond WhatsApp */
+  catalog?: { title?: string; products: CatalogProduct[] };
+  inlineForm?: { title: string; fields: FormField[]; submitLabel?: string; icon?: string };
+  location?: LocationData;
+  payment?: PaymentCardData;
+  rating?: { title: string; type?: "stars" | "emoji" | "nps" };
+  certificate?: CertificateData;
+  training?: { title: string; modules: TrainingModule[]; overallProgress: number };
 }
 
 interface WakaSovereignPlayerProps {
