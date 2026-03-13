@@ -247,6 +247,10 @@ function ExperienceDetail({
               )}
             </TabsContent>
 
+            <TabsContent value="triggers">
+              <ExperienceTriggersTab experienceId={experience.id} />
+            </TabsContent>
+
             <TabsContent value="context">
               <ExperienceContextTab experienceId={experience.id} />
             </TabsContent>
