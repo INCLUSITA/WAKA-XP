@@ -73,36 +73,41 @@ export default function WakaPlayerDemo() {
   const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load conversation history on mount
+  // Determine if we're in "saved flow" mode
+  const flowIdParam = searchParams.get("flow");
+  const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
+  const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
+
+  // Load saved flow from query param (takes priority over generic history)
+  const flowParamLoaded = useRef(false);
   useEffect(() => {
-    if (historyLoaded.current || !conversationId) return;
+    if (flowParamLoaded.current) return;
+    if (!flowIdParam) return;
+    flowParamLoaded.current = true;
+    setActiveFlowId(flowIdParam);
+    loadFlowFull(flowIdParam).then((full) => {
+      if (full) {
+        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+        setDataMode(full.dataMode);
+        setActiveFlowTitle(full.name);
+        toast.success(`Flujo "${full.name}" cargado`);
+      }
+    });
+  }, [flowIdParam, loadFlowFull]);
+
+  // Load generic conversation history only when NOT loading a saved flow
+  useEffect(() => {
+    if (historyLoaded.current || !conversationId || flowIdParam) return;
     historyLoaded.current = true;
 
     loadHistory().then((history) => {
       if (history.length > 0) {
         setMessages(history);
       } else {
-        // Save welcome messages for new conversations
         WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
       }
     });
-  }, [conversationId, loadHistory, saveMessage]);
-
-  // Auto-load flow from query param
-  const flowParamLoaded = useRef(false);
-  useEffect(() => {
-    if (flowParamLoaded.current) return;
-    const flowId = searchParams.get("flow");
-    if (!flowId) return;
-    flowParamLoaded.current = true;
-    loadFlowFull(flowId).then((full) => {
-      if (full) {
-        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
-        setDataMode(full.dataMode);
-        toast.success(`Flujo "${full.name}" cargado`);
-      }
-    });
-  }, [searchParams, loadFlowFull]);
+  }, [conversationId, loadHistory, saveMessage, flowIdParam]);
 
   const status = isThinking ? "typing" : "online";
 
