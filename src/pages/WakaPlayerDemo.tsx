@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
-import type { CatalogProduct } from "@/components/player/sovereign-blocks";
+import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
 
 const INITIAL_MESSAGES: PlayerMessage[] = [
   {
@@ -101,6 +101,24 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
       total: "990",
       currency: "FCFA",
       methods: ["mobile_money", "card"],
+    },
+  },
+  // Media Carousel — WhatsApp: 1 image per message. WAKA: full carousel with lazy loading
+  {
+    id: "carousel-1",
+    text: "Nos dernières promotions :",
+    direction: "outbound" as const,
+    timestamp: new Date(Date.now() - 170_000),
+    source: "WAKA Media",
+    mediaCarousel: {
+      title: "Promotions Moov 🔥",
+      slides: [
+        { id: "s1", type: "image" as const, emoji: "📡", caption: "Forfait Internet illimité — Nouveau !", cta: "Souscrire maintenant" },
+        { id: "s2", type: "video" as const, emoji: "🎓", caption: "Tutoriel : Comment envoyer de l'argent", duration: "2:30", cta: "Regarder" },
+        { id: "s3", type: "image" as const, emoji: "🎉", caption: "Gagnez un smartphone avec Moov Money", cta: "Participer au concours" },
+        { id: "s4", type: "image" as const, emoji: "🌍", caption: "Roaming Afrique — Appels à 50 FCFA/min" },
+        { id: "s5", type: "video" as const, emoji: "💡", caption: "5 astuces pour économiser vos données", duration: "1:45" },
+      ],
     },
   },
   // Location Card — WhatsApp: static pin. WAKA: rich card
@@ -331,6 +349,16 @@ export default function WakaPlayerDemo() {
     [addBotReply]
   );
 
+  const handleSlideAction = useCallback(
+    (slide: MediaSlide) => {
+      addBotReply(`${slide.type === "video" ? "▶ Lecture" : "🖼 Ouverture"} : "${slide.caption || "Média"}"`, {
+        reaction: slide.type === "video" ? "🎬" : "👀",
+        quickReplies: ["↩ Retour", "📤 Partager", "❓ Aide"],
+      });
+    },
+    [addBotReply]
+  );
+
   const handleVoiceToggle = useCallback(
     (active: boolean) => {
       if (!active) {
@@ -408,6 +436,7 @@ export default function WakaPlayerDemo() {
                 onPayment={handlePayment}
                 onRate={handleRate}
                 onModuleClick={handleModuleClick}
+                onSlideAction={handleSlideAction}
               />
             </div>
 

@@ -26,6 +26,7 @@ import {
   RatingWidget,
   CertificateCard, type CertificateData,
   TrainingProgress, type TrainingModule,
+  MediaCarousel, type MediaSlide,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
@@ -70,6 +71,7 @@ export interface PlayerMessage {
   rating?: { title: string; type?: "stars" | "emoji" | "nps" };
   certificate?: CertificateData;
   training?: { title: string; modules: TrainingModule[]; overallProgress: number };
+  mediaCarousel?: { title?: string; slides: MediaSlide[] };
 }
 
 interface WakaSovereignPlayerProps {
@@ -85,6 +87,7 @@ interface WakaSovereignPlayerProps {
   onPayment?: (method: string) => void;
   onRate?: (value: number | string) => void;
   onModuleClick?: (moduleId: string) => void;
+  onSlideAction?: (slide: MediaSlide) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
@@ -372,6 +375,7 @@ export function WakaSovereignPlayer({
   onPayment,
   onRate,
   onModuleClick,
+  onSlideAction,
   status = "online",
   statusBar,
   dataMode: externalMode,
@@ -648,6 +652,15 @@ export function WakaSovereignPlayer({
                             modules={msg.training.modules}
                             overallProgress={msg.training.overallProgress}
                             onModuleClick={onModuleClick}
+                          />
+                        </div>
+                      )}
+                      {msg.mediaCarousel && (
+                        <div className="mt-1.5">
+                          <MediaCarousel
+                            title={msg.mediaCarousel.title}
+                            slides={msg.mediaCarousel.slides}
+                            onSlideAction={onSlideAction}
                           />
                         </div>
                       )}
