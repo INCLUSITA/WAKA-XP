@@ -77,6 +77,7 @@ export default function WakaPlayerDemo() {
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("https://avatar.waka.africa/agent");
+  const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
 
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
