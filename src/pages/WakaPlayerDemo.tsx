@@ -5,9 +5,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, Phone, User } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
@@ -15,10 +14,10 @@ import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-b
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
 import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
+import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
