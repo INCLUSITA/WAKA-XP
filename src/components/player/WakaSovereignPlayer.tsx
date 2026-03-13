@@ -26,6 +26,7 @@ import {
   RatingWidget,
   CertificateCard, type CertificateData,
   TrainingProgress, type TrainingModule,
+  MediaCarousel, type MediaSlide,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
