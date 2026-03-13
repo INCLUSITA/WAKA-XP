@@ -855,15 +855,71 @@ export function WakaSovereignPlayer({
           </div>
         )}
 
+        {/* ── Attach menu popup ── */}
+        <AnimatePresence>
+          {showAttachMenu && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-14 left-3 z-30 bg-white rounded-xl shadow-lg border border-[hsl(220,15%,90%)] p-1.5 flex flex-col gap-0.5 min-w-[180px]"
+            >
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+              >
+                <div className="h-8 w-8 rounded-full bg-[hsl(270,60%,55%)] flex items-center justify-center">
+                  <Camera className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-[hsl(220,15%,20%)]">Photo / Image</p>
+                  <p className="text-[9px] text-[hsl(220,10%,55%)]">Caméra ou galerie</p>
+                </div>
+              </button>
+              <button
+                onClick={() => docInputRef.current?.click()}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+              >
+                <div className="h-8 w-8 rounded-full bg-[hsl(210,60%,50%)] flex items-center justify-center">
+                  <Paperclip className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-[hsl(220,15%,20%)]">Document</p>
+                  <p className="text-[9px] text-[hsl(220,10%,55%)]">PDF, Word, Excel…</p>
+                </div>
+              </button>
+              <button
+                onClick={handleShareLocation}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+              >
+                <div className="h-8 w-8 rounded-full bg-[hsl(140,60%,40%)] flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-[hsl(220,15%,20%)]">Position GPS</p>
+                  <p className="text-[9px] text-[hsl(220,10%,55%)]">Partager ma localisation</p>
+                </div>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Input bar ── */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-[hsl(220,15%,92%)] flex-shrink-0">
-          {/* Camera button */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-[hsl(220,15%,92%)] flex-shrink-0 relative">
+          {/* Attach button */}
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+          <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip,.rar" className="hidden" onChange={handleDocSelect} />
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 text-[hsl(220,10%,50%)] hover:text-[hsl(160,60%,35%)] hover:bg-[hsl(160,30%,95%)] transition-colors active:scale-95"
+            onClick={() => setShowAttachMenu(!showAttachMenu)}
+            className={cn(
+              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
+              showAttachMenu
+                ? "bg-[hsl(160,60%,35%)] text-white rotate-45"
+                : "text-[hsl(220,10%,50%)] hover:text-[hsl(160,60%,35%)] hover:bg-[hsl(160,30%,95%)]"
+            )}
           >
-            <Camera className="h-4.5 w-4.5" />
+            <Paperclip className="h-4.5 w-4.5 transition-transform" />
           </button>
 
           <div className="flex-1">
