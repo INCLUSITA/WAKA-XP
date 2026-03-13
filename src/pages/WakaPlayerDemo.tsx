@@ -22,6 +22,8 @@ import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
+import { AvatarOverlay } from "@/components/player/AvatarOverlay";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
