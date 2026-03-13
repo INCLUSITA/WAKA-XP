@@ -57,7 +57,6 @@ export default function PlayerFlowsPage() {
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [showFlowContext, setShowFlowContext] = useState(false);
   const [cloneTarget, setCloneTarget] = useState<SavedPlayerFlow | null>(null);
   const [cloneName, setCloneName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<SavedPlayerFlow | null>(null);
@@ -65,11 +64,6 @@ export default function PlayerFlowsPage() {
   const [renameName, setRenameName] = useState("");
   const [statusTarget, setStatusTarget] = useState<SavedPlayerFlow | null>(null);
   const [newStatus, setNewStatus] = useState<FlowStatus>("sandbox");
-
-  // Create new flow dialog state
-  const [createName, setCreateName] = useState("");
-  const [createDesc, setCreateDesc] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
 
   const filtered = flows.filter((f) => {
     if (tab !== "all" && f.status !== tab) return false;
