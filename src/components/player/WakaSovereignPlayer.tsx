@@ -350,12 +350,12 @@ function RichCardBubble({
       initial={mode === "libre" ? { opacity: 0, y: 12, scale: 0.95 } : { opacity: 0 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="rounded-xl border border-[hsl(160,30%,85%)] bg-white overflow-hidden shadow-sm max-w-[85%]"
+      className="rounded-xl border border-[hsl(270,20%,88%)] bg-white overflow-hidden shadow-sm max-w-[85%]"
     >
       <div
         className="px-3 py-4 flex items-center gap-2.5"
         style={{
-          background: card.bgGradient || "linear-gradient(135deg, hsl(160,70%,40%), hsl(200,70%,45%))",
+          background: card.bgGradient || "linear-gradient(135deg, hsl(270,50%,45%), hsl(300,40%,50%))",
         }}
       >
         {card.icon && <AnimatedEmoji emoji={card.icon} size={28} />}
@@ -367,12 +367,12 @@ function RichCardBubble({
         </div>
       </div>
       {card.actions && card.actions.length > 0 && (
-        <div className="divide-y divide-[hsl(160,20%,92%)]">
+        <div className="divide-y divide-[hsl(270,15%,93%)]">
           {card.actions.map((action, i) => (
             <button
               key={i}
               onClick={() => onAction?.(action)}
-              className="w-full px-3 py-2.5 text-[12px] font-medium text-[hsl(160,70%,30%)] hover:bg-[hsl(160,30%,96%)] transition-colors text-center active:bg-[hsl(160,30%,92%)]"
+              className="w-full px-3 py-2.5 text-[12px] font-medium text-[hsl(270,50%,40%)] hover:bg-[hsl(270,20%,97%)] transition-colors text-center active:bg-[hsl(270,20%,93%)]"
             >
               {action}
             </button>
