@@ -280,22 +280,28 @@ serve(async (req) => {
       ? "\n\nL'utilisateur est en mode SUBVENTIONNÉ. Sois concis mais chaleureux."
       : "\n\nL'utilisateur est en mode LIBRE. Tu peux être expressif avec des emojis et des messages riches.";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT + modeContext },
-          ...messages,
-        ],
-        tools: SOVEREIGN_TOOLS,
-        stream: false,
-      }),
-    });
+      // Use vision-capable model when images are present
+      const hasImages = messages.some((m: any) =>
+        Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
+      );
+      const model = hasImages ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview";
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT + modeContext },
+            ...messages,
+          ],
+          tools: SOVEREIGN_TOOLS,
+          stream: false,
+        }),
+      });
 
     if (!response.ok) {
       const status = response.status;

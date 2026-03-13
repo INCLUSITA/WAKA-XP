@@ -59,12 +59,13 @@ export default function WakaPlayerDemo() {
 
   const status = isThinking ? "typing" : "online";
 
-  const addUserMessage = useCallback((text: string) => {
+  const addUserMessage = useCallback((text: string, imageUrl?: string) => {
     const userMsg: PlayerMessage = {
       id: `user-${Date.now()}`,
       text,
       direction: "inbound",
       timestamp: new Date(),
+      imageUrl,
     };
     setMessages((prev) => [...prev, userMsg]);
     return userMsg;
@@ -91,6 +92,23 @@ export default function WakaPlayerDemo() {
       } else {
         addBotMessage({
           text: "Désolé, je n'ai pas pu traiter votre demande. Réessayez.",
+          quickReplies: ["🔄 Réessayer", "🏠 Menu principal"],
+        });
+      }
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  // Image send — multimodal vision
+  const handleSendImage = useCallback(
+    async (imageDataUrl: string, caption?: string) => {
+      addUserMessage(caption || "📸 Photo envoyée", imageDataUrl);
+      const response = await sendToAI(caption || "", dataMode, imageDataUrl);
+      if (response) {
+        addBotMessage(response);
+      } else {
+        addBotMessage({
+          text: "Désolé, je n'ai pas pu analyser cette image. Réessayez.",
           quickReplies: ["🔄 Réessayer", "🏠 Menu principal"],
         });
       }
@@ -285,6 +303,7 @@ export default function WakaPlayerDemo() {
                 dataMode={dataMode}
                 onDataModeChange={setDataMode}
                 onSend={handleSend}
+                onSendImage={handleSendImage}
                 onQuickReply={handleQuickReply}
                 onVoiceToggle={handleVoiceToggle}
                 onMenuSelect={handleMenuSelect}
