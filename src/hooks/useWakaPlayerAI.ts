@@ -50,6 +50,7 @@ export function useWakaPlayerAI() {
         body: {
           messages: historyRef.current,
           dataMode,
+          flowContext: flowContextRef.current || undefined,
         },
       });
 
