@@ -112,10 +112,26 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
           <div className="p-2 space-y-1.5">
             {filtered.map((flow) => {
               const sc = STATUS_CONFIG[flow.status];
+              const isActive = activeFlowId === flow.id;
+
               return (
                 <div
                   key={flow.id}
-                  className="group rounded-lg border border-border/50 bg-card/50 hover:bg-card p-3 transition-colors"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onLoad(flow.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onLoad(flow.id);
+                    }
+                  }}
+                  className={cn(
+                    "group rounded-lg border p-3 transition-colors cursor-pointer",
+                    isActive
+                      ? "border-primary/50 bg-primary/10"
+                      : "border-border/50 bg-card/50 hover:bg-card"
+                  )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -124,6 +140,9 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
                         <Badge variant="outline" className={`text-[9px] gap-0.5 border ${sc.className}`}>
                           {sc.icon} {sc.label}
                         </Badge>
+                        {isActive && (
+                          <Badge variant="secondary" className="text-[9px]">Activo</Badge>
+                        )}
                       </div>
                       {flow.description && (
                         <p className="text-[10px] text-muted-foreground truncate">{flow.description}</p>
@@ -140,12 +159,15 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => onLoad(flow.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onLoad(flow.id);
+                        }}
                         title="Cargar"
                       >
                         <Play className="h-3 w-3 text-primary" />
@@ -154,7 +176,10 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => handleClone(flow)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClone(flow);
+                        }}
                         title="Clonar como Sandbox"
                       >
                         <Copy className="h-3 w-3" />
@@ -163,7 +188,10 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
                         value={flow.status}
                         onValueChange={(v) => handleStatusChange(flow, v as FlowStatus)}
                       >
-                        <SelectTrigger className="h-6 w-6 p-0 border-0 bg-transparent [&>svg]:hidden">
+                        <SelectTrigger
+                          className="h-6 w-6 p-0 border-0 bg-transparent [&>svg]:hidden"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {sc.icon}
                         </SelectTrigger>
                         <SelectContent>
@@ -177,7 +205,10 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedF
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-destructive/60 hover:text-destructive"
-                          onClick={() => setConfirmDelete(flow.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(flow.id);
+                          }}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
