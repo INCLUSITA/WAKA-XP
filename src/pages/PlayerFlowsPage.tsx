@@ -148,13 +148,13 @@ export default function PlayerFlowsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFlowContext(true)} className="gap-1.5 text-xs">
-            <GitBranch className="h-3.5 w-3.5" />
-            Importar contexto
+          <Button variant="outline" size="sm" onClick={() => navigate("/player/live")} className="gap-1.5 text-xs">
+            <Play className="h-3.5 w-3.5" />
+            Player libre
           </Button>
           <Button size="sm" onClick={() => setShowCreate(true)} className="gap-1.5 text-xs">
-            <Plus className="h-3.5 w-3.5" />
-            Nuevo flujo
+            <Sparkles className="h-3.5 w-3.5" />
+            Crear flujo
           </Button>
         </div>
       </div>
