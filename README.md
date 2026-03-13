@@ -453,7 +453,7 @@ Gestión de Production Candidates con ciclo de vida completo.
 - ✅ Vinculación automática de flow si hay uno solo, selección si hay múltiples
 - ✅ Trazabilidad completa via versionado transversal
 
-### 5.6. Simulation Engine
+### 5.7. Simulation Engine
 
 **Simulador WhatsApp integrado** en el Classic Builder:
 
