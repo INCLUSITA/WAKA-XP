@@ -595,6 +595,62 @@ export function WakaSovereignPlayer({
                           />
                         </div>
                       )}
+
+                      {/* ── Sovereign Blocks ── */}
+                      {msg.catalog && (
+                        <div className="mt-1.5">
+                          <ProductCatalog
+                            title={msg.catalog.title}
+                            products={msg.catalog.products}
+                            onAddToCart={onAddToCart}
+                          />
+                        </div>
+                      )}
+                      {msg.inlineForm && (
+                        <div className="mt-1.5">
+                          <InlineForm
+                            title={msg.inlineForm.title}
+                            fields={msg.inlineForm.fields}
+                            submitLabel={msg.inlineForm.submitLabel}
+                            icon={msg.inlineForm.icon}
+                            onSubmit={onFormSubmit}
+                          />
+                        </div>
+                      )}
+                      {msg.location && (
+                        <div className="mt-1.5">
+                          <LocationCard location={msg.location} />
+                        </div>
+                      )}
+                      {msg.payment && (
+                        <div className="mt-1.5">
+                          <PaymentCard payment={msg.payment} onPay={onPayment} />
+                        </div>
+                      )}
+                      {msg.rating && (
+                        <div className="mt-1.5">
+                          <RatingWidget
+                            title={msg.rating.title}
+                            type={msg.rating.type}
+                            onRate={onRate}
+                          />
+                        </div>
+                      )}
+                      {msg.certificate && (
+                        <div className="mt-1.5">
+                          <CertificateCard certificate={msg.certificate} />
+                        </div>
+                      )}
+                      {msg.training && (
+                        <div className="mt-1.5">
+                          <TrainingProgress
+                            title={msg.training.title}
+                            modules={msg.training.modules}
+                            overallProgress={msg.training.overallProgress}
+                            onModuleClick={onModuleClick}
+                          />
+                        </div>
+                      )}
                     </BubbleWrapper>
                   );
                 })}
