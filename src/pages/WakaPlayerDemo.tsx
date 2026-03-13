@@ -97,12 +97,44 @@ export default function WakaPlayerDemo() {
     "🏠 Menu principal",
   ];
 
+  /** Extract numbered/bulleted options from text to generate quick reply buttons */
+  const extractOptionsFromText = (text: string): string[] => {
+    const options: string[] = [];
+    // Match patterns like "1. 📱 **Option Name**" or "- **Option**" or "1. Option"
+    const lines = text.split("\n");
+    for (const line of lines) {
+      const match = line.match(/^\s*(?:\d+[.)]\s*|[-•]\s*)([^\n]{3,60})/);
+      if (match) {
+        // Clean markdown bold markers and trim
+        let label = match[1].replace(/\*\*/g, "").replace(/\s*[:—–-]\s*.+$/, "").trim();
+        // Only include if it looks like a selectable option (not a description)
+        if (label.length >= 3 && label.length <= 50 && !label.includes("(") && !label.match(/^\d/)) {
+          options.push(label);
+        }
+      }
+    }
+    return options.slice(0, 5); // Max 5 buttons
+  };
+
   const addBotMessage = useCallback((partial: Partial<PlayerMessage>, extra?: { aiModel?: string; aiLatencyMs?: number }) => {
-    // Always ensure continuation menu if no interactive elements present
     const hasInteraction = partial.quickReplies?.length || partial.menu?.length || partial.catalog ||
       partial.inlineForm || partial.payment || partial.rating || partial.servicePlans ||
       partial.creditSimulation || partial.clientStatus || partial.momoAccount ||
       partial.paymentConfirmation || partial.creditContract || partial.deviceLockConsent;
+
+    // Try to extract options from text if no quick replies provided
+    let quickReplies = partial.quickReplies;
+    if (!quickReplies?.length && !hasInteraction && partial.text) {
+      const extracted = extractOptionsFromText(partial.text);
+      if (extracted.length >= 2) {
+        quickReplies = extracted;
+      }
+    }
+
+    // Ultimate fallback: always show navigation menu
+    if (!quickReplies?.length && !hasInteraction) {
+      quickReplies = FALLBACK_REPLIES;
+    }
 
     const botMsg: PlayerMessage = {
       id: `bot-${Date.now()}`,
@@ -110,7 +142,7 @@ export default function WakaPlayerDemo() {
       direction: "outbound",
       timestamp: new Date(),
       ...partial,
-      quickReplies: partial.quickReplies?.length ? partial.quickReplies : (!hasInteraction ? FALLBACK_REPLIES : undefined),
+      quickReplies,
     };
     setMessages((prev) => [...prev, botMsg]);
     saveMessage(botMsg, extra);
