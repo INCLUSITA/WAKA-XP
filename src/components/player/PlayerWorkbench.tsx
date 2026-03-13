@@ -11,8 +11,7 @@
 import { useState, useCallback, useRef } from "react";
 import {
   Send, Upload, FileJson, FileText, Image as ImageIcon, RotateCcw,
-  Save, Sparkles, Loader2, ChevronDown, ChevronUp, FolderOpen,
-  Phone, User, Pencil,
+  Save, Sparkles, Loader2, FolderOpen, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
