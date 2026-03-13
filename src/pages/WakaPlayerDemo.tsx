@@ -88,6 +88,22 @@ export default function WakaPlayerDemo() {
     });
   }, [conversationId, loadHistory, saveMessage]);
 
+  // Auto-load flow from query param
+  const flowParamLoaded = useRef(false);
+  useEffect(() => {
+    if (flowParamLoaded.current) return;
+    const flowId = searchParams.get("flow");
+    if (!flowId) return;
+    flowParamLoaded.current = true;
+    loadFlowFull(flowId).then((full) => {
+      if (full) {
+        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+        setDataMode(full.dataMode);
+        toast.success(`Flujo "${full.name}" cargado`);
+      }
+    });
+  }, [searchParams, loadFlowFull]);
+
   const status = isThinking ? "typing" : "online";
 
   const addUserMessage = useCallback((text: string, imageUrl?: string) => {
