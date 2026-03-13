@@ -1,18 +1,13 @@
 /**
- * Waka Sovereign Player — Hybrid UI
- *
- * Matches the WhatsApp Simulator aesthetic: professional phone-frame,
- * WhatsApp-style chat area, clean bubbles, Waka branding in header.
- * Supports: quick replies, progress bar, voicebot UI.
+ * Waka Sovereign Player — Full iPhone WhatsApp Business aesthetic with WAKA identity
  */
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Bot, RotateCcw, MoreVertical } from "lucide-react";
+import { Send, Mic, MicOff, Phone, Video, MoreVertical, Check, CheckCheck, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 
 /* ── Types ── */
 
@@ -22,16 +17,20 @@ export interface PlayerMessage {
   direction: "inbound" | "outbound";
   timestamp: Date;
   quickReplies?: string[];
-  /** 0-100 progress bar shown under the message */
   progress?: number;
   progressLabel?: string;
-  /** voicebot flag — renders waveform UI */
   isVoice?: boolean;
+  /** Source label under message e.g. "WAKA NEXUS → WhatsApp" */
+  source?: string;
+  /** System event (renders as centered gold card) */
+  isSystemEvent?: boolean;
 }
 
 interface WakaSovereignPlayerProps {
   messages: PlayerMessage[];
   botName?: string;
+  botSubtitle?: string;
+  avatarUrl?: string;
   onSend?: (text: string) => void;
   onQuickReply?: (label: string) => void;
   onVoiceToggle?: (active: boolean) => void;
@@ -43,19 +42,17 @@ interface WakaSovereignPlayerProps {
 /* ── Voicebot Waveform ── */
 function VoiceWaveform({ active }: { active: boolean }) {
   return (
-    <div className="flex items-end gap-[3px] h-6">
+    <div className="flex items-end gap-[2px] h-5">
       {[0.6, 1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7, 0.5, 1, 0.6, 0.8].map((h, i) => (
         <motion.div
           key={i}
-          className="w-[3px] rounded-full bg-primary"
-          initial={{ height: `${h * 24}px`, opacity: 0.3 }}
+          className="w-[2px] rounded-full"
+          style={{ backgroundColor: "hsl(var(--primary))" }}
+          initial={{ height: `${h * 20}px`, opacity: 0.3 }}
           animate={
             active
-              ? {
-                  height: [`${h * 10}px`, `${h * 24}px`, `${h * 14}px`],
-                  opacity: [0.4, 0.9, 0.5],
-                }
-              : { height: `${h * 8}px`, opacity: 0.2 }
+              ? { height: [`${h * 8}px`, `${h * 20}px`, `${h * 12}px`], opacity: [0.4, 0.9, 0.5] }
+              : { height: `${h * 6}px`, opacity: 0.2 }
           }
           transition={
             active
@@ -68,11 +65,43 @@ function VoiceWaveform({ active }: { active: boolean }) {
   );
 }
 
+/* ── Status Bar (iPhone top) ── */
+function IPhoneStatusBar() {
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="flex items-center justify-between px-6 py-1.5 text-[11px] font-semibold text-foreground/80">
+      <span>{time}</span>
+      <div className="absolute left-1/2 -translate-x-1/2 w-[85px] h-[25px] bg-foreground/90 rounded-full" />
+      <div className="flex items-center gap-1">
+        {/* Signal bars */}
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor" className="opacity-70">
+          <rect x="0" y="8" width="3" height="3" rx="0.5" />
+          <rect x="4" y="5" width="3" height="6" rx="0.5" />
+          <rect x="8" y="2" width="3" height="9" rx="0.5" />
+          <rect x="12" y="0" width="3" height="11" rx="0.5" opacity="0.3" />
+        </svg>
+        {/* WiFi */}
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor" className="opacity-70">
+          <path d="M7 9.5a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zM3.5 6.2a5 5 0 017 0l-.9.9a3.6 3.6 0 00-5.2 0l-.9-.9zM1 3.7a8.5 8.5 0 0112 0l-.9.9a7.1 7.1 0 00-10.2 0L1 3.7z" />
+        </svg>
+        {/* Battery */}
+        <svg width="22" height="11" viewBox="0 0 22 11" fill="currentColor" className="opacity-70">
+          <rect x="0" y="1" width="19" height="9" rx="2" stroke="currentColor" strokeWidth="1" fill="none" />
+          <rect x="1.5" y="2.5" width="14" height="6" rx="1" />
+          <rect x="20" y="3.5" width="2" height="4" rx="0.5" opacity="0.4" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Component ── */
 
 export function WakaSovereignPlayer({
   messages,
-  botName = "WAKA",
+  botName = "WAKA XP",
+  botSubtitle = "Business Account · WAKA",
   onSend,
   onQuickReply,
   onVoiceToggle,
@@ -84,7 +113,6 @@ export function WakaSovereignPlayer({
   const [voiceActive, setVoiceActive] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -110,142 +138,158 @@ export function WakaSovereignPlayer({
     onVoiceToggle?.(next);
   };
 
-  // Last message quick replies
   const lastMsg = messages[messages.length - 1];
   const activeQuickReplies = lastMsg?.quickReplies?.length ? lastMsg.quickReplies : [];
 
   return (
-    <div className={cn("flex h-full w-full flex-col border-l border-border bg-background shadow-2xl", className)}>
-      {/* ── Header — WhatsApp Simulator style ── */}
-      <div className="flex items-center gap-3 bg-primary px-4 py-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/20">
-          <Bot className="h-5 w-5 text-primary-foreground" />
+    <div className={cn("flex h-full w-full flex-col bg-background overflow-hidden", className)}>
+      {/* ── WhatsApp Business Header (teal/dark) ── */}
+      <div className="bg-[hsl(168,76%,26%)] px-3 py-2.5 flex items-center gap-3 relative">
+        {/* Back arrow */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="opacity-70 flex-shrink-0">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+
+        {/* Avatar */}
+        <div className="h-10 w-10 rounded-full bg-[hsl(160,50%,35%)] flex items-center justify-center flex-shrink-0 border-2 border-white/10 relative">
+          <SalamandraSvg className="h-6 w-6 text-white/90" />
         </div>
+
+        {/* Name & subtitle */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-primary-foreground">{botName}</p>
-          <p className="text-xs text-primary-foreground/70">
-            {status === "online" && "en ligne"}
-            {status === "typing" && (
-              <span className="italic">en train d'écrire…</span>
-            )}
-            {status === "offline" && "hors ligne"}
+          <div className="flex items-center gap-1.5">
+            <p className="text-[14px] font-semibold text-white truncate">{botName}</p>
+            {/* Verified badge */}
+            <div className="h-4 w-4 rounded-full bg-[hsl(200,80%,50%)] flex items-center justify-center flex-shrink-0">
+              <Check className="h-2.5 w-2.5 text-white" />
+            </div>
+          </div>
+          <p className="text-[11px] text-white/60 truncate">
+            {status === "typing" ? "typing…" : botSubtitle}
           </p>
         </div>
-        <div className="flex items-center gap-1">
-          {onReset && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onReset}
-              className="text-primary-foreground hover:bg-primary-foreground/20"
-              title="Réinitialiser"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-primary-foreground hover:bg-primary-foreground/20"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+
+        {/* Action icons */}
+        <div className="flex items-center gap-3">
+          <Video className="h-[18px] w-[18px] text-white/60" />
+          <Phone className="h-[18px] w-[18px] text-white/60" />
+          <MoreVertical className="h-[18px] w-[18px] text-white/60" />
         </div>
       </div>
 
-      {/* ── Chat area — WhatsApp-style patterned background ── */}
+      {/* ── Chat area — WhatsApp wallpaper ── */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-4 relative"
+        className="flex-1 overflow-y-auto relative"
         ref={scrollRef}
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e5ddd5' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundColor: "hsl(var(--muted))",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23075e54' fill-opacity='0.04'%3E%3Ccircle cx='40' cy='40' r='3'/%3E%3Ccircle cx='120' cy='80' r='2'/%3E%3Ccircle cx='200' cy='30' r='2.5'/%3E%3Ccircle cx='280' cy='70' r='2'/%3E%3Ccircle cx='360' cy='50' r='3'/%3E%3Ccircle cx='80' cy='140' r='2'/%3E%3Ccircle cx='160' cy='160' r='3'/%3E%3Ccircle cx='240' cy='130' r='2'/%3E%3Ccircle cx='320' cy='150' r='2.5'/%3E%3Ccircle cx='60' cy='240' r='2.5'/%3E%3Ccircle cx='140' cy='260' r='2'/%3E%3Ccircle cx='220' cy='230' r='3'/%3E%3Ccircle cx='300' cy='250' r='2'/%3E%3Ccircle cx='380' cy='230' r='2.5'/%3E%3Ccircle cx='40' cy='340' r='2'/%3E%3Ccircle cx='120' cy='360' r='3'/%3E%3Ccircle cx='200' cy='330' r='2'/%3E%3Ccircle cx='280' cy='350' r='2.5'/%3E%3Ccircle cx='360' cy='340' r='2'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundColor: "hsl(225, 25%, 12%)",
         }}
       >
-        {/* Salamandra watermark */}
+        {/* Salamandra watermark — very subtle */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <SalamandraSvg className="h-[60%] w-[60%] text-primary opacity-[0.04]" />
+          <SalamandraSvg className="h-[50%] w-[50%] text-white opacity-[0.02]" />
         </div>
 
-        <div className="relative z-10 space-y-2">
+        <div className="relative z-10 px-3 py-3 space-y-1.5">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-              <SalamandraSvg className="h-16 w-16 text-primary opacity-20 mb-3" />
-              <p className="text-sm font-medium">Aucun message</p>
-              <p className="text-[10px] mt-1">Envoyez un message pour commencer</p>
+            <div className="flex flex-col items-center justify-center h-64">
+              <SalamandraSvg className="h-14 w-14 text-white opacity-10 mb-3" />
+              <p className="text-[11px] text-white/30">Appuyez sur Lancer Démo</p>
             </div>
           ) : (
             <AnimatePresence initial={false}>
-              {messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={cn(
-                    "flex gap-2",
-                    msg.direction === "outbound" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
-                      msg.direction === "outbound"
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-card border border-border text-foreground rounded-bl-md"
-                    )}
-                  >
-                    {/* Voice message UI */}
-                    {msg.isVoice ? (
-                      <div className="flex items-center gap-2 min-w-[140px]">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Mic className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <VoiceWaveform active={false} />
-                        <span className="text-[10px] text-muted-foreground ml-auto">0:12</span>
-                      </div>
-                    ) : (
-                      <p className="whitespace-pre-wrap break-words leading-relaxed">
-                        {msg.text}
-                      </p>
-                    )}
-
-                    {/* Progress bar (micro-learning) */}
-                    {msg.progress != null && (
-                      <div className="mt-2 space-y-1">
-                        <Progress value={msg.progress} className="h-1.5" />
-                        {msg.progressLabel && (
-                          <p
-                            className={cn(
-                              "text-[9px]",
-                              msg.direction === "outbound"
-                                ? "text-primary-foreground/60"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {msg.progressLabel}
-                          </p>
+              {messages.map((msg) => {
+                /* System event card */
+                if (msg.isSystemEvent) {
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-center my-2"
+                    >
+                      <div className="bg-[hsl(45,80%,35%)]/20 border border-[hsl(45,70%,45%)]/30 rounded-lg px-3 py-2 max-w-[90%]">
+                        <p className="text-[11px] text-[hsl(45,80%,70%)] font-medium leading-relaxed whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
+                        {msg.source && (
+                          <p className="text-[9px] text-[hsl(45,60%,50%)] mt-1">{msg.source}</p>
                         )}
                       </div>
-                    )}
+                    </motion.div>
+                  );
+                }
 
-                    {/* Timestamp */}
-                    <p
+                const isOut = msg.direction === "outbound";
+
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn("flex", isOut ? "justify-start" : "justify-end")}
+                  >
+                    <div
                       className={cn(
-                        "text-[9px] text-right mt-1",
-                        msg.direction === "outbound"
-                          ? "text-primary-foreground/50"
-                          : "text-muted-foreground/50"
+                        "max-w-[85%] rounded-lg px-3 py-2 shadow-md relative",
+                        isOut
+                          ? "bg-[hsl(220,20%,18%)] text-white rounded-tl-none"
+                          : "bg-[hsl(160,60%,22%)] text-white rounded-tr-none"
                       )}
                     >
-                      {msg.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+                      {/* WhatsApp tail */}
+                      <div
+                        className={cn(
+                          "absolute top-0 w-0 h-0",
+                          isOut
+                            ? "left-[-6px] border-t-[8px] border-r-[6px] border-t-[hsl(220,20%,18%)] border-r-transparent"
+                            : "right-[-6px] border-t-[8px] border-l-[6px] border-t-[hsl(160,60%,22%)] border-l-transparent"
+                        )}
+                      />
+
+                      {/* Voice UI */}
+                      {msg.isVoice ? (
+                        <div className="flex items-center gap-2 min-w-[130px]">
+                          <div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <Mic className="h-3 w-3 text-white/70" />
+                          </div>
+                          <VoiceWaveform active={false} />
+                          <span className="text-[10px] text-white/40 ml-auto">0:12</span>
+                        </div>
+                      ) : (
+                        <p className="text-[13px] leading-[1.6] whitespace-pre-wrap break-words">
+                          {msg.text}
+                        </p>
+                      )}
+
+                      {/* Progress bar */}
+                      {msg.progress != null && (
+                        <div className="mt-2 space-y-1">
+                          <Progress value={msg.progress} className="h-1.5 bg-white/10" />
+                          {msg.progressLabel && (
+                            <p className="text-[9px] text-white/50">{msg.progressLabel}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Source label + timestamp */}
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        {msg.source && (
+                          <p className="text-[9px] text-white/30 italic">{msg.source}</p>
+                        )}
+                        <div className="flex items-center gap-1 ml-auto">
+                          <span className="text-[9px] text-white/35">
+                            {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {!isOut && <CheckCheck className="h-3 w-3 text-[hsl(200,80%,60%)]" />}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           )}
 
@@ -254,13 +298,13 @@ export function WakaSovereignPlayer({
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-wrap gap-1.5 pt-1"
+              className="space-y-1.5 pt-1"
             >
               {activeQuickReplies.map((qr, i) => (
                 <button
                   key={i}
                   onClick={() => onQuickReply?.(qr)}
-                  className="rounded-full border border-primary/30 bg-background/90 backdrop-blur-sm px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+                  className="w-full rounded-lg border border-[hsl(160,70%,40%)]/40 bg-[hsl(220,20%,15%)] px-4 py-2.5 text-[13px] font-medium text-[hsl(160,70%,55%)] hover:bg-[hsl(160,70%,40%)]/10 transition-all active:scale-[0.98] text-left"
                 >
                   {qr}
                 </button>
@@ -270,50 +314,56 @@ export function WakaSovereignPlayer({
         </div>
       </div>
 
+      {/* ── Encryption notice ── */}
+      <div className="flex items-center justify-center gap-1.5 py-1 bg-[hsl(225,25%,12%)]">
+        <Shield className="h-2.5 w-2.5 text-white/20" />
+        <p className="text-[9px] text-white/20">Chiffrement de bout en bout · WAKA Secure</p>
+      </div>
+
       {/* ── Input bar ── */}
-      <div className="border-t border-border px-3 py-2.5 flex items-center gap-2 bg-background">
-        {/* Voice toggle */}
-        <button
-          onClick={toggleVoice}
-          className={cn(
-            "h-8 w-8 rounded-full flex items-center justify-center transition-all flex-shrink-0",
-            voiceActive
-              ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 animate-pulse"
-              : "bg-muted hover:bg-muted/80 text-muted-foreground"
-          )}
-        >
-          {voiceActive ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+      <div className="flex items-center gap-2 px-2 py-2 bg-[hsl(225,25%,10%)]">
+        {/* Emoji */}
+        <button className="h-9 w-9 rounded-full flex items-center justify-center text-white/40 hover:text-white/60 flex-shrink-0">
+          <span className="text-[20px]">😊</span>
         </button>
 
         {/* Text input */}
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={voiceActive ? "Écoute en cours…" : "Tapez un message…"}
+            placeholder={voiceActive ? "Écoute en cours…" : "Appuyer sur Lancer Démo"}
             disabled={voiceActive}
             className={cn(
-              "w-full h-9 rounded-full bg-muted/50 border border-border/40 px-4 text-[12px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all",
+              "w-full h-10 rounded-full bg-[hsl(220,20%,18%)] border-none px-4 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-[hsl(160,70%,40%)]/30 transition-all",
               voiceActive && "opacity-50 cursor-not-allowed"
             )}
           />
         </div>
 
-        {/* Send button */}
-        <button
-          onClick={handleSend}
-          disabled={!inputText.trim() || voiceActive}
-          className={cn(
-            "h-9 w-9 rounded-full flex items-center justify-center transition-all flex-shrink-0",
-            inputText.trim() && !voiceActive
-              ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg"
-              : "bg-muted text-muted-foreground/40"
-          )}
-        >
-          <Send className="h-4 w-4" />
-        </button>
+        {/* Mic or Send */}
+        {inputText.trim() ? (
+          <button
+            onClick={handleSend}
+            className="h-10 w-10 rounded-full bg-[hsl(160,70%,35%)] flex items-center justify-center flex-shrink-0 shadow-lg hover:bg-[hsl(160,70%,40%)] transition-colors"
+          >
+            <Send className="h-4 w-4 text-white" />
+          </button>
+        ) : (
+          <button
+            onClick={toggleVoice}
+            className={cn(
+              "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
+              voiceActive
+                ? "bg-destructive text-white shadow-lg animate-pulse"
+                : "bg-[hsl(160,70%,35%)] text-white shadow-lg hover:bg-[hsl(160,70%,40%)]"
+            )}
+          >
+            {voiceActive ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+        )}
       </div>
     </div>
   );
