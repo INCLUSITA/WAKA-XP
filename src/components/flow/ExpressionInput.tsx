@@ -63,13 +63,18 @@ export function ExpressionInput({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Build suggestions including dynamic results
+  // Build suggestions including dynamic results and context entities
   const allSuggestions: Suggestion[] = [
     ...BASE_SUGGESTIONS,
     ...resultNames.map((name) => ({
       value: `@results.${name}`,
       label: `results.${name}`,
       category: "Results",
+    })),
+    ...contextEntityNames.map((name) => ({
+      value: `@context.${name}`,
+      label: `context.${name}`,
+      category: "Context",
     })),
   ];
 
