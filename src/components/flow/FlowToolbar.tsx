@@ -307,6 +307,18 @@ export function FlowToolbar({
             <kbd className="hidden sm:inline rounded border border-border bg-muted px-1 py-px text-[8px] font-mono text-muted-foreground">⌘K</kbd>
           </Button>
         )}
+        {onDeployToRuntime && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDeployToRuntime}
+            disabled={isDeploying}
+            className="border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 text-[11px] h-7"
+          >
+            {isDeploying ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Rocket className="mr-1 h-3 w-3" />}
+            Deploy
+          </Button>
+        )}
         {onPromoteToCandidate && (
           <Button variant="outline" size="sm" onClick={onPromoteToCandidate} className="border-amber-500/30 text-amber-600 hover:bg-amber-500/5 text-[11px] h-7">
             <Rocket className="mr-1 h-3 w-3" /> Promote
