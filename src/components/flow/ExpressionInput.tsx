@@ -43,6 +43,8 @@ interface ExpressionInputProps {
   multiline?: boolean;
   /** Dynamic result names from the flow context */
   resultNames?: string[];
+  /** Context entity names from the Experience Context Board */
+  contextEntityNames?: string[];
 }
 
 export function ExpressionInput({
@@ -52,6 +54,7 @@ export function ExpressionInput({
   className,
   multiline = false,
   resultNames = [],
+  contextEntityNames = [],
 }: ExpressionInputProps) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
@@ -60,13 +63,18 @@ export function ExpressionInput({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Build suggestions including dynamic results
+  // Build suggestions including dynamic results and context entities
   const allSuggestions: Suggestion[] = [
     ...BASE_SUGGESTIONS,
     ...resultNames.map((name) => ({
       value: `@results.${name}`,
       label: `results.${name}`,
       category: "Results",
+    })),
+    ...contextEntityNames.map((name) => ({
+      value: `@context.${name}`,
+      label: `context.${name}`,
+      category: "Context",
     })),
   ];
 
@@ -192,7 +200,7 @@ export function ExpressionInput({
     return acc;
   }, {});
 
-  const categoryOrder = ["Input", "Contact", "Results", "Webhook", "URNs", "Functions"];
+  const categoryOrder = ["Input", "Contact", "Results", "Context", "Webhook", "URNs", "Functions"];
 
   return (
     <div className="relative">

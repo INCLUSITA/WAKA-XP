@@ -1,4 +1,5 @@
-import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,6 +7,7 @@ import { RunStatusBadge } from "./RunStatusBadge";
 import { ChannelBadge } from "./ChannelBadge";
 import { channelFromUrn } from "@/lib/channelUtils";
 import { useFlowRunSteps } from "@/hooks/useFlowRuns";
+import { supabase } from "@/integrations/supabase/client";
 import type { FlowRun, FlowRunStep } from "@/hooks/useFlowRuns";
 import { cn } from "@/lib/utils";
 import { isWindowPolicyError, WindowPolicyBadge, isTemplatePolicyError, TemplateBadge } from "@/components/whatsapp/WhatsAppPolicyHints";
@@ -24,27 +26,36 @@ function durationLabel(start: string, end: string | null) {
 }
 
 const nodeTypeColors: Record<string, string> = {
+  sendMsg: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   send_msg: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  waitResponse: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   wait_for_response: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  splitExpression: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   split_by_expression: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  webhook: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
   call_webhook: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
+  callAI: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   call_ai: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  updateContact: "bg-pink-500/10 text-pink-600 border-pink-500/20",
   update_contact: "bg-pink-500/10 text-pink-600 border-pink-500/20",
+  saveResult: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  addGroup: "bg-teal-500/10 text-teal-600 border-teal-500/20",
+  removeGroup: "bg-orange-500/10 text-orange-600 border-orange-500/20",
 };
 
-function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
+function StepCard({ step, index, isNew }: { step: FlowRunStep; index: number; isNew?: boolean }) {
   const colorClass = nodeTypeColors[step.node_type] ?? "bg-muted text-muted-foreground border-border";
   const hasOutput = Object.keys(step.output).length > 0;
   const outputStr = hasOutput ? JSON.stringify(step.output) : "";
-  const isSend = step.node_type === "send_msg";
+  const isSend = step.node_type === "send_msg" || step.node_type === "sendMsg";
   const windowIssue = isSend && isWindowPolicyError(outputStr);
   const templateIssue = isSend && !windowIssue && isTemplatePolicyError(outputStr);
 
   return (
-    <div className="flex gap-3">
+    <div className={cn("flex gap-3 transition-all", isNew && "animate-in fade-in slide-in-from-left-2 duration-500")}>
       {/* Timeline connector */}
       <div className="flex flex-col items-center">
-        <div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold", colorClass)}>
+        <div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold", colorClass, isNew && "ring-2 ring-primary/30")}>
           {index + 1}
         </div>
         <div className="flex-1 w-px bg-border" />
@@ -57,6 +68,7 @@ function StepCard({ step, index }: { step: FlowRunStep; index: number }) {
           <Badge variant="outline" className={cn("text-[10px] font-mono", colorClass)}>
             {step.node_type}
           </Badge>
+          {isNew && <Badge className="text-[9px] bg-primary/20 text-primary border-0 animate-pulse">LIVE</Badge>}
           {windowIssue && <WindowPolicyBadge />}
           {templateIssue && <TemplateBadge variant="missing" />}
           {step.elapsed_ms != null && (
@@ -81,8 +93,54 @@ interface Props {
 
 export function RunDetailView({ run, onBack }: Props) {
   const { data: steps, isLoading: stepsLoading } = useFlowRunSteps(run.id);
+  const [realtimeSteps, setRealtimeSteps] = useState<FlowRunStep[]>([]);
+  const [newStepIds, setNewStepIds] = useState<Set<string>>(new Set());
   const isTerminal = ["completed", "expired", "errored"].includes(run.status);
   const hasContext = Object.keys(run.context_snapshot ?? {}).length > 0;
+
+  // Subscribe to realtime step inserts
+  useEffect(() => {
+    const channel = supabase
+      .channel(`run-steps-${run.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "flow_run_steps",
+          filter: `run_id=eq.${run.id}`,
+        },
+        (payload) => {
+          const newStep = payload.new as FlowRunStep;
+          setRealtimeSteps((prev) => {
+            if (prev.some((s) => s.id === newStep.id)) return prev;
+            return [...prev, newStep];
+          });
+          setNewStepIds((prev) => new Set([...prev, newStep.id]));
+          // Clear "new" indicator after 3s
+          setTimeout(() => {
+            setNewStepIds((prev) => {
+              const next = new Set(prev);
+              next.delete(newStep.id);
+              return next;
+            });
+          }, 3000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [run.id]);
+
+  // Merge fetched steps with realtime ones
+  const allSteps = (() => {
+    if (!steps) return realtimeSteps;
+    const fetchedIds = new Set(steps.map((s) => s.id));
+    const extra = realtimeSteps.filter((s) => !fetchedIds.has(s.id));
+    return [...steps, ...extra];
+  })();
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -98,6 +156,11 @@ export function RunDetailView({ run, onBack }: Props) {
             <Badge variant="outline" className="text-[10px] text-muted-foreground">
               Backend
             </Badge>
+            {!isTerminal && (
+              <Badge className="text-[9px] bg-primary/20 text-primary border-0 flex items-center gap-1">
+                <Radio className="h-2.5 w-2.5 animate-pulse" /> LIVE
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <span className="font-medium text-primary">{run.flow_name}</span>
@@ -155,8 +218,13 @@ export function RunDetailView({ run, onBack }: Props) {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
             Step Trace
-            {steps && (
-              <Badge variant="secondary" className="text-[10px]">{steps.length} steps</Badge>
+            {allSteps.length > 0 && (
+              <Badge variant="secondary" className="text-[10px]">{allSteps.length} steps</Badge>
+            )}
+            {!isTerminal && (
+              <span className="text-[10px] text-primary flex items-center gap-1">
+                <Radio className="h-2.5 w-2.5 animate-pulse" /> Listening for new steps…
+              </span>
             )}
           </h3>
 
@@ -166,14 +234,14 @@ export function RunDetailView({ run, onBack }: Props) {
                 <Skeleton key={i} className="h-14 w-full rounded-lg" />
               ))}
             </div>
-          ) : !steps || steps.length === 0 ? (
+          ) : allSteps.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
               <p className="text-sm">No steps recorded for this run.</p>
             </div>
           ) : (
             <div className="space-y-0">
-              {steps.map((step, i) => (
-                <StepCard key={step.id} step={step} index={i} />
+              {allSteps.map((step, i) => (
+                <StepCard key={step.id} step={step} index={i} isNew={newStepIds.has(step.id)} />
               ))}
             </div>
           )}

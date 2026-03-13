@@ -117,6 +117,7 @@ function FlowEditorInner() {
   const [showNodeSearch, setShowNodeSearch] = useState(false);
   const [showRuns, setShowRuns] = useState(false);
   const [pinnedStartNodeId, _setPinnedStartNodeId] = useState<string | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   // Wrap setPinnedStartNodeId to also persist isStart flag in node data
   const setPinnedStartNodeId = useCallback((nodeId: string | null) => {
@@ -919,6 +920,26 @@ function FlowEditorInner() {
     navigate(`/production?id=${data.id}`);
   }, [flowIdParam, flowName, experienceId, navigate]);
 
+  const handleDeployToRuntime = useCallback(async () => {
+    if (!flowIdParam || !tenantId) {
+      toast.error("Save the flow first");
+      return;
+    }
+    setIsDeploying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("run-flow", {
+        body: { flow_id: flowIdParam, tenant_id: tenantId, contact_urn: `manual:${Date.now()}` },
+      });
+      if (error) throw error;
+      toast.success(`Flow deployed — Run ${data?.run_id?.slice(0, 8)}… (${data?.status})`);
+      setShowRuns(true);
+    } catch (err: any) {
+      toast.error(`Deploy failed: ${err.message}`);
+    } finally {
+      setIsDeploying(false);
+    }
+  }, [flowIdParam, tenantId]);
+
 
   const handleFocusNode = useCallback(
     (nodeId: string) => {
@@ -992,6 +1013,8 @@ function FlowEditorInner() {
         onVersions={() => setShowVersions((v) => !v)}
         onRuns={() => setShowRuns((v) => !v)}
         onPromoteToCandidate={flowIdParam ? handlePromoteToCandidate : undefined}
+        onDeployToRuntime={flowIdParam ? handleDeployToRuntime : undefined}
+        isDeploying={isDeploying}
         saveStatus={saveStatus}
         experienceName={experienceName}
         onOpenExperience={() => {
