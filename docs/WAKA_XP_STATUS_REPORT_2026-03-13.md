@@ -193,6 +193,9 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `telegram-setup` | ✅ Operativa |
 | `telegram-webhook` | ✅ Operativa |
 | `connection-health-check` | ✅ Operativa |
+| `waka-player-ai` | ✅ Operativa — respuestas conversacionales IA del Player |
+| `generate-player-flow` | ✅ Operativa — generación de flujos desde texto/JSON/YAML/imágenes |
+| `run-flow` | ✅ Operativa — ejecución de flujos en backend |
 
 ### Canales configurados
 
