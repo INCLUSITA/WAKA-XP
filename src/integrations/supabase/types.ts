@@ -620,6 +620,103 @@ export type Database = {
           },
         ]
       }
+      player_conversations: {
+        Row: {
+          channel: string
+          contact_urn: string
+          created_at: string
+          data_mode: string
+          id: string
+          last_message_at: string
+          message_count: number
+          metadata: Json
+          session_id: string
+          started_at: string
+          tenant_id: string | null
+        }
+        Insert: {
+          channel?: string
+          contact_urn?: string
+          created_at?: string
+          data_mode?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          metadata?: Json
+          session_id: string
+          started_at?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          channel?: string
+          contact_urn?: string
+          created_at?: string
+          data_mode?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          metadata?: Json
+          session_id?: string
+          started_at?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_messages: {
+        Row: {
+          ai_latency_ms: number | null
+          ai_model: string | null
+          blocks: Json
+          content: string
+          conversation_id: string
+          created_at: string
+          direction: string
+          id: string
+          image_url: string | null
+          source: string | null
+        }
+        Insert: {
+          ai_latency_ms?: number | null
+          ai_model?: string | null
+          blocks?: Json
+          content?: string
+          conversation_id: string
+          created_at?: string
+          direction?: string
+          id?: string
+          image_url?: string | null
+          source?: string | null
+        }
+        Update: {
+          ai_latency_ms?: number | null
+          ai_model?: string | null
+          blocks?: Json
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          image_url?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "player_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_candidates: {
         Row: {
           created_at: string
