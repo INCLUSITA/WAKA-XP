@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus, Trash2, Upload, Link, Image, FileText, Music, Video, File, Loader2, AlertTriangle, Library, CheckCircle2, XCircle, Pin, PinOff } from "lucide-react";
 import { NodeEffectsEditor, NodeEffect, AvailableEntity } from "./NodeEffectsEditor";
+import { OmnichannelPreview } from "./OmnichannelPreview";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
