@@ -911,21 +911,43 @@ export function WakaSovereignPlayer({
         </AnimatePresence>
 
         {/* ── Input bar ── */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-[hsl(220,15%,92%)] flex-shrink-0 relative">
+        <div className="flex items-center gap-1.5 px-2 py-2 bg-white border-t border-[hsl(220,15%,92%)] flex-shrink-0 relative">
           {/* Attach button */}
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
           <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip,.rar" className="hidden" onChange={handleDocSelect} />
           <button
             onClick={() => setShowAttachMenu(!showAttachMenu)}
             className={cn(
-              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
+              "h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
               showAttachMenu
                 ? "bg-[hsl(270,45%,48%)] text-white rotate-45"
                 : "text-[hsl(220,10%,50%)] hover:text-[hsl(270,45%,48%)] hover:bg-[hsl(270,25%,95%)]"
             )}
           >
-            <Paperclip className="h-4.5 w-4.5 transition-transform" />
+            <Paperclip className="h-4 w-4 transition-transform" />
           </button>
+
+          {/* Voice call button */}
+          {onVoiceCall && (
+            <button
+              onClick={onVoiceCall}
+              className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-[hsl(220,10%,50%)] hover:text-[hsl(160,84%,39%)] hover:bg-[hsl(160,40%,95%)] transition-all active:scale-95"
+              title="WAKA VOICE"
+            >
+              <Phone className="h-4 w-4" />
+            </button>
+          )}
+
+          {/* Avatar button */}
+          {onAvatarCall && (
+            <button
+              onClick={onAvatarCall}
+              className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-[hsl(220,10%,50%)] hover:text-[hsl(var(--accent))] hover:bg-[hsl(270,25%,95%)] transition-all active:scale-95"
+              title="WAKA Avatar"
+            >
+              <User className="h-4 w-4" />
+            </button>
+          )}
 
           <div className="flex-1">
             <input
