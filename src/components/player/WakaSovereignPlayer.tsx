@@ -630,13 +630,13 @@ export function WakaSovereignPlayer({
                               "max-w-[85%] rounded-2xl px-3.5 py-2 shadow-sm",
                               isBot
                                 ? "bg-white text-[hsl(220,15%,15%)] rounded-bl-md border border-[hsl(220,15%,92%)]"
-                                : "bg-[hsl(160,55%,38%)] text-white rounded-br-md"
+                                : "bg-[hsl(270,45%,50%)] text-white rounded-br-md"
                             )}
                           >
                             {msg.isVoice ? (
                               <div className="flex items-center gap-2 min-w-[120px]">
-                                <div className="h-6 w-6 rounded-full bg-[hsl(160,50%,90%)] flex items-center justify-center flex-shrink-0">
-                                  <Mic className="h-3 w-3 text-[hsl(160,60%,35%)]" />
+                                <div className="h-6 w-6 rounded-full bg-[hsl(270,30%,92%)] flex items-center justify-center flex-shrink-0">
+                                  <Mic className="h-3 w-3 text-[hsl(270,50%,45%)]" />
                                 </div>
                                 <VoiceWaveform active={false} />
                                 <span className="text-[9px] opacity-50 ml-auto">0:12</span>
