@@ -90,13 +90,27 @@ export default function WakaPlayerDemo() {
     return userMsg;
   }, [saveMessage]);
 
+  const FALLBACK_REPLIES = [
+    "📱 Voir les téléphones",
+    "💳 Mon solde",
+    "🏥 Assurance santé",
+    "🏠 Menu principal",
+  ];
+
   const addBotMessage = useCallback((partial: Partial<PlayerMessage>, extra?: { aiModel?: string; aiLatencyMs?: number }) => {
+    // Always ensure continuation menu if no interactive elements present
+    const hasInteraction = partial.quickReplies?.length || partial.menu?.length || partial.catalog ||
+      partial.inlineForm || partial.payment || partial.rating || partial.servicePlans ||
+      partial.creditSimulation || partial.clientStatus || partial.momoAccount ||
+      partial.paymentConfirmation || partial.creditContract || partial.deviceLockConsent;
+
     const botMsg: PlayerMessage = {
       id: `bot-${Date.now()}`,
       text: "",
       direction: "outbound",
       timestamp: new Date(),
       ...partial,
+      quickReplies: partial.quickReplies?.length ? partial.quickReplies : (!hasInteraction ? FALLBACK_REPLIES : undefined),
     };
     setMessages((prev) => [...prev, botMsg]);
     saveMessage(botMsg, extra);
