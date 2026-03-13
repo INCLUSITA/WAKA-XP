@@ -518,12 +518,12 @@ export function WakaSovereignPlayer({
             style={{
               background:
                 mode === "zero-rated"
-                  ? "hsl(160,50%,30%)"
-                  : "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
+                  ? "hsl(270,35%,35%)"
+                  : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
             }}
           >
-            <div className="h-10 w-10 rounded-full bg-white/12 flex items-center justify-center flex-shrink-0 border border-white/15">
-              <SalamandraSvg className="h-6 w-6 text-white/85" />
+            <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/25 shadow-md">
+              <img src={wakaLogo} alt="WAKA" className="h-full w-full object-cover" />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -548,12 +548,12 @@ export function WakaSovereignPlayer({
 
         {/* ── Persistent status bar ── */}
         {statusBar && mode !== "zero-rated" && (
-          <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(160,30%,95%)] border-b border-[hsl(160,20%,90%)] flex-shrink-0">
-            <span className="text-[10px] text-[hsl(160,30%,40%)] font-medium">{statusBar.label}</span>
+          <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(270,20%,96%)] border-b border-[hsl(270,15%,91%)] flex-shrink-0">
+            <span className="text-[10px] text-[hsl(270,25%,50%)] font-medium">{statusBar.label}</span>
             <span
               className={cn(
                 "text-[11px] font-bold",
-                statusBar.accent ? "text-[hsl(160,70%,35%)]" : "text-[hsl(220,15%,30%)]"
+                statusBar.accent ? "text-[hsl(270,50%,42%)]" : "text-[hsl(220,15%,30%)]"
               )}
             >
               {statusBar.value}
