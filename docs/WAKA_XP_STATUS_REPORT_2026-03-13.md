@@ -53,6 +53,29 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Vista inicial inteligente (centrado en entry node) | ✅ |
 | **Gap:** Resolución de contexto cross-flow | ⚠️ Parcial |
 
+### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~90%)
+
+| Capacidad | Estado |
+|---|---|
+| Simulador conversacional IA con modelo soberano (Gemini via Lovable AI) | ✅ |
+| Bloques soberanos nativos: ProductCatalog, PaymentCard, CreditSimulation, RatingWidget, LocationCard, etc. (16+ tipos) | ✅ |
+| Tres modalidades de datos: Libre, Subventionné, Zero-Rated | ✅ |
+| Persistencia de conversaciones en DB (player_conversations + player_messages) | ✅ |
+| Flujos guardados con ciclo de vida: Stable → Sandbox → Production (player_saved_flows) | ✅ |
+| Galería de flujos guardados con filtros por estado, búsqueda y acciones CRUD | ✅ |
+| Wizard de creación multi-fuente: Texto libre + IA, JSON TextIt/RapidPro, YAML de agente, Imágenes/logos | ✅ |
+| Selector de motor IA: WAKA AI (default), Azure OpenAI (coming soon), BYOM (demo) | ✅ |
+| Edge function `generate-player-flow` para generación IA de conversation_snapshot + scenario_config | ✅ |
+| Edge function `waka-player-ai` para respuestas conversacionales en tiempo real | ✅ |
+| Panel lateral de flujos guardados con highlight del flujo activo | ✅ |
+| Carga reactiva de flujos por URL query param (?flow=ID) con aislamiento estricto | ✅ |
+| Clonación de flujos (Stable → Sandbox) | ✅ |
+| Renombrado, cambio de estado y eliminación de flujos | ✅ |
+| Indicador visual del flujo activo en header del Player | ✅ |
+| **Gap:** Previsualización del flujo generado antes de guardar | ⚠️ Parcial |
+| **Gap:** Integración real con Azure OpenAI | ❌ Pendiente de claves |
+| **Gap:** BYOM funcional (requiere configuración de usuario) | ❌ Pendiente |
+
 ### Fase 2 — Experience Studio → 🟡 EN CURSO (~70%)
 
 | Capacidad | Estado |
