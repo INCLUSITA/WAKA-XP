@@ -42,6 +42,8 @@ interface FlowToolbarProps {
   onVersions?: () => void;
   onRuns?: () => void;
   onPromoteToCandidate?: () => void;
+  onDeployToRuntime?: () => void;
+  isDeploying?: boolean;
   saveStatus?: SaveStatus;
   experienceName?: string | null;
   onOpenExperience?: () => void;
