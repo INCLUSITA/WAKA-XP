@@ -196,7 +196,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
   const mode = useDataMode();
 
   if (mode === "zero-rated") {
-    return <span className="text-[10px] text-[hsl(160,40%,45%)]">🎤 0:12</span>;
+    return <span className="text-[10px] text-[hsl(270,30%,55%)]">🎤 0:12</span>;
   }
 
   const bars = mode === "libre" ? [0.6, 1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7] : [0.6, 1, 0.5, 0.8];
@@ -206,7 +206,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
       {bars.map((h, i) => (
         <motion.div
           key={i}
-          className="w-[2px] rounded-full bg-[hsl(160,84%,39%)]"
+          className="w-[2px] rounded-full bg-[hsl(270,50%,50%)]"
           animate={
             active
               ? { height: [`${h * 8}px`, `${h * 20}px`, `${h * 12}px`], opacity: [0.4, 0.9, 0.5] }
