@@ -27,6 +27,9 @@ import {
   CertificateCard, type CertificateData,
   TrainingProgress, type TrainingModule,
   MediaCarousel, type MediaSlide,
+  CreditSimulationCard, type CreditSimulationData,
+  ClientStatusCard, type ClientStatusData,
+  MoMoAccountCard, type MoMoAccountData,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
@@ -73,6 +76,9 @@ export interface PlayerMessage {
   certificate?: CertificateData;
   training?: { title: string; modules: TrainingModule[]; overallProgress: number };
   mediaCarousel?: { title?: string; slides: MediaSlide[] };
+  creditSimulation?: CreditSimulationData;
+  clientStatus?: ClientStatusData;
+  momoAccount?: MoMoAccountData;
 }
 
 interface WakaSovereignPlayerProps {
@@ -90,6 +96,8 @@ interface WakaSovereignPlayerProps {
   onRate?: (value: number | string) => void;
   onModuleClick?: (moduleId: string) => void;
   onSlideAction?: (slide: MediaSlide) => void;
+  onCreditAction?: (action: string) => void;
+  onMomoAction?: (action: string) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
@@ -379,6 +387,8 @@ export function WakaSovereignPlayer({
   onRate,
   onModuleClick,
   onSlideAction,
+  onCreditAction,
+  onMomoAction,
   status = "online",
   statusBar,
   dataMode: externalMode,
@@ -691,6 +701,27 @@ export function WakaSovereignPlayer({
                             title={msg.mediaCarousel.title}
                             slides={msg.mediaCarousel.slides}
                             onSlideAction={onSlideAction}
+                          />
+                        </div>
+                      )}
+                      {msg.creditSimulation && (
+                        <div className="mt-1.5">
+                          <CreditSimulationCard
+                            data={msg.creditSimulation}
+                            onAction={onCreditAction}
+                          />
+                        </div>
+                      )}
+                      {msg.clientStatus && (
+                        <div className="mt-1.5">
+                          <ClientStatusCard data={msg.clientStatus} />
+                        </div>
+                      )}
+                      {msg.momoAccount && (
+                        <div className="mt-1.5">
+                          <MoMoAccountCard
+                            data={msg.momoAccount}
+                            onAction={onMomoAction}
                           />
                         </div>
                       )}

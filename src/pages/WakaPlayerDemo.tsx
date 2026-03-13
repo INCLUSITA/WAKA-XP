@@ -31,11 +31,11 @@ const WELCOME_MESSAGES: PlayerMessage[] = [
     source: "WAKA NEXUS · IA",
     reaction: "👋",
     quickReplies: [
-      "💰 Mon solde",
-      "📱 Forfaits internet",
-      "📚 Ma formation",
-      "🏪 Agence la plus proche",
-      "💸 Envoyer de l'argent",
+      "📱 Voir les téléphones",
+      "🌐 Plans fibre optique",
+      "🏥 Assurance santé",
+      "💰 Ouvrir compte MoMo",
+      "💳 Mon solde",
     ],
   },
 ];
@@ -235,6 +235,26 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  const handleCreditAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action crédit : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handleMomoAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action MoMo : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
   const handleVoiceToggle = useCallback(
     async (active: boolean) => {
       if (!active) {
@@ -366,6 +386,8 @@ export default function WakaPlayerDemo() {
                 onRate={handleRate}
                 onModuleClick={handleModuleClick}
                 onSlideAction={handleSlideAction}
+                onCreditAction={handleCreditAction}
+                onMomoAction={handleMomoAction}
               />
             </div>
 
