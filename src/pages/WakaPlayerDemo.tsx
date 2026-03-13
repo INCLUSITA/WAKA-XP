@@ -253,6 +253,7 @@ export default function WakaPlayerDemo() {
       if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
 
   const handleVoiceToggle = useCallback(
     async (active: boolean) => {
