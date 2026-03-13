@@ -349,6 +349,16 @@ export default function WakaPlayerDemo() {
     [addBotReply]
   );
 
+  const handleSlideAction = useCallback(
+    (slide: MediaSlide) => {
+      addBotReply(`${slide.type === "video" ? "▶ Lecture" : "🖼 Ouverture"} : "${slide.caption || "Média"}"`, {
+        reaction: slide.type === "video" ? "🎬" : "👀",
+        quickReplies: ["↩ Retour", "📤 Partager", "❓ Aide"],
+      });
+    },
+    [addBotReply]
+  );
+
   const handleVoiceToggle = useCallback(
     (active: boolean) => {
       if (!active) {
