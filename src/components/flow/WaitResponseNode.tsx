@@ -17,6 +17,7 @@ export function WaitResponseNode({ data, selected }: NodeProps) {
       }`}
     >
       {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} pinned={d._isPinnedStart} triggerReady={d._triggerReady} />}
+      {d._pulseCount > 0 && <PulseDot count={d._pulseCount} />}
       {/* Header */}
       <div className="flex items-center gap-2 rounded-t-lg bg-node-wait px-3 py-1.5">
         <Clock className="h-3.5 w-3.5 text-primary-foreground" />
