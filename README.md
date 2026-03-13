@@ -732,4 +732,4 @@ La página principal (`/`) incluye una sección **Connected WAKA Stack** con vis
 
 ---
 
-*Documentación actualizada el 10 de marzo de 2026 — WAKA XP v0.2*
+*Documentación actualizada el 13 de marzo de 2026 — WAKA XP v0.3 (incluye Waka XP Player)*
