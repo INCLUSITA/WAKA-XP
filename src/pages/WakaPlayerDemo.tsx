@@ -648,10 +648,6 @@ export default function WakaPlayerDemo() {
           onNewConversation={handleNewConversation}
           onSave={() => setShowSaveDialog(true)}
           onOpenFlows={() => setShowFlowsPanel(true)}
-          onStartVoiceCall={() => setShowVoiceCall(true)}
-          onStartAvatar={() => setShowAvatar(true)}
-          avatarUrl={avatarUrl}
-          onAvatarUrlChange={setAvatarUrl}
         />
       </div>
 
