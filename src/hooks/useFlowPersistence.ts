@@ -71,16 +71,15 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
 
           if (error) throw error;
         } else {
-          const insertPayload: Record<string, unknown> = {
-            nodes: nodes as unknown as Json,
-            edges: edges as unknown as Json,
-            name,
-            tenant_id: tenantId,
-          };
-          if (triggerRules) insertPayload.trigger_rules = triggerRules as unknown as Json;
           const { data, error } = await supabase
             .from("flows")
-            .insert(insertPayload)
+            .insert({
+              nodes: nodes as unknown as Json,
+              edges: edges as unknown as Json,
+              name,
+              tenant_id: tenantId,
+              trigger_rules: (triggerRules || []) as unknown as Json,
+            })
             .select("id")
             .single();
 
