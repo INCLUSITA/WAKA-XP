@@ -144,6 +144,57 @@ export function useWakaPlayerAI() {
           actions: blocks.show_momo_card.actions,
         };
       }
+      if (blocks.show_service_plans) {
+        msg.servicePlans = {
+          title: blocks.show_service_plans.title,
+          category: blocks.show_service_plans.category,
+          plans: blocks.show_service_plans.plans,
+          message: blocks.show_service_plans.message,
+          icon: blocks.show_service_plans.icon,
+        };
+      }
+      if (blocks.show_payment_confirmation) {
+        msg.paymentConfirmation = {
+          title: blocks.show_payment_confirmation.title,
+          status: blocks.show_payment_confirmation.status,
+          amount_paid: blocks.show_payment_confirmation.amount_paid,
+          remaining_balance: blocks.show_payment_confirmation.remaining_balance,
+          credit_voice_id: blocks.show_payment_confirmation.credit_voice_id,
+          payment_date: blocks.show_payment_confirmation.payment_date,
+          next_payment_date: blocks.show_payment_confirmation.next_payment_date,
+          next_payment_amount: blocks.show_payment_confirmation.next_payment_amount,
+          message: blocks.show_payment_confirmation.message,
+          icon: blocks.show_payment_confirmation.icon,
+          actions: blocks.show_payment_confirmation.actions,
+        };
+      }
+      if (blocks.show_credit_contract) {
+        msg.creditContract = {
+          title: blocks.show_credit_contract.title,
+          credit_voice_id: blocks.show_credit_contract.credit_voice_id,
+          credit_type: blocks.show_credit_contract.credit_type,
+          amount: blocks.show_credit_contract.amount,
+          term: blocks.show_credit_contract.term,
+          frequency: blocks.show_credit_contract.frequency,
+          monthly_payment: blocks.show_credit_contract.monthly_payment,
+          status: blocks.show_credit_contract.status,
+          status_explanation: blocks.show_credit_contract.status_explanation,
+          device_lock: blocks.show_credit_contract.device_lock,
+          product_name: blocks.show_credit_contract.product_name,
+          next_steps: blocks.show_credit_contract.next_steps,
+          icon: blocks.show_credit_contract.icon,
+          actions: blocks.show_credit_contract.actions,
+        };
+      }
+      if (blocks.show_device_lock_consent) {
+        msg.deviceLockConsent = {
+          title: blocks.show_device_lock_consent.title,
+          device_name: blocks.show_device_lock_consent.device_name,
+          amount: blocks.show_device_lock_consent.amount,
+          message: blocks.show_device_lock_consent.message,
+          icon: blocks.show_device_lock_consent.icon,
+        };
+      }
 
       return msg;
     } catch (e) {

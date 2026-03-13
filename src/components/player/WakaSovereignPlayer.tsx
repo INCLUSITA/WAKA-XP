@@ -30,6 +30,10 @@ import {
   CreditSimulationCard, type CreditSimulationData,
   ClientStatusCard, type ClientStatusData,
   MoMoAccountCard, type MoMoAccountData,
+  ServicePlansCard, type ServicePlansData,
+  PaymentConfirmationCard, type PaymentConfirmationData,
+  CreditContractCard, type CreditContractData,
+  DeviceLockConsentCard, type DeviceLockConsentData,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
@@ -79,6 +83,10 @@ export interface PlayerMessage {
   creditSimulation?: CreditSimulationData;
   clientStatus?: ClientStatusData;
   momoAccount?: MoMoAccountData;
+  servicePlans?: ServicePlansData;
+  paymentConfirmation?: PaymentConfirmationData;
+  creditContract?: CreditContractData;
+  deviceLockConsent?: DeviceLockConsentData;
 }
 
 interface WakaSovereignPlayerProps {
@@ -98,6 +106,10 @@ interface WakaSovereignPlayerProps {
   onSlideAction?: (slide: MediaSlide) => void;
   onCreditAction?: (action: string) => void;
   onMomoAction?: (action: string) => void;
+  onSelectPlan?: (sku: string, name: string) => void;
+  onPaymentConfirmAction?: (action: string) => void;
+  onCreditContractAction?: (action: string) => void;
+  onDeviceLockConsent?: (accepted: boolean) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
@@ -389,6 +401,10 @@ export function WakaSovereignPlayer({
   onSlideAction,
   onCreditAction,
   onMomoAction,
+  onSelectPlan,
+  onPaymentConfirmAction,
+  onCreditContractAction,
+  onDeviceLockConsent,
   status = "online",
   statusBar,
   dataMode: externalMode,
@@ -722,6 +738,38 @@ export function WakaSovereignPlayer({
                           <MoMoAccountCard
                             data={msg.momoAccount}
                             onAction={onMomoAction}
+                          />
+                        </div>
+                      )}
+                      {msg.servicePlans && (
+                        <div className="mt-1.5">
+                          <ServicePlansCard
+                            data={msg.servicePlans}
+                            onSelectPlan={onSelectPlan}
+                          />
+                        </div>
+                      )}
+                      {msg.paymentConfirmation && (
+                        <div className="mt-1.5">
+                          <PaymentConfirmationCard
+                            data={msg.paymentConfirmation}
+                            onAction={onPaymentConfirmAction}
+                          />
+                        </div>
+                      )}
+                      {msg.creditContract && (
+                        <div className="mt-1.5">
+                          <CreditContractCard
+                            data={msg.creditContract}
+                            onAction={onCreditContractAction}
+                          />
+                        </div>
+                      )}
+                      {msg.deviceLockConsent && (
+                        <div className="mt-1.5">
+                          <DeviceLockConsentCard
+                            data={msg.deviceLockConsent}
+                            onConsent={onDeviceLockConsent}
                           />
                         </div>
                       )}
