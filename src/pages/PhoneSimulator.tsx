@@ -1,568 +1,495 @@
-import { useState, useEffect, useRef } from "react";
-import { Node, Edge } from "@xyflow/react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useFlowSimulation, ChatMessage } from "@/hooks/useFlowSimulation";
-import {
-  ArrowLeft, RotateCcw, Send, Phone, Video as VideoIcon, MoreVertical, Smile,
-  Paperclip, Mic, Camera, Image as ImageIcon, CheckCheck, Wifi, Battery, Signal,
-  Loader2, Play, Search, FileText, Volume2, Film, File,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Json } from "@/integrations/supabase/types";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft, Play, Sparkles, BrainCircuit, Send,
+  Loader2, RotateCcw, Radio, Bot, User, Clock,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+/* ── Types ── */
+
+interface StepRow {
+  id: string;
+  run_id: string;
+  node_uuid: string;
+  node_label: string | null;
+  node_type: string;
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  created_at: string;
+  elapsed_ms: number | null;
+}
 
 interface FlowOption {
   id: string;
   name: string;
-  status: string;
-  updated_at: string;
-  nodes: Json;
-  edges: Json;
 }
 
+/* ── Constants ── */
+
+const OUTBOUND = new Set(["sendMsg", "send_msg", "sendEmail", "send_email", "callAI", "call_ai"]);
+const INBOUND = new Set(["waitResponse", "wait_for_response"]);
+
+function stepDirection(s: StepRow) {
+  if (OUTBOUND.has(s.node_type)) return "outbound";
+  if (INBOUND.has(s.node_type)) return "inbound";
+  return "system";
+}
+
+function extractText(s: StepRow): string {
+  const o = s.output as Record<string, unknown>;
+  const i = s.input as Record<string, unknown>;
+  return String(o?.text || o?.message || i?.text || i?.message || s.node_label || s.node_type);
+}
+
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+/* ══════════════════════════════════════════════════════ */
+
 export default function PhoneSimulator() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { tenantId } = useWorkspace();
+  const flowIdParam = searchParams.get("flow_id");
 
-  // Flow selection state
+  /* State */
   const [flowList, setFlowList] = useState<FlowOption[]>([]);
-  const [loadingFlows, setLoadingFlows] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFlow, setSelectedFlow] = useState<FlowOption | null>(null);
+  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(flowIdParam);
+  const [testRunId, setTestRunId] = useState<string | null>(null);
+  const [steps, setSteps] = useState<StepRow[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
 
-  // Simulation state
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [ready, setReady] = useState(false);
-  const [inputText, setInputText] = useState("");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("waka-simulator-api-key") || "");
-  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  /* Setup fields */
+  const [contactName, setContactName] = useState("Test User");
+  const [contactPhone, setContactPhone] = useState("+22670000000");
+  const [customFieldsJson, setCustomFieldsJson] = useState('{\n  "is_vip": true,\n  "balance": 150\n}');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Load flows from DB
+  /* Load flows */
   useEffect(() => {
-    (async () => {
-      setLoadingFlows(true);
-      const { data } = await supabase
-        .from("flows")
-        .select("id, name, status, updated_at, nodes, edges")
-        .eq("tenant_id", tenantId)
-        .neq("status", "archived")
-        .order("updated_at", { ascending: false });
-      setFlowList((data as FlowOption[]) || []);
-      setLoadingFlows(false);
-    })();
-  }, [tenantId]);
+    if (!tenantId) return;
+    supabase
+      .from("flows")
+      .select("id, name")
+      .eq("tenant_id", tenantId)
+      .neq("status", "archived")
+      .order("updated_at", { ascending: false })
+      .then(({ data }) => {
+        setFlowList((data as FlowOption[]) || []);
+        if (flowIdParam) setSelectedFlowId(flowIdParam);
+      });
+  }, [tenantId, flowIdParam]);
 
-  // Check sessionStorage for a flow passed from the builder
+  /* Realtime steps subscription */
   useEffect(() => {
-    const stored = sessionStorage.getItem("simulator-flow");
-    if (stored) {
-      try {
-        const { nodes: n, edges: e, name } = JSON.parse(stored);
-        setNodes(n);
-        setEdges(e);
-        setSelectedFlow({ id: "session", name: name || "Flujo importado", status: "draft", updated_at: "", nodes: n, edges: e });
-        setReady(true);
-      } catch { /* ignore */ }
-      sessionStorage.removeItem("simulator-flow");
+    if (!testRunId) return;
+    setSteps([]);
+
+    // Fetch existing
+    supabase
+      .from("flow_run_steps")
+      .select("*")
+      .eq("run_id", testRunId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => setSteps((data as StepRow[]) || []));
+
+    const ch = supabase
+      .channel(`sim-dual-${testRunId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "flow_run_steps",
+        filter: `run_id=eq.${testRunId}`,
+      }, (payload) => {
+        const s = payload.new as StepRow;
+        setSteps((prev) => (prev.some((p) => p.id === s.id) ? prev : [...prev, s]));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(ch); };
+  }, [testRunId]);
+
+  /* Auto-scroll chat */
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [steps]);
+
+  /* Validate JSON */
+  const validateJson = (raw: string) => {
+    try {
+      JSON.parse(raw);
+      setJsonError(null);
+      return true;
+    } catch (e: any) {
+      setJsonError(e.message);
+      return false;
     }
-  }, []);
-
-  const handleSelectFlow = (flow: FlowOption) => {
-    setSelectedFlow(flow);
-    setNodes(flow.nodes as unknown as Node[]);
-    setEdges(flow.edges as unknown as Edge[]);
-    setReady(true);
   };
 
-  const handleBackToList = () => {
-    setSelectedFlow(null);
-    setReady(false);
-    setNodes([]);
-    setEdges([]);
+  /* Start simulation */
+  const startSimulation = useCallback(async () => {
+    if (!selectedFlowId || !tenantId) {
+      toast.error("Select a flow first");
+      return;
+    }
+    if (!validateJson(customFieldsJson)) {
+      toast.error("Fix JSON syntax before launching");
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      const customFields = JSON.parse(customFieldsJson);
+      const urn = `test:sim-${Date.now()}`;
+
+      const { data, error } = await supabase.functions.invoke("run-flow", {
+        body: {
+          flow_id: selectedFlowId,
+          tenant_id: tenantId,
+          contact_urn: urn,
+          is_test: true,
+          metadata: {
+            initialContext: {
+              "contact.name": contactName,
+              "contact.phone": contactPhone,
+              ...Object.fromEntries(
+                Object.entries(customFields).map(([k, v]) => [`fields.${k}`, v])
+              ),
+            },
+          },
+        },
+      });
+
+      if (error) throw error;
+      const runId = data?.run_id || data?.id;
+      if (runId) {
+        setTestRunId(runId);
+        toast.success("Simulation started");
+      } else {
+        toast.error("No run_id returned from backend");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to start simulation");
+    } finally {
+      setIsStarting(false);
+    }
+  }, [selectedFlowId, tenantId, contactName, contactPhone, customFieldsJson]);
+
+  const resetSimulation = () => {
+    setTestRunId(null);
+    setSteps([]);
   };
 
-  const defaultHeaders = apiKey ? { "x-api-key": apiKey } : {};
+  /* Derived data */
+  const inferenceSteps = steps.filter((s) => (s.output as Record<string, unknown>)?.decision_log != null);
 
-  const { messages, waitingForInput, categories, isFinished, isProcessing, start, sendMessage, sendAttachment } =
-    useFlowSimulation(nodes, edges, undefined, {
-      executeWebhooks: true,
-      defaultHeaders,
-      onWebhookExecuted: (url, status, _response) => {
-        console.log(`[Simulator] Webhook ${status}: ${url}`);
-      },
-    });
+  return (
+    <div className="flex h-full flex-col bg-background">
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 border-b border-border px-6 py-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <BrainCircuit className="h-5 w-5 text-primary" />
+        <h1 className="text-lg font-bold text-foreground">Simulator</h1>
+        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">DUAL VIEW</Badge>
 
-  useEffect(() => {
-    if (ready && nodes.length > 0) start();
-  }, [ready]); // eslint-disable-line
-
-  useEffect(() => {
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  }, [messages.length]);
-
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-    sendMessage(text);
-    setInputText("");
-  };
-
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    sendAttachment(file);
-    setShowAttachMenu(false);
-    e.target.value = "";
-  };
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-
-  const filteredFlows = flowList.filter((f) =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // ── Flow picker screen ──
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-        <div className="relative mx-auto w-[420px]">
-          {/* Back */}
-          <button
-            onClick={() => navigate("/")}
-            className="absolute -left-16 top-8 flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" /> Volver
-          </button>
-
-          {/* Phone shell */}
-          <div className="overflow-hidden rounded-[3rem] border-[6px] border-slate-700 bg-black shadow-2xl shadow-black/50">
-            {/* Notch */}
-            <div className="relative flex h-12 items-center justify-between bg-black px-8">
-              <span className="text-xs font-semibold text-white">{timeStr}</span>
-              <div className="absolute left-1/2 top-1 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-black" />
-              <div className="flex items-center gap-1">
-                <Signal className="h-3 w-3 text-white" />
-                <Wifi className="h-3 w-3 text-white" />
-                <Battery className="h-3.5 w-3.5 text-white" />
-              </div>
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center gap-3 bg-[#075E54] px-4 py-3">
-              <img src="/favicon.png" alt="WAKA" className="h-10 w-10 rounded-full object-cover" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-white">WAKA Simulator</p>
-                <p className="text-[11px] text-white/70">Selecciona un flujo para probar</p>
-              </div>
-            </div>
-
-            {/* API Key + Search */}
-            <div className="bg-[#F0F0F0] px-4 py-2.5 space-y-2">
-              <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
-                <span className="text-[10px] font-medium text-gray-400 shrink-0">🔑</span>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => {
-                    setApiKey(e.target.value);
-                    localStorage.setItem("waka-simulator-api-key", e.target.value);
-                  }}
-                  placeholder="x-api-key (waka_...)"
-                  className="flex-1 bg-transparent text-xs text-gray-800 outline-none placeholder:text-gray-400"
-                />
-              </div>
-              <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
-                <Search className="h-4 w-4 text-gray-400" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar flujo…"
-                  className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400"
-                />
-              </div>
-            </div>
-
-            {/* Flow list */}
-            <div className="h-[580px] overflow-y-auto bg-white">
-              {loadingFlows ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <Loader2 className="h-6 w-6 animate-spin mb-2" />
-                  <span className="text-sm">Cargando flujos…</span>
-                </div>
-              ) : filteredFlows.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <span className="text-sm">No se encontraron flujos</span>
-                </div>
-              ) : (
-                filteredFlows.map((flow) => (
-                  <button
-                    key={flow.id}
-                    onClick={() => handleSelectFlow(flow)}
-                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3.5 text-left transition hover:bg-gray-50 active:bg-gray-100"
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366]/15">
-                      <Play className="h-4 w-4 text-[#075E54]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{flow.name}</p>
-                      <p className="text-[11px] text-gray-400">
-                        {flow.status === "active" ? "🟢 Activo" : "📝 Borrador"}
-                        {flow.updated_at && ` · ${new Date(flow.updated_at).toLocaleDateString("es")}`}
-                      </p>
-                    </div>
-                    <ArrowLeft className="h-4 w-4 text-gray-300 rotate-180" />
-                  </button>
-                ))
-              )}
-            </div>
-
-            {/* Bottom bar */}
-            <div className="flex h-8 items-end justify-center bg-white pb-2">
-              <div className="h-1 w-32 rounded-full bg-gray-400" />
-            </div>
-          </div>
+        {selectedFlowId && (
+          <Badge variant="secondary" className="text-xs ml-2">
+            {flowList.find((f) => f.id === selectedFlowId)?.name || "Flow"}
+          </Badge>
+        )}
+        {testRunId && (
+          <Badge className="text-[9px] bg-primary/15 text-primary border-0 flex items-center gap-1 ml-2">
+            <Radio className="h-2.5 w-2.5 animate-pulse" /> LIVE
+          </Badge>
+        )}
+        <div className="ml-auto flex gap-2">
+          {testRunId && (
+            <Button variant="outline" size="sm" onClick={resetSimulation} className="gap-1 text-xs">
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
+            </Button>
+          )}
         </div>
       </div>
-    );
-  }
 
-  // ── Chat simulation screen ──
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      {/* Hidden file inputs */}
-      <input ref={fileInputRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelected} />
-      <input ref={imageInputRef} type="file" accept="image/*,video/*" capture="environment" className="hidden" onChange={handleFileSelected} />
+      {/* ── Body ── */}
+      <div className="flex flex-1 overflow-hidden">
 
-      <div className="relative mx-auto w-[420px]">
-        {/* Side buttons */}
-        <button
-          onClick={handleBackToList}
-          className="absolute -left-16 top-8 flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" /> Flujos
-        </button>
-        <button
-          onClick={start}
-          className="absolute -right-16 top-8 flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-        >
-          <RotateCcw className="h-4 w-4" /> Reiniciar
-        </button>
-        <div className="absolute -right-16 top-20 rounded-lg bg-green-500/20 px-3 py-1.5 text-[10px] font-semibold text-green-400 backdrop-blur-sm">
-          🔴 LIVE MODE
+        {/* ══ Setup Panel (left) ══ */}
+        {!testRunId && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="w-[360px] border-r border-border flex-shrink-0 overflow-y-auto p-5 space-y-4"
+          >
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <BrainCircuit className="h-4 w-4 text-muted-foreground" />
+              Reality Setup
+            </h3>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Define the initial state of the contact before the flow starts. These values will be injected into the execution context.
+            </p>
+
+            <Separator />
+
+            {/* Flow selector */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Flow</label>
+              <Select value={selectedFlowId || ""} onValueChange={setSelectedFlowId}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Select a flow…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {flowList.map((f) => (
+                    <SelectItem key={f.id} value={f.id} className="text-xs">{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Contact fields */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground">Name</label>
+                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground">Phone</label>
+                <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="h-8 text-xs font-mono" />
+              </div>
+            </div>
+
+            {/* Custom fields JSON */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-muted-foreground">Custom Fields (JSON)</label>
+              <Textarea
+                value={customFieldsJson}
+                onChange={(e) => {
+                  setCustomFieldsJson(e.target.value);
+                  validateJson(e.target.value);
+                }}
+                className={cn(
+                  "h-32 text-[11px] font-mono resize-none",
+                  jsonError && "border-destructive focus-visible:ring-destructive"
+                )}
+              />
+              {jsonError && (
+                <p className="text-[10px] text-destructive">{jsonError}</p>
+              )}
+            </div>
+
+            <Separator />
+
+            <Button className="w-full gap-2" onClick={startSimulation} disabled={!selectedFlowId || isStarting}>
+              {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Launch Simulation
+            </Button>
+          </motion.div>
+        )}
+
+        {/* ══ Column A: Chat Timeline ══ */}
+        <div className="flex-1 flex flex-col overflow-hidden border-r border-border">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
+            <Send className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Chat Timeline</span>
+            {steps.length > 0 && (
+              <Badge variant="secondary" className="text-[9px] ml-auto">{steps.length} steps</Badge>
+            )}
+          </div>
+          <ScrollArea className="flex-1 px-4 py-3">
+            {!testRunId ? (
+              <EmptyState icon={<Bot className="h-12 w-12 opacity-15" />} title="No active simulation" subtitle="Configure and launch from the setup panel" />
+            ) : steps.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mb-3 text-primary" />
+                <p className="text-sm">Executing flow…</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {steps.map((step) => (
+                  <ChatBubble key={step.id} step={step} />
+                ))}
+              </AnimatePresence>
+            )}
+            <div ref={chatEndRef} />
+          </ScrollArea>
         </div>
 
-        {/* Phone body */}
-        <div className="overflow-hidden rounded-[3rem] border-[6px] border-slate-700 bg-black shadow-2xl shadow-black/50">
-          {/* Notch */}
-          <div className="relative flex h-12 items-center justify-between bg-black px-8">
-            <span className="text-xs font-semibold text-white">{timeStr}</span>
-            <div className="absolute left-1/2 top-1 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-black" />
-            <div className="flex items-center gap-1">
-              <Signal className="h-3 w-3 text-white" />
-              <Wifi className="h-3 w-3 text-white" />
-              <Battery className="h-3.5 w-3.5 text-white" />
-            </div>
+        {/* ══ Column B: AI Inference Debugger ══ */}
+        <div className="w-[400px] flex-shrink-0 flex flex-col overflow-hidden bg-card">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-accent/5">
+            <Sparkles className="h-3.5 w-3.5 text-accent-foreground" />
+            <span className="text-xs font-semibold text-accent-foreground">AI Inference Debugger</span>
+            {inferenceSteps.length > 0 && (
+              <Badge variant="outline" className="text-[9px] border-accent/30 text-accent-foreground ml-auto">
+                {inferenceSteps.length} decisions
+              </Badge>
+            )}
           </div>
-
-          {/* WhatsApp header */}
-          <div className="flex items-center gap-3 bg-[#075E54] px-3 py-2">
-            <button onClick={handleBackToList} className="text-white">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <img src="/favicon.png" alt="WAKA" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{selectedFlow?.name || "WAKA Bot"}</p>
-              <p className="text-[11px] text-white/70">
-                {isProcessing ? "procesando…" : isFinished ? "sin conexión" : waitingForInput ? "en línea" : "escribiendo…"}
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-white/80">
-              <VideoIcon className="h-5 w-5" />
-              <Phone className="h-5 w-5" />
-              <MoreVertical className="h-5 w-5" />
-            </div>
-          </div>
-
-          {/* Chat area — taller */}
-          <div
-            className="h-[600px] overflow-y-auto px-3 py-3"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23dcd8c0' fill-opacity='0.08'%3E%3Cpath d='M20 20h15v15H20zm30 0h15v15H50zm30 0h15v15H80zm30 0h15v15h-15zm30 0h15v15h-15zm30 0h15v15h-15zm30 0h15v15h-15zm30 0h15v15h-15z'/%3E%3C/g%3E%3C/svg%3E")`,
-              backgroundColor: "#ECE5DD",
-            }}
-          >
-            {/* Date chip */}
-            <div className="mb-3 flex justify-center">
-              <span className="rounded-lg bg-white/80 px-3 py-1 text-[11px] text-gray-500 shadow-sm">HOY</span>
-            </div>
-
-            {/* Live mode banner */}
-            <div className="mb-3 flex justify-center">
-              <span className="rounded-lg bg-red-50 border border-red-200 px-3 py-1 text-[10px] text-red-600 shadow-sm font-medium">
-                🔴 Modo Live — Las APIs se ejecutan en tiempo real
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              {messages.map((msg) => {
-                if (msg.sender === "system") {
-                  return (
-                    <div key={msg.id} className="flex justify-center py-1">
-                      <span className="rounded-lg bg-[#E2F7CB]/80 px-3 py-1 text-[11px] text-gray-600 shadow-sm max-w-[90%] text-center">
-                        {msg.text}
-                      </span>
-                    </div>
-                  );
-                }
-
-                const isBot = msg.sender === "bot";
-                return (
-                  <div key={msg.id} className={`flex ${isBot ? "justify-start" : "justify-end"}`}>
-                    <div
-                      className={`relative max-w-[85%] rounded-lg px-2.5 py-1.5 shadow-sm ${
-                        isBot
-                          ? "rounded-tl-none bg-white text-gray-800"
-                          : "rounded-tr-none bg-[#DCF8C6] text-gray-800"
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0 h-3 w-3 ${
-                          isBot
-                            ? "-left-1.5 border-l-[6px] border-t-[6px] border-l-transparent border-t-white"
-                            : "-right-1.5 border-r-[6px] border-t-[6px] border-r-transparent border-t-[#DCF8C6]"
-                        }`}
-                      />
-
-                      {msg.imageUrl && (
-                        <div className="mb-1.5 -mx-1 -mt-0.5 overflow-hidden rounded-md">
-                          <img src={msg.imageUrl} alt="Attachment" className="w-full max-h-48 object-cover" />
-                        </div>
-                      )}
-
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div className="mb-1.5 space-y-1">
-                          {msg.attachments.map((att, i) => {
-                            const mime = att.mime || "";
-                            const isImage = mime.startsWith("image");
-                            const isVideo = mime.startsWith("video");
-                            const isAudio = mime.startsWith("audio");
-                            const isPdf = mime === "application/pdf" || att.name?.toLowerCase().endsWith(".pdf");
-                            const fileName = att.name || "archivo";
-
-                            if (isImage) {
-                              return (
-                                <div key={i} className="rounded-md overflow-hidden">
-                                  <img src={att.url} alt={fileName} className="w-full max-h-48 object-cover" />
-                                  <div className="px-2 py-0.5 bg-gray-100 flex items-center gap-1">
-                                    <ImageIcon className="h-3 w-3 text-gray-400" />
-                                    <span className="text-[10px] text-gray-500 truncate">{fileName}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            if (isVideo) {
-                              return (
-                                <div key={i} className="rounded-md overflow-hidden border border-gray-200">
-                                  <video src={att.url} controls className="w-full max-h-48" preload="metadata" />
-                                  <div className="px-2 py-1 bg-gray-100 flex items-center gap-1">
-                                    <Film className="h-3 w-3 text-gray-400" />
-                                    <span className="text-[10px] text-gray-500 truncate">{fileName}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            if (isAudio) {
-                              return (
-                                <div key={i} className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2 flex items-center gap-2">
-                                  <div className="h-7 w-7 rounded-full bg-[#075E54]/15 flex items-center justify-center shrink-0">
-                                    <Volume2 className="h-3.5 w-3.5 text-[#075E54]" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <span className="text-[11px] text-gray-700 truncate block">{fileName}</span>
-                                    <div className="h-1 rounded-full bg-gray-200 mt-1">
-                                      <div className="h-1 rounded-full bg-[#075E54]/40 w-1/3" />
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            // PDF / Document / generic
-                            const IconComp = isPdf ? FileText : File;
-                            const label = isPdf ? "PDF" : "Documento";
-                            return (
-                              <div key={i} className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2 flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-md bg-[#075E54]/10 flex items-center justify-center shrink-0">
-                                  <IconComp className="h-3.5 w-3.5 text-[#075E54]" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-[11px] text-gray-700 truncate block">{fileName}</span>
-                                  <span className="text-[9px] text-gray-400">{label}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      <p className="whitespace-pre-wrap text-[13.5px] leading-[1.35]">{msg.text}</p>
-
-                      {msg.quickReplies && msg.quickReplies.length > 0 && (
-                        <div className="mt-1.5 space-y-1 border-t border-gray-200 pt-1.5">
-                          {msg.quickReplies.map((r, i) => (
-                            <button
-                              key={i}
-                              onClick={() => waitingForInput && handleSend(r)}
-                              disabled={!waitingForInput}
-                              className="block w-full rounded-md border border-[#25D366]/30 py-1.5 text-center text-xs font-medium text-[#075E54] transition hover:bg-[#25D366]/10 disabled:opacity-40"
-                            >
-                              {r}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="mt-0.5 flex items-center justify-end gap-0.5">
-                        <span className="text-[10px] text-gray-400">{formatTime(msg.timestamp)}</span>
-                        {!isBot && <CheckCheck className="h-3 w-3 text-[#53BDEB]" />}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Category pills */}
-              {waitingForInput && categories.length > 0 && (
-                <div className="flex justify-center py-2">
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {categories.map((cat, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSend(cat)}
-                        className="rounded-full bg-[#075E54] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-[#064E47]"
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Processing indicator */}
-              {isProcessing && (
-                <div className="flex justify-center py-2">
-                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 shadow-sm">
-                    <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-                    <span className="text-[11px] text-blue-600 font-medium">Ejecutando API…</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Typing indicator */}
-              {!isFinished && !waitingForInput && !isProcessing && messages.length > 0 && (
-                <div className="flex justify-start">
-                  <div className="rounded-lg rounded-tl-none bg-white px-4 py-2.5 shadow-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:0ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:150ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:300ms]" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Input bar */}
-          <div className="relative flex items-center gap-2 bg-[#F0F0F0] px-2 py-2">
-            <button className="text-gray-500">
-              <Smile className="h-6 w-6" />
-            </button>
-            <div className="flex flex-1 items-center rounded-full bg-white px-4 py-2 shadow-sm">
-              <input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && waitingForInput) handleSend(inputText);
-                }}
-                placeholder={waitingForInput ? "Mensaje" : isProcessing ? "Procesando…" : "Esperando…"}
-                disabled={!waitingForInput}
-                className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
-              />
-              <button
-                className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
-                onClick={() => setShowAttachMenu(!showAttachMenu)}
-                disabled={!waitingForInput}
-              >
-                <Paperclip className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Attachment menu */}
-            {showAttachMenu && waitingForInput && (
-              <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-4 rounded-2xl bg-white px-6 py-4 shadow-xl border border-gray-200">
-                <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-1">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-500 shadow-md">
-                    <Camera className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="text-[10px] text-gray-500">Cámara</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    input.accept = "image/*";
-                    input.onchange = (ev) => {
-                      const file = (ev.target as HTMLInputElement).files?.[0];
-                      if (file) { sendAttachment(file); setShowAttachMenu(false); }
-                    };
-                    input.click();
-                  }}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-500 shadow-md">
-                    <ImageIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="text-[10px] text-gray-500">Galería</span>
-                </button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-1">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 shadow-md">
-                    <Paperclip className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="text-[10px] text-gray-500">Documento</span>
-                </button>
+          <ScrollArea className="flex-1 p-3">
+            {steps.length === 0 ? (
+              <EmptyState icon={<Sparkles className="h-10 w-10 opacity-15" />} title="Waiting for inferences…" subtitle="AI decision logs will stream here in real-time" />
+            ) : inferenceSteps.length === 0 ? (
+              <div className="space-y-2">
+                {/* Show all steps as system log even without decision_log */}
+                {steps.map((s) => (
+                  <SystemLogEntry key={s.id} step={s} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {steps.map((s) => {
+                  const dl = (s.output as Record<string, unknown>)?.decision_log as Record<string, unknown> | undefined;
+                  return dl ? <InferenceCard key={s.id} step={s} log={dl} /> : <SystemLogEntry key={s.id} step={s} />;
+                })}
               </div>
             )}
-
-            {inputText.trim() ? (
-              <button
-                onClick={() => handleSend(inputText)}
-                disabled={!waitingForInput}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#075E54] text-white shadow-sm transition hover:bg-[#064E47] disabled:opacity-50"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            ) : (
-              <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[#075E54] text-white shadow-sm">
-                <Mic className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-
-          {/* Bottom bar */}
-          <div className="flex h-8 items-end justify-center bg-[#F0F0F0] pb-2">
-            <div className="h-1 w-32 rounded-full bg-gray-400" />
-          </div>
+          </ScrollArea>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Sub-components ── */
+
+function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+      {icon}
+      <p className="text-sm font-medium mt-3">{title}</p>
+      <p className="text-[10px] mt-1">{subtitle}</p>
+    </div>
+  );
+}
+
+function ChatBubble({ step }: { step: StepRow }) {
+  const dir = stepDirection(step);
+  const msg = extractText(step);
+
+  if (dir === "system") {
+    return (
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center my-2">
+        <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-[10px] text-muted-foreground">
+          <span className="font-mono font-medium">{step.node_type}</span>
+          {step.node_label && <span>• {step.node_label}</span>}
+          <span className="opacity-60">{fmtTime(step.created_at)}</span>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const isOut = dir === "outbound";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("flex gap-2 my-1.5", isOut ? "justify-end" : "justify-start")}
+    >
+      {!isOut && (
+        <div className="flex-shrink-0 mt-auto">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted border border-border">
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        </div>
+      )}
+      <div className={cn(
+        "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+        isOut ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border text-foreground rounded-bl-md"
+      )}>
+        <p className="whitespace-pre-wrap break-words leading-relaxed">{msg}</p>
+        <div className={cn("flex items-center gap-1.5 mt-1", isOut ? "justify-end" : "justify-start")}>
+          <span className={cn("text-[9px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground")}>
+            {fmtTime(step.created_at)}
+          </span>
+          {step.elapsed_ms != null && (
+            <span className={cn("text-[9px] flex items-center gap-0.5", isOut ? "text-primary-foreground/50" : "text-muted-foreground/60")}>
+              <Clock className="h-2 w-2" />{step.elapsed_ms}ms
+            </span>
+          )}
+        </div>
+      </div>
+      {isOut && (
+        <div className="flex-shrink-0 mt-auto">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/20">
+            <Bot className="h-3.5 w-3.5 text-primary" />
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function SystemLogEntry({ step }: { step: StepRow }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-lg border border-border bg-muted/20 p-2.5 text-[10px] font-mono"
+    >
+      <div className="flex justify-between text-muted-foreground mb-1">
+        <span>{step.node_type}</span>
+        <span>{fmtTime(step.created_at)}</span>
+      </div>
+      {step.node_label && <p className="text-[11px] text-foreground font-sans font-medium">{step.node_label}</p>}
+      {step.elapsed_ms != null && <span className="text-muted-foreground">{step.elapsed_ms}ms</span>}
+    </motion.div>
+  );
+}
+
+function InferenceCard({ step, log }: { step: StepRow; log: Record<string, unknown> }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-accent/30 bg-accent/5 p-3 space-y-2"
+    >
+      <div className="flex justify-between text-[10px] font-mono">
+        <span className="text-accent-foreground font-semibold flex items-center gap-1">
+          <Sparkles className="h-3 w-3" /> NODE: {step.node_label || step.node_uuid.slice(0, 8)}
+        </span>
+        {log.confidence != null && (
+          <span className="text-primary font-bold">
+            CONFIDENCE: {Math.round(Number(log.confidence) * 100)}%
+          </span>
+        )}
+      </div>
+
+      {log.confidence != null && (
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round(Number(log.confidence) * 100)}%` }} />
+        </div>
+      )}
+
+      {log.reasoning && (
+        <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+          "{String(log.reasoning)}"
+        </p>
+      )}
+
+      {(log.decision || log.chosen_exit || log.intent) && (
+        <div className="pt-2 border-t border-border space-y-1">
+          {log.intent && (
+            <p className="text-[10px] text-foreground"><span className="text-muted-foreground">Intent:</span> {String(log.intent)}</p>
+          )}
+          <p className="text-[10px] font-bold text-primary">
+            DECISION: Branch "{String(log.decision || log.chosen_exit || "—")}"
+          </p>
+        </div>
+      )}
+    </motion.div>
   );
 }
