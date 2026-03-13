@@ -422,8 +422,10 @@ export function WakaSovereignPlayer({
   const [inputText, setInputText] = useState("");
   const [voiceActive, setVoiceActive] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
