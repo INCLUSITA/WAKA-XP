@@ -67,10 +67,10 @@ export function useExperienceEntities(experienceId?: string) {
   });
 
   const updateEntity = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<ExperienceEntity> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string | null; entity_type?: string; data_schema?: Record<string, unknown> }) => {
       const { data, error } = await supabase
         .from("experience_entities")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
