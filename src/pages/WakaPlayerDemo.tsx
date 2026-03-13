@@ -592,6 +592,22 @@ export default function WakaPlayerDemo() {
                   onDeviceLockConsent={handleDeviceLockConsent}
                 />
               </div>
+
+              {/* Voice Call Overlay — takes over phone screen */}
+              <VoiceCallOverlay
+                open={showVoiceCall}
+                onClose={handleVoiceCallEnd}
+                agentName="WAKA VOICE"
+              />
+
+              {/* Avatar Overlay — takes over phone screen */}
+              <AvatarOverlay
+                open={showAvatar}
+                onClose={handleAvatarClose}
+                avatarUrl={avatarUrl}
+                agentName="WAKA Avatar"
+              />
+
               <div className="flex justify-center py-2 bg-white">
                 <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
               </div>
