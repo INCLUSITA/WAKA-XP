@@ -78,20 +78,30 @@ export default function WakaPlayerDemo() {
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
   const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
 
-  // Load saved flow from query param (takes priority over generic history)
-  const flowParamLoaded = useRef(false);
+  // Load selected flow from query param and react to param changes
+  const loadedFlowIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (flowParamLoaded.current) return;
-    if (!flowIdParam) return;
-    flowParamLoaded.current = true;
+    if (!flowIdParam) {
+      loadedFlowIdRef.current = null;
+      setActiveFlowId(null);
+      setActiveFlowTitle(null);
+      return;
+    }
+
+    if (loadedFlowIdRef.current === flowIdParam) return;
+    loadedFlowIdRef.current = flowIdParam;
+
     setActiveFlowId(flowIdParam);
     loadFlowFull(flowIdParam).then((full) => {
-      if (full) {
-        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
-        setDataMode(full.dataMode);
-        setActiveFlowTitle(full.name);
-        toast.success(`Flujo "${full.name}" cargado`);
+      if (!full) {
+        toast.error("No se pudo cargar el flujo seleccionado");
+        return;
       }
+
+      setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+      setDataMode(full.dataMode);
+      setActiveFlowTitle(full.name);
+      toast.success(`Flujo "${full.name}" cargado`);
     });
   }, [flowIdParam, loadFlowFull]);
 
@@ -447,14 +457,11 @@ export default function WakaPlayerDemo() {
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback(async (flowId: string) => {
-    const full = await loadFlowFull(flowId);
-    if (!full) { toast.error("No se pudo cargar el flujo"); return; }
-    setMessages(full.conversationSnapshot);
-    setDataMode(full.dataMode);
+  const handleLoadFlow = useCallback((flowId: string) => {
     setShowFlowsPanel(false);
-    toast.success(`Flujo "${full.name}" cargado`);
-  }, [loadFlowFull]);
+    if (flowId === flowIdParam) return;
+    navigate(`/player/live?flow=${flowId}`);
+  }, [navigate, flowIdParam]);
 
   const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
     if (flowContext && flowName) {
@@ -484,6 +491,11 @@ export default function WakaPlayerDemo() {
         <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
           {MODE_LABELS[dataMode]}
         </Badge>
+        {activeFlowTitle && (
+          <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
+            {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+          </Badge>
+        )}
         {isThinking && (
           <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
             <Zap className="h-2.5 w-2.5" />
@@ -648,7 +660,11 @@ export default function WakaPlayerDemo() {
       {/* Saved Flows Panel */}
       <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
         <SheetContent side="right" className="w-[400px] p-0">
-          <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
+          <SavedFlowsPanel
+            onLoad={handleLoadFlow}
+            onClose={() => setShowFlowsPanel(false)}
+            activeFlowId={activeFlowId}
+          />
         </SheetContent>
       </Sheet>
 
