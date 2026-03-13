@@ -30,6 +30,10 @@ import {
   CreditSimulationCard, type CreditSimulationData,
   ClientStatusCard, type ClientStatusData,
   MoMoAccountCard, type MoMoAccountData,
+  ServicePlansCard, type ServicePlansData,
+  PaymentConfirmationCard, type PaymentConfirmationData,
+  CreditContractCard, type CreditContractData,
+  DeviceLockConsentCard, type DeviceLockConsentData,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
