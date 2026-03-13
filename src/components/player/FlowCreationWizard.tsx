@@ -35,7 +35,7 @@ interface AIEngine {
 }
 
 const ENGINES: AIEngine[] = [
-  { id: "waka-ai", name: "WAKA AI", subtitle: "Default", description: "Gemini · Lovable Cloud nativo", icon: Cpu, available: true },
+  { id: "waka-ai", name: "WAKA AI", subtitle: "Default", description: "Motor IA nativo · Infraestructura WAKA", icon: Cpu, available: true },
   { id: "azure-openai", name: "Azure OpenAI", subtitle: "Demo", description: "GPT-4o via Azure · Requiere claves", icon: Cloud, available: false },
   { id: "byom", name: "BYOM", subtitle: "Demo", description: "Bring Your Own Model · Requiere config", icon: Server, available: false },
 ];
