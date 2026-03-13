@@ -43,6 +43,8 @@ interface ExpressionInputProps {
   multiline?: boolean;
   /** Dynamic result names from the flow context */
   resultNames?: string[];
+  /** Context entity names from the Experience Context Board */
+  contextEntityNames?: string[];
 }
 
 export function ExpressionInput({
