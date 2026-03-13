@@ -106,6 +106,10 @@ interface WakaSovereignPlayerProps {
   onSlideAction?: (slide: MediaSlide) => void;
   onCreditAction?: (action: string) => void;
   onMomoAction?: (action: string) => void;
+  onSelectPlan?: (sku: string, name: string) => void;
+  onPaymentConfirmAction?: (action: string) => void;
+  onCreditContractAction?: (action: string) => void;
+  onDeviceLockConsent?: (accepted: boolean) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
