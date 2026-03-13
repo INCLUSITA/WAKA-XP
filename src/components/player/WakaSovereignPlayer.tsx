@@ -455,6 +455,34 @@ export function WakaSovereignPlayer({
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+    setShowAttachMenu(false);
+  };
+
+  const handleDocSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    onSendDocument?.(file);
+    e.target.value = "";
+    setShowAttachMenu(false);
+  };
+
+  const handleShareLocation = () => {
+    setShowAttachMenu(false);
+    if (!navigator.geolocation) {
+      // Fallback: send a default location message
+      onSend?.("📍 Partage de position non supporté par ce navigateur");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onSendLocation?.(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        onSend?.("📍 Impossible d'accéder à la position GPS");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
