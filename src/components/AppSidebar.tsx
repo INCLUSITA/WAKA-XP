@@ -3,7 +3,7 @@ import {
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
   Plug, Building2, Settings, MessageSquare, BrainCircuit,
   Archive, Globe as GlobIcon, Clock, Webhook,
-  Download, ShieldCheck, ServerCog,
+  Download, ShieldCheck, ServerCog, Play,
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
