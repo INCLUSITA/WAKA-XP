@@ -171,6 +171,11 @@ export function RunDetailView({ run, onBack, onOpenTimeline }: Props) {
             <span className="font-mono">{run.contact_urn?.split(":").slice(1).join(":") || "no contact"}</span>
           </div>
         </div>
+        {onOpenTimeline && (
+          <Button variant="outline" size="sm" onClick={onOpenTimeline} className="gap-1 text-xs border-primary/30 text-primary hover:bg-primary/10">
+            <MessageSquare className="h-3.5 w-3.5" /> Chat View
+          </Button>
+        )}
         <RunStatusBadge status={run.status} />
       </div>
 
