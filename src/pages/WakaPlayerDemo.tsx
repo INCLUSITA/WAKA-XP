@@ -107,6 +107,7 @@ export default function WakaPlayerDemo() {
       setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
+      setActiveScenarioConfig(full.scenarioConfig || {});
       toast.success(`Flujo "${full.name}" cargado`);
     });
   }, [flowIdParam, loadFlowFull]);
