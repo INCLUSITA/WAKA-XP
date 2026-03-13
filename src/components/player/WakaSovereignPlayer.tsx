@@ -87,6 +87,7 @@ interface WakaSovereignPlayerProps {
   onPayment?: (method: string) => void;
   onRate?: (value: number | string) => void;
   onModuleClick?: (moduleId: string) => void;
+  onSlideAction?: (slide: MediaSlide) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
