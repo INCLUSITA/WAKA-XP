@@ -38,6 +38,7 @@ interface FlowToolbarProps {
   onLoadSample?: () => void;
   onValidate?: () => void;
   onSimulate?: () => void;
+  onOpenSimulatorShell?: () => void;
   onTranslate?: () => void;
   onVersions?: () => void;
   onRuns?: () => void;
