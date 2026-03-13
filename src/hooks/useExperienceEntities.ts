@@ -46,12 +46,18 @@ export function useExperienceEntities(experienceId?: string) {
       experience_id?: string;
       data_schema?: Record<string, unknown>;
     }) => {
+      const row: Record<string, unknown> = {
+        name: entity.name,
+        entity_type: entity.entity_type,
+        tenant_id: tenantId!,
+      };
+      if (entity.description) row.description = entity.description;
+      if (entity.experience_id) row.experience_id = entity.experience_id;
+      if (entity.data_schema) row.data_schema = entity.data_schema;
+
       const { data, error } = await supabase
         .from("experience_entities")
-        .insert({
-          ...entity,
-          tenant_id: tenantId!,
-        })
+        .insert(row as any)
         .select()
         .single();
       if (error) throw error;
