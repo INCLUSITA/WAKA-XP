@@ -174,6 +174,9 @@ src/
 │   ├── useFlowPersistence.ts        # Auto-save con debounce a DB
 │   ├── useFlowModules.ts            # Gestión de módulos/agrupación
 │   ├── useFlowSimulation.ts         # Motor de simulación WhatsApp
+│   ├── useSavedPlayerFlows.ts       # CRUD de flujos guardados del Player
+│   ├── usePlayerConversation.ts     # Gestión de conversaciones del Player
+│   ├── useWakaPlayerAI.ts           # Motor IA del Player
 │   ├── useAssetVersions.ts          # Versionado transversal
 │   ├── useUploadedDemos.ts          # Demos subidas por usuario
 │   ├── use-mobile.tsx               # Detección de móvil
