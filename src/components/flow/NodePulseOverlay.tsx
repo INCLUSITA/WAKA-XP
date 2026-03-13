@@ -93,11 +93,14 @@ export function useActiveNodePulse(flowId: string | null) {
 /**
  * Small pulse dot to overlay on a node that has active runs.
  */
-export function PulseDot({ count }: { count: number }) {
+export function PulseDot({ count, onClick }: { count: number; onClick?: () => void }) {
   if (count <= 0) return null;
 
   return (
-    <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-0.5">
+    <div
+      className={cn("absolute -top-1.5 -right-1.5 z-10 flex items-center gap-0.5", onClick && "cursor-pointer")}
+      onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+    >
       <motion.div
         className="relative flex items-center justify-center"
         initial={{ scale: 0 }}
