@@ -351,4 +351,4 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ---
 
-*Informe generado el 13 de marzo de 2026 — WAKA XP v0.2*
+*Informe actualizado el 13 de marzo de 2026 — WAKA XP v0.3 (incluye Waka XP Player)*
