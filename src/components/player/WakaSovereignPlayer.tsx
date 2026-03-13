@@ -151,7 +151,7 @@ function TypingIndicator() {
   const mode = useDataMode();
 
   if (mode === "zero-rated") {
-    return <span className="text-[11px] text-[hsl(160,40%,45%)] italic">…</span>;
+    return <span className="text-[11px] text-[hsl(270,30%,55%)] italic">…</span>;
   }
 
   return (
@@ -159,7 +159,7 @@ function TypingIndicator() {
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="h-[6px] w-[6px] rounded-full bg-[hsl(160,50%,55%)]"
+          className="h-[6px] w-[6px] rounded-full bg-[hsl(270,45%,60%)]"
           animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
           transition={{
             duration: 0.8,
