@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
+import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 
@@ -61,12 +62,14 @@ export default function WakaPlayerDemo() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
-  const { sendToAI, isThinking } = useWakaPlayerAI();
+  const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
   const { saveFlow, loadFlowFull } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showFlowsPanel, setShowFlowsPanel] = useState(false);
+  const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
+  const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Load conversation history on mount
@@ -431,6 +434,16 @@ export default function WakaPlayerDemo() {
     toast.success(`Flujo "${full.name}" cargado`);
   }, [loadFlowFull]);
 
+  const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
+    if (flowContext && flowName) {
+      setFlowContext(flowContext);
+      setActiveFlowContextName(flowName);
+    } else {
+      setFlowContext(null);
+      setActiveFlowContextName(null);
+    }
+  }, [setFlowContext]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -455,6 +468,12 @@ export default function WakaPlayerDemo() {
             Thinking…
           </Badge>
         )}
+        {activeFlowContextName && (
+          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] gap-1 cursor-pointer" onClick={() => setShowFlowContextSelector(true)}>
+            <GitBranch className="h-2.5 w-2.5" />
+            {activeFlowContextName.length > 25 ? activeFlowContextName.slice(0, 25) + "…" : activeFlowContextName}
+          </Badge>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <Tooltip>
@@ -466,6 +485,23 @@ export default function WakaPlayerDemo() {
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">Mensajes persistidos en esta conversación</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={activeFlowContextName ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFlowContextSelector(true)}
+                className="h-7 text-[11px] gap-1"
+              >
+                <GitBranch className="h-3 w-3" />
+                Contexto
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Cargar un flujo TextIt como contexto IA</p>
             </TooltipContent>
           </Tooltip>
 
@@ -593,6 +629,14 @@ export default function WakaPlayerDemo() {
           <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
         </SheetContent>
       </Sheet>
+
+      {/* Flow Context Selector */}
+      <FlowContextSelector
+        open={showFlowContextSelector}
+        onClose={() => setShowFlowContextSelector(false)}
+        onSelect={handleFlowContextSelect}
+        activeFlowName={activeFlowContextName}
+      />
     </div>
   );
 }

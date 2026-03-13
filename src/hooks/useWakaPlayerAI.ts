@@ -18,6 +18,11 @@ interface ConversationMessage {
 export function useWakaPlayerAI() {
   const [isThinking, setIsThinking] = useState(false);
   const historyRef = useRef<ConversationMessage[]>([]);
+  const flowContextRef = useRef<string | null>(null);
+
+  const setFlowContext = useCallback((ctx: string | null) => {
+    flowContextRef.current = ctx;
+  }, []);
 
   const sendToAI = useCallback(async (
     userText: string,
@@ -45,6 +50,7 @@ export function useWakaPlayerAI() {
         body: {
           messages: historyRef.current,
           dataMode,
+          flowContext: flowContextRef.current || undefined,
         },
       });
 
@@ -208,5 +214,5 @@ export function useWakaPlayerAI() {
 
   const resetHistory = useCallback(() => { historyRef.current = []; }, []);
 
-  return { sendToAI, isThinking, resetHistory };
+  return { sendToAI, isThinking, resetHistory, setFlowContext, flowContext: flowContextRef.current };
 }

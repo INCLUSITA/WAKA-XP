@@ -803,7 +803,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dataMode } = await req.json();
+    const { messages, dataMode, flowContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -815,6 +815,11 @@ serve(async (req) => {
       : dataMode === "subventionné"
       ? "\n\nL'utilisateur est en mode SUBVENTIONNÉ. Sois concis mais chaleureux."
       : "\n\nL'utilisateur est en mode LIBRE. Tu peux être expressif avec des emojis et des messages riches.";
+
+    // Inject flow context if provided (from TextIt JSON or other sources)
+    const flowContextSection = flowContext
+      ? `\n\n## CONTEXTO DE FLUJO ACTIVO\n${flowContext}\n\nIMPORTANT: Utiliza este flujo como guía conversacional. Conduce al usuario por los pasos de forma natural y fluida, usando las APIs y webhooks indicados para las operaciones reales. NO sigas los nodos de forma rígida — sé conversacional y dinámico.`
+      : "";
 
     const hasImages = messages.some((m: any) =>
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
@@ -833,7 +838,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + modeContext },
+          { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
           ...messages,
         ],
         tools: allTools,
@@ -871,7 +876,7 @@ serve(async (req) => {
     // Multi-pass loop: keep executing CORE tool calls until AI produces a final response
     const MAX_PASSES = 5;
     let conversationMessages = [
-      { role: "system", content: SYSTEM_PROMPT + modeContext },
+      { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
       ...messages,
     ];
     let pass = 0;
