@@ -18,6 +18,11 @@ interface ConversationMessage {
 export function useWakaPlayerAI() {
   const [isThinking, setIsThinking] = useState(false);
   const historyRef = useRef<ConversationMessage[]>([]);
+  const flowContextRef = useRef<string | null>(null);
+
+  const setFlowContext = useCallback((ctx: string | null) => {
+    flowContextRef.current = ctx;
+  }, []);
 
   const sendToAI = useCallback(async (
     userText: string,
