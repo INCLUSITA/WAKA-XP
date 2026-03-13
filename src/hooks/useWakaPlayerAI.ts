@@ -214,5 +214,5 @@ export function useWakaPlayerAI() {
 
   const resetHistory = useCallback(() => { historyRef.current = []; }, []);
 
-  return { sendToAI, isThinking, resetHistory };
+  return { sendToAI, isThinking, resetHistory, setFlowContext, flowContext: flowContextRef.current };
 }
