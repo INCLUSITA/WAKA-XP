@@ -655,7 +655,11 @@ export default function WakaPlayerDemo() {
       {/* Saved Flows Panel */}
       <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
         <SheetContent side="right" className="w-[400px] p-0">
-          <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
+          <SavedFlowsPanel
+            onLoad={handleLoadFlow}
+            onClose={() => setShowFlowsPanel(false)}
+            activeFlowId={activeFlowId}
+          />
         </SheetContent>
       </Sheet>
 
