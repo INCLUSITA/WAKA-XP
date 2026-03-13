@@ -554,6 +554,13 @@ export function WakaSovereignPlayer({
                         </div>
                       )}
 
+                      {/* Image attachment */}
+                      {msg.imageUrl && (
+                        <div className={cn("max-w-[85%] rounded-2xl overflow-hidden shadow-sm mb-1", isBot ? "border border-[hsl(220,15%,92%)]" : "")}>
+                          <img src={msg.imageUrl} alt="Photo envoyée" className="w-full max-h-[200px] object-cover" loading="lazy" />
+                        </div>
+                      )}
+
                       {/* Text bubble */}
                       {(msg.text || msg.isVoice) && (
                         <div className="relative">
