@@ -79,6 +79,7 @@ interface WakaSovereignPlayerProps {
   messages: PlayerMessage[];
   botName?: string;
   onSend?: (text: string) => void;
+  onSendImage?: (imageDataUrl: string, caption?: string) => void;
   onQuickReply?: (label: string) => void;
   onVoiceToggle?: (active: boolean) => void;
   onMenuSelect?: (label: string) => void;
