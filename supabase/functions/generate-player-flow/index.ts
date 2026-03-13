@@ -17,7 +17,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { name, description, engineId, tenantId, sourceData, mode } = await req.json();
+    const { name, description, engineId, tenantId, sourceData, mode, existingFlowId } = await req.json();
 
     if (!name || !tenantId) {
       return new Response(JSON.stringify({ error: "name and tenantId required" }), {
