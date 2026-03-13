@@ -629,6 +629,14 @@ export default function WakaPlayerDemo() {
           <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
         </SheetContent>
       </Sheet>
+
+      {/* Flow Context Selector */}
+      <FlowContextSelector
+        open={showFlowContextSelector}
+        onClose={() => setShowFlowContextSelector(false)}
+        onSelect={handleFlowContextSelect}
+        activeFlowName={activeFlowContextName}
+      />
     </div>
   );
 }
