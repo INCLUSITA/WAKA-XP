@@ -15,6 +15,7 @@ import {
   Play, Copy, Trash2, Search, MessageSquare, Shield, FlaskConical, Rocket, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<FlowStatus, { label: string; icon: React.ReactNode; className: string }> = {
   stable: { label: "Stable", icon: <Shield className="h-3 w-3" />, className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
@@ -25,9 +26,10 @@ const STATUS_CONFIG: Record<FlowStatus, { label: string; icon: React.ReactNode; 
 interface SavedFlowsPanelProps {
   onLoad: (flowId: string) => void;
   onClose: () => void;
+  activeFlowId?: string | null;
 }
 
-export function SavedFlowsPanel({ onLoad, onClose }: SavedFlowsPanelProps) {
+export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedFlowsPanelProps) {
   const { flows, isLoading, updateFlowStatus, deleteFlow, cloneFlow } = useSavedPlayerFlows();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<FlowStatus | "all">("all");

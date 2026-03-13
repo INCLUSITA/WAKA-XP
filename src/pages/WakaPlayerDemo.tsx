@@ -78,20 +78,30 @@ export default function WakaPlayerDemo() {
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
   const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
 
-  // Load saved flow from query param (takes priority over generic history)
-  const flowParamLoaded = useRef(false);
+  // Load selected flow from query param and react to param changes
+  const loadedFlowIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (flowParamLoaded.current) return;
-    if (!flowIdParam) return;
-    flowParamLoaded.current = true;
+    if (!flowIdParam) {
+      loadedFlowIdRef.current = null;
+      setActiveFlowId(null);
+      setActiveFlowTitle(null);
+      return;
+    }
+
+    if (loadedFlowIdRef.current === flowIdParam) return;
+    loadedFlowIdRef.current = flowIdParam;
+
     setActiveFlowId(flowIdParam);
     loadFlowFull(flowIdParam).then((full) => {
-      if (full) {
-        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
-        setDataMode(full.dataMode);
-        setActiveFlowTitle(full.name);
-        toast.success(`Flujo "${full.name}" cargado`);
+      if (!full) {
+        toast.error("No se pudo cargar el flujo seleccionado");
+        return;
       }
+
+      setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+      setDataMode(full.dataMode);
+      setActiveFlowTitle(full.name);
+      toast.success(`Flujo "${full.name}" cargado`);
     });
   }, [flowIdParam, loadFlowFull]);
 
