@@ -214,6 +214,7 @@ function FlowEditorInner() {
           setNodes(result.nodes);
           setEdges(result.edges);
           setFlowName(result.name);
+          if (result.triggerRules) setTriggerRules(result.triggerRules);
 
           // Restore pinned start node from saved node data
           const pinnedNode = (result.nodes as Node[]).find(
