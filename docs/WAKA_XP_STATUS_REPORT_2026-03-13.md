@@ -234,10 +234,10 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 | Componente | Estado actual | Qué existe hoy | Qué falta |
 |---|---|---|---|
-| **Simulator Shell** | 🟡 Parcial | WhatsApp Simulator funcional en Builder | Shell nativo reutilizable multi-canal |
-| **Scenario Editor** | ❌ No iniciado | Demo Builder es precursor | Editor estructurado de escenarios con datos/shell/lógica separados |
-| **AI Journey Generator** | 🟡 Parcial | Demo Builder genera JSX con IA | Generación de flows completos desde briefing |
-| **Scenario-to-Flow Bridge** | 🟡 Parcial | WakaFlow Mapper existe | Compilación real de escenarios a nodos ejecutables |
+| **Simulator Shell** | ✅ Operativo | Waka XP Player como shell soberano con bloques nativos + WhatsApp Simulator en Builder | Variantes multi-canal del mismo shell |
+| **Scenario Editor** | 🟡 Parcial | FlowCreationWizard con multi-fuente (texto/JSON/YAML/imagen) + AI Engine Selector | Editor visual WYSIWYG de escenarios |
+| **AI Journey Generator** | ✅ Operativo | Player genera conversation_snapshot + scenario_config desde briefing via IA | Refinamiento iterativo post-generación |
+| **Scenario-to-Flow Bridge** | 🟡 Parcial | WakaFlow Mapper + Player saved flows con promote to production | Compilación real de escenarios a nodos ejecutables |
 | **Blueprint Generator** | ❌ No iniciado | — | Generación de intenciones de integración, contratos, readiness |
 
 ---
