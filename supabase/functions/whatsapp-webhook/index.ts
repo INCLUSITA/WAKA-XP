@@ -57,8 +57,9 @@ Deno.serve(async (req) => {
           if (error) console.error("Insert error:", error);
           else console.log("Saved inbound message from", fromPhone);
 
-          // ─── Flow Resume: find a waiting run for this contact ───
           const contactUrn = `whatsapp:${fromPhone}`;
+
+          // ─── 1. Try to RESUME a waiting run for this contact ───
           const { data: waitingRuns } = await sb
             .from("flow_runs")
             .select("id, flow_id, tenant_id")
@@ -89,6 +90,73 @@ Deno.serve(async (req) => {
             } catch (resumeErr: any) {
               console.error("Resume error:", resumeErr.message);
             }
+            continue; // Don't also try to trigger a new flow
+          }
+
+          // ─── 2. Try to START a new flow by keyword trigger ───
+          const normalizedMsg = messageBody.trim().toLowerCase();
+          console.log(`No waiting run. Checking triggers for keyword: "${normalizedMsg}"`);
+
+          // Find all active flows with trigger_rules
+          const { data: flows } = await sb
+            .from("flows")
+            .select("id, name, tenant_id, trigger_rules")
+            .neq("status", "archived")
+            .not("trigger_rules", "eq", "[]");
+
+          if (flows && flows.length > 0) {
+            let matchedFlow: { id: string; tenant_id: string; name: string } | null = null;
+
+            for (const flow of flows) {
+              const rules = (flow.trigger_rules as any[]) || [];
+              for (const rule of rules) {
+                if (!rule.active) continue;
+                // Check channel scope
+                if (rule.channel && rule.channel !== "whatsapp") continue;
+
+                if (rule.type === "keyword" && rule.keywords?.length > 0) {
+                  const matched = rule.keywords.some(
+                    (kw: string) => kw.trim().toLowerCase() === normalizedMsg
+                  );
+                  if (matched) {
+                    matchedFlow = { id: flow.id, tenant_id: flow.tenant_id, name: flow.name };
+                    break;
+                  }
+                } else if (rule.type === "catch_all") {
+                  matchedFlow = { id: flow.id, tenant_id: flow.tenant_id, name: flow.name };
+                  break;
+                }
+              }
+              if (matchedFlow) break;
+            }
+
+            if (matchedFlow) {
+              console.log(`Keyword match! Starting flow "${matchedFlow.name}" (${matchedFlow.id}) for ${contactUrn}`);
+              try {
+                const runFlowUrl = `${supabaseUrl}/functions/v1/run-flow`;
+                const startResp = await fetch(runFlowUrl, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({
+                    flow_id: matchedFlow.id,
+                    tenant_id: matchedFlow.tenant_id,
+                    contact_urn: contactUrn,
+                    channel: "whatsapp",
+                  }),
+                });
+                const startResult = await startResp.json();
+                console.log("Start flow result:", JSON.stringify(startResult));
+              } catch (startErr: any) {
+                console.error("Start flow error:", startErr.message);
+              }
+            } else {
+              console.log("No trigger matched for this message");
+            }
+          } else {
+            console.log("No flows with trigger_rules found");
           }
         }
 
