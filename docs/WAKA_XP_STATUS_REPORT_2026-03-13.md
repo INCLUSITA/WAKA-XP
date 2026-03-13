@@ -309,6 +309,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 - Auto-save, versionado, import/export JSON v13
 - Experience Studio con CRUD y vinculación de activos
 - Demo Builder con generación IA conversacional
+- **Waka XP Player** — Simulador conversacional IA soberano con 16+ bloques nativos, galería de flujos guardados, wizard de creación multi-fuente (texto/JSON/YAML/imagen), selector de motor IA (WAKA AI/Azure/BYOM), persistencia completa, ciclo de vida Stable→Sandbox→Production
 - Production Layer con ciclo de vida de candidatos
 - Multi-tenancy con RLS, roles, workspaces
 - Sistema de conexiones de canales con health check
