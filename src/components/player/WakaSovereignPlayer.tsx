@@ -741,6 +741,38 @@ export function WakaSovereignPlayer({
                           />
                         </div>
                       )}
+                      {msg.servicePlans && (
+                        <div className="mt-1.5">
+                          <ServicePlansCard
+                            data={msg.servicePlans}
+                            onSelectPlan={onSelectPlan}
+                          />
+                        </div>
+                      )}
+                      {msg.paymentConfirmation && (
+                        <div className="mt-1.5">
+                          <PaymentConfirmationCard
+                            data={msg.paymentConfirmation}
+                            onAction={onPaymentConfirmAction}
+                          />
+                        </div>
+                      )}
+                      {msg.creditContract && (
+                        <div className="mt-1.5">
+                          <CreditContractCard
+                            data={msg.creditContract}
+                            onAction={onCreditContractAction}
+                          />
+                        </div>
+                      )}
+                      {msg.deviceLockConsent && (
+                        <div className="mt-1.5">
+                          <DeviceLockConsentCard
+                            data={msg.deviceLockConsent}
+                            onConsent={onDeviceLockConsent}
+                          />
+                        </div>
+                      )}
                     </BubbleWrapper>
                   );
                 })}
