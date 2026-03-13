@@ -31,11 +31,11 @@ const WELCOME_MESSAGES: PlayerMessage[] = [
     source: "WAKA NEXUS · IA",
     reaction: "👋",
     quickReplies: [
-      "💰 Mon solde",
-      "📱 Forfaits internet",
-      "📚 Ma formation",
-      "🏪 Agence la plus proche",
-      "💸 Envoyer de l'argent",
+      "📱 Voir les téléphones",
+      "🌐 Plans fibre optique",
+      "🏥 Assurance santé",
+      "💰 Ouvrir compte MoMo",
+      "💳 Mon solde",
     ],
   },
 ];
