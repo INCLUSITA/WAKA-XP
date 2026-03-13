@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,12 @@ import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/compon
 import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
+import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { toast } from "sonner";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
