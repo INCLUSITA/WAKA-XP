@@ -102,6 +102,23 @@ src/
 │   │   ├── OpenTicketNode.tsx       # Nodo: Abrir ticket
 │   │   ├── CallZapierNode.tsx       # Nodo: Llamar Zapier
 │   │   └── SendAirtimeNode.tsx      # Nodo: Enviar airtime
+│   ├── player/                      # Componentes del Waka XP Player
+│   │   ├── WakaSovereignPlayer.tsx  # ★ Componente principal del simulador IA
+│   │   ├── FlowCreationWizard.tsx   # Wizard multi-fuente de creación de flujos
+│   │   ├── FlowContextSelector.tsx  # Selector de contexto de flujo
+│   │   ├── SavedFlowsPanel.tsx      # Panel lateral de flujos guardados
+│   │   ├── SaveFlowDialog.tsx       # Diálogo de guardado
+│   │   ├── SalamandraSvg.tsx        # Logo animado
+│   │   ├── dataMode.ts             # Tipos de modalidad de datos
+│   │   └── sovereign-blocks/       # 16+ bloques soberanos nativos
+│   │       ├── ProductCatalog.tsx   # Catálogo de productos
+│   │       ├── PaymentCard.tsx      # Tarjeta de pago
+│   │       ├── CreditSimulationCard.tsx # Simulación de crédito
+│   │       ├── RatingWidget.tsx     # Widget de valoración
+│   │       ├── LocationCard.tsx     # Tarjeta de ubicación
+│   │       ├── MediaCarousel.tsx    # Carrusel multimedia
+│   │       ├── InlineForm.tsx       # Formulario inline
+│   │       └── ...                  # +9 bloques especializados
 │   ├── demos/                       # Componentes del Demo Builder
 │   │   ├── AIEngineSelector.tsx     # Selector de motor IA
 │   │   ├── AIProposalsPanel.tsx     # Panel de propuestas IA
