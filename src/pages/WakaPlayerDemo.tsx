@@ -605,6 +605,8 @@ export default function WakaPlayerDemo() {
                   onPaymentConfirmAction={handlePaymentConfirmAction}
                   onCreditContractAction={handleCreditContractAction}
                   onDeviceLockConsent={handleDeviceLockConsent}
+                  onVoiceCall={() => setShowVoiceCall(true)}
+                  onAvatarCall={() => setShowAvatar(true)}
                 />
               </div>
 
