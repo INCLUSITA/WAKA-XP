@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ const MODE_COLORS: Record<DataMode, string> = {
 
 export default function WakaPlayerDemo() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
@@ -86,6 +87,22 @@ export default function WakaPlayerDemo() {
       }
     });
   }, [conversationId, loadHistory, saveMessage]);
+
+  // Auto-load flow from query param
+  const flowParamLoaded = useRef(false);
+  useEffect(() => {
+    if (flowParamLoaded.current) return;
+    const flowId = searchParams.get("flow");
+    if (!flowId) return;
+    flowParamLoaded.current = true;
+    loadFlowFull(flowId).then((full) => {
+      if (full) {
+        setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+        setDataMode(full.dataMode);
+        toast.success(`Flujo "${full.name}" cargado`);
+      }
+    });
+  }, [searchParams, loadFlowFull]);
 
   const status = isThinking ? "typing" : "online";
 
@@ -451,7 +468,7 @@ export default function WakaPlayerDemo() {
     <div className="flex h-full flex-col bg-background">
       {/* Page Header */}
       <div className="flex items-center gap-3 border-b border-border px-6 py-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
