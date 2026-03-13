@@ -468,6 +468,12 @@ export default function WakaPlayerDemo() {
             Thinking…
           </Badge>
         )}
+        {activeFlowContextName && (
+          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] gap-1 cursor-pointer" onClick={() => setShowFlowContextSelector(true)}>
+            <GitBranch className="h-2.5 w-2.5" />
+            {activeFlowContextName.length > 25 ? activeFlowContextName.slice(0, 25) + "…" : activeFlowContextName}
+          </Badge>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <Tooltip>
