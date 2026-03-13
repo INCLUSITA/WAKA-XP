@@ -590,8 +590,8 @@ export function WakaSovereignPlayer({
                   if (msg.isSystemEvent) {
                     return (
                       <div key={msg.id} className="flex justify-center my-1.5">
-                        <div className="bg-[hsl(160,25%,92%)] rounded-lg px-3 py-1.5 max-w-[90%] border border-[hsl(160,20%,87%)]">
-                          <p className="text-[10px] text-[hsl(160,30%,35%)] font-medium leading-relaxed whitespace-pre-wrap text-center">
+                        <div className="bg-[hsl(270,20%,93%)] rounded-lg px-3 py-1.5 max-w-[90%] border border-[hsl(270,15%,88%)]">
+                          <p className="text-[10px] text-[hsl(270,30%,40%)] font-medium leading-relaxed whitespace-pre-wrap text-center">
                             {msg.text}
                           </p>
                         </div>
