@@ -325,7 +325,7 @@ function RichCardBubble({
   // Zero-rated: text-only card
   if (mode === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(160,30%,85%)] bg-white px-3 py-2 max-w-[85%]">
+      <div className="rounded-lg border border-[hsl(270,20%,88%)] bg-white px-3 py-2 max-w-[85%]">
         <p className="text-[12px] font-bold text-[hsl(220,15%,20%)]">
           {card.icon} {card.title}
         </p>
@@ -336,7 +336,7 @@ function RichCardBubble({
           <button
             key={i}
             onClick={() => onAction?.(a)}
-            className="block w-full text-left text-[11px] text-[hsl(160,60%,30%)] font-medium mt-1 underline"
+            className="block w-full text-left text-[11px] text-[hsl(270,45%,40%)] font-medium mt-1 underline"
           >
             → {a}
           </button>
