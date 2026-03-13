@@ -414,6 +414,23 @@ export default function WakaPlayerDemo() {
     WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
   }, [startNewConversation, saveMessage]);
 
+  const handleSaveFlow = useCallback(async (name: string, description: string, status: "stable" | "sandbox" | "production") => {
+    setIsSaving(true);
+    const id = await saveFlow(name, description, messages, dataMode, status);
+    setIsSaving(false);
+    if (id) toast.success(`Flujo "${name}" guardado`);
+    else toast.error("Error al guardar el flujo");
+  }, [saveFlow, messages, dataMode]);
+
+  const handleLoadFlow = useCallback(async (flowId: string) => {
+    const full = await loadFlowFull(flowId);
+    if (!full) { toast.error("No se pudo cargar el flujo"); return; }
+    setMessages(full.conversationSnapshot);
+    setDataMode(full.dataMode);
+    setShowFlowsPanel(false);
+    toast.success(`Flujo "${full.name}" cargado`);
+  }, [loadFlowFull]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
