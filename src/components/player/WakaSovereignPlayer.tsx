@@ -368,6 +368,7 @@ export function WakaSovereignPlayer({
   messages,
   botName = "WAKA",
   onSend,
+  onSendImage,
   onQuickReply,
   onVoiceToggle,
   onMenuSelect,
@@ -390,7 +391,9 @@ export function WakaSovereignPlayer({
 
   const [inputText, setInputText] = useState("");
   const [voiceActive, setVoiceActive] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -398,10 +401,28 @@ export function WakaSovereignPlayer({
   }, [messages]);
 
   const handleSend = () => {
+    if (pendingImage) {
+      onSendImage?.(pendingImage, inputText.trim() || undefined);
+      setPendingImage(null);
+      setInputText("");
+      return;
+    }
     const trimmed = inputText.trim();
     if (!trimmed || !onSend) return;
     onSend(trimmed);
     setInputText("");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
