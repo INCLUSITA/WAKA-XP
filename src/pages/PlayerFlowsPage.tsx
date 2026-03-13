@@ -8,7 +8,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Copy, Trash2, Play, Upload, FileJson, Pencil,
-  Shield, FlaskConical, Rocket, LayoutGrid, GitBranch,
+  Shield, FlaskConical, Rocket, LayoutGrid, GitBranch, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useSavedPlayerFlows, type SavedPlayerFlow, type FlowStatus } from "@/hooks/useSavedPlayerFlows";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
+import { FlowCreationWizard } from "@/components/player/FlowCreationWizard";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 
 const STATUS_META: Record<FlowStatus, { label: string; icon: typeof Shield; color: string }> = {
