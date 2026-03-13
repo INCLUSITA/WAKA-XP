@@ -83,6 +83,10 @@ export interface PlayerMessage {
   creditSimulation?: CreditSimulationData;
   clientStatus?: ClientStatusData;
   momoAccount?: MoMoAccountData;
+  servicePlans?: ServicePlansData;
+  paymentConfirmation?: PaymentConfirmationData;
+  creditContract?: CreditContractData;
+  deviceLockConsent?: DeviceLockConsentData;
 }
 
 interface WakaSovereignPlayerProps {
