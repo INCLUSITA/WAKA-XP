@@ -1,5 +1,5 @@
 /**
- * Waka Sovereign Player — Demo page with full iPhone frame
+ * Waka Sovereign Player — Demo page with full iPhone frame, light chat background
  */
 
 import { useState, useCallback } from "react";
@@ -115,11 +115,6 @@ export default function WakaPlayerDemo() {
     [addBotReply]
   );
 
-  const handleReset = useCallback(() => {
-    setMessages(INITIAL_MESSAGES);
-    setStatus("online");
-  }, []);
-
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -137,14 +132,14 @@ export default function WakaPlayerDemo() {
       </div>
 
       {/* Body — full iPhone in center */}
-      <div className="flex flex-1 items-center justify-center overflow-hidden bg-[hsl(225,30%,8%)]">
+      <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/40">
         {/* iPhone 15 Pro frame */}
         <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
-          {/* Outer shell */}
-          <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,10%,25%)] to-[hsl(220,10%,15%)] shadow-[0_0_60px_rgba(0,0,0,0.5)]" />
+          {/* Outer shell — titanium gray */}
+          <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,78%)] to-[hsl(220,8%,65%)] shadow-[0_0_50px_rgba(0,0,0,0.15)]" />
           {/* Inner bezel */}
           <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
-            {/* Status bar */}
+            {/* Status bar — sits on top of WA header color */}
             <div className="relative flex items-center justify-between px-7 pt-3 pb-1 bg-[hsl(168,76%,26%)] z-20">
               <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
               {/* Dynamic Island */}
@@ -166,21 +161,20 @@ export default function WakaPlayerDemo() {
                 onSend={handleSend}
                 onQuickReply={handleQuickReply}
                 onVoiceToggle={handleVoiceToggle}
-                onReset={handleReset}
               />
             </div>
 
             {/* Home indicator */}
-            <div className="flex justify-center py-2 bg-[hsl(225,25%,10%)]">
-              <div className="h-[5px] w-[130px] rounded-full bg-white/20" />
+            <div className="flex justify-center py-2 bg-[hsl(30,10%,95%)]">
+              <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
             </div>
           </div>
 
           {/* Side buttons */}
-          <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,10%,30%)]" />
-          <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,10%,30%)]" />
-          <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,10%,30%)]" />
-          <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,10%,30%)]" />
+          <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,8%,70%)]" />
+          <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,70%)]" />
+          <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,70%)]" />
+          <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,70%)]" />
         </div>
       </div>
     </div>
