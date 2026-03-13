@@ -1056,19 +1056,23 @@ function FlowEditorInner() {
               const rootSet = new Set(readiness.rootNodeIds);
               const isAmbiguous = !pinnedStartNodeId && rootSet.size > 1;
               const effectiveEntryId = pinnedStartNodeId || readiness.entryNodeId;
-              if (rootSet.size === 0 && !effectiveEntryId) return nodes;
+              const enrichNode = (n: Node, extra: Record<string, unknown> = {}) => {
+                const pulseCount = activePulseCounts[n.id] || 0;
+                return { ...n, data: { ...n.data, _pulseCount: pulseCount, ...extra } };
+              };
+              if (rootSet.size === 0 && !effectiveEntryId) return nodes.map((n) => enrichNode(n));
               return nodes.map((n) => {
                 const isPinned = pinnedStartNodeId === n.id;
                 if (isPinned) {
-                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: false, _entryAmbiguous: false, _isPinnedStart: true, _triggerReady: readiness.ready } };
+                  return enrichNode(n, { _isEntryNode: true, _entryInferred: false, _entryAmbiguous: false, _isPinnedStart: true, _triggerReady: readiness.ready });
                 }
                 if (!pinnedStartNodeId && (n.id === readiness.entryNodeId || rootSet.has(n.id))) {
-                  return { ...n, data: { ...n.data, _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous, _triggerReady: readiness.ready && !isAmbiguous } };
+                  return enrichNode(n, { _isEntryNode: true, _entryInferred: true, _entryAmbiguous: isAmbiguous, _triggerReady: readiness.ready && !isAmbiguous });
                 }
                 if (n.data?._isEntryNode || n.data?._isPinnedStart) {
-                  return { ...n, data: { ...n.data, _isEntryNode: false, _entryAmbiguous: false, _isPinnedStart: false, _triggerReady: false } };
+                  return enrichNode(n, { _isEntryNode: false, _entryAmbiguous: false, _isPinnedStart: false, _triggerReady: false });
                 }
-                return n;
+                return enrichNode(n);
               });
             })()}
             edges={edges}
