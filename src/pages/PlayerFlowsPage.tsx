@@ -91,7 +91,7 @@ export default function PlayerFlowsPage() {
       setShowCreate(false);
       setCreateName("");
       setCreateDesc("");
-      navigate(`/player?flow=${id}`);
+      navigate(`/player/live?flow=${id}`);
     } else {
       toast.error("Error al crear el flujo");
     }
