@@ -1,0 +1,1 @@
+ALTER TABLE public.flows ADD COLUMN IF NOT EXISTS trigger_rules jsonb NOT NULL DEFAULT '[]'::jsonb;

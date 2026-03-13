@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { TriggerRule } from "@/lib/triggerRules";
 import { toast } from "sonner";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -36,6 +37,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
         edges: (data.edges as unknown as Edge[]) || [],
         name: data.name,
         status: data.status,
+        triggerRules: ((data as any).trigger_rules as TriggerRule[]) || [],
       };
     } catch (err) {
       console.error("Error loading flow:", err);
@@ -47,7 +49,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
   }, []);
 
   const saveFlow = useCallback(
-    async (nodes: Node[], edges: Edge[], name: string) => {
+    async (nodes: Node[], edges: Edge[], name: string, triggerRules?: TriggerRule[]) => {
       if (!tenantId) {
         setSaveStatus("error");
         toast.error("No tenant context available");
@@ -62,6 +64,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
               nodes: nodes as unknown as Json,
               edges: edges as unknown as Json,
               name,
+              trigger_rules: (triggerRules || []) as unknown as Json,
             })
             .eq("id", currentFlowId.current);
 
@@ -74,6 +77,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
               edges: edges as unknown as Json,
               name,
               tenant_id: tenantId,
+              trigger_rules: (triggerRules || []) as unknown as Json,
             })
             .select("id")
             .single();
@@ -92,11 +96,11 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
   );
 
   const debouncedSave = useCallback(
-    (nodes: Node[], edges: Edge[], name: string) => {
+    (nodes: Node[], edges: Edge[], name: string, triggerRules?: TriggerRule[]) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       setSaveStatus("saving");
       debounceRef.current = setTimeout(() => {
-        saveFlow(nodes, edges, name);
+        saveFlow(nodes, edges, name, triggerRules);
       }, 2000);
     },
     [saveFlow]
