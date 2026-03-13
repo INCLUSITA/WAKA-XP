@@ -658,10 +658,10 @@ Referencia: `docs/waka-xp-strategic-foundation.md`, secciones §17 y §20.
 
 | Componente (§17.3) | Estado |
 |---|---|
-| Simulator Shell | 🟡 Parcial — WhatsApp Simulator funcional, falta shell nativo reutilizable |
-| Scenario Editor | 🔜 No iniciado — Demo Builder es el precursor |
-| AI Journey Generator | 🟡 Parcial — Demo Builder genera con IA, falta generación de flows |
-| Scenario-to-Flow Bridge | 🔜 Diseñado — WakaFlow Mapper es el primer paso |
+| Simulator Shell | ✅ Operativo — **Waka XP Player** como shell soberano con 16+ bloques nativos |
+| Scenario Editor | 🟡 Parcial — FlowCreationWizard multi-fuente (texto/JSON/YAML/imagen) |
+| AI Journey Generator | ✅ Operativo — Player genera conversation_snapshot + scenario_config desde briefing |
+| Scenario-to-Flow Bridge | 🟡 Parcial — WakaFlow Mapper + Player saved flows con ciclo de vida |
 | Blueprint Generator | 🔜 No iniciado |
 
 ### Conceptos estratégicos pendientes
