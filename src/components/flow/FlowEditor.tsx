@@ -119,7 +119,7 @@ function FlowEditorInner() {
   const [showRuns, setShowRuns] = useState(false);
   const [pinnedStartNodeId, _setPinnedStartNodeId] = useState<string | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
-
+  const activePulseCounts = useActiveNodePulse(flowIdParam);
   // Wrap setPinnedStartNodeId to also persist isStart flag in node data
   const setPinnedStartNodeId = useCallback((nodeId: string | null) => {
     _setPinnedStartNodeId(nodeId);
