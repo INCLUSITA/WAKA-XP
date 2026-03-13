@@ -868,9 +868,9 @@ export function WakaSovereignPlayer({
             >
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(270,60%,55%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(270,50%,55%)] flex items-center justify-center">
                   <Camera className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -880,9 +880,9 @@ export function WakaSovereignPlayer({
               </button>
               <button
                 onClick={() => docInputRef.current?.click()}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(210,60%,50%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(270,40%,48%)] flex items-center justify-center">
                   <Paperclip className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -892,9 +892,9 @@ export function WakaSovereignPlayer({
               </button>
               <button
                 onClick={handleShareLocation}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(140,60%,40%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(35,70%,50%)] flex items-center justify-center">
                   <MapPin className="h-4 w-4 text-white" />
                 </div>
                 <div>
