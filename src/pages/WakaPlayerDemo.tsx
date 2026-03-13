@@ -253,7 +253,17 @@ export default function WakaPlayerDemo() {
       if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
-  );
+
+  const handleVoiceToggle = useCallback(
+    async (active: boolean) => {
+      if (!active) {
+        const voiceMsg: PlayerMessage = {
+          id: `voice-${Date.now()}`,
+          text: "",
+          direction: "inbound",
+          timestamp: new Date(),
+          isVoice: true,
+        };
         setMessages((prev) => [...prev, voiceMsg]);
         saveMessage(voiceMsg);
         const t0 = Date.now();
