@@ -103,6 +103,24 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
       methods: ["mobile_money", "card"],
     },
   },
+  // Media Carousel — WhatsApp: 1 image per message. WAKA: full carousel with lazy loading
+  {
+    id: "carousel-1",
+    text: "Nos dernières promotions :",
+    direction: "outbound" as const,
+    timestamp: new Date(Date.now() - 170_000),
+    source: "WAKA Media",
+    mediaCarousel: {
+      title: "Promotions Moov 🔥",
+      slides: [
+        { id: "s1", type: "image" as const, emoji: "📡", caption: "Forfait Internet illimité — Nouveau !", cta: "Souscrire maintenant" },
+        { id: "s2", type: "video" as const, emoji: "🎓", caption: "Tutoriel : Comment envoyer de l'argent", duration: "2:30", cta: "Regarder" },
+        { id: "s3", type: "image" as const, emoji: "🎉", caption: "Gagnez un smartphone avec Moov Money", cta: "Participer au concours" },
+        { id: "s4", type: "image" as const, emoji: "🌍", caption: "Roaming Afrique — Appels à 50 FCFA/min" },
+        { id: "s5", type: "video" as const, emoji: "💡", caption: "5 astuces pour économiser vos données", duration: "1:45" },
+      ],
+    },
+  },
   // Location Card — WhatsApp: static pin. WAKA: rich card
   {
     id: "location-1",
