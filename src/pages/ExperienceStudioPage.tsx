@@ -10,7 +10,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye, ArrowLeft,
-  Hammer, Smartphone, Rocket, History, Link2, Unlink, ExternalLink, ChevronRight, BrainCircuit,
+  Hammer, Smartphone, Rocket, History, Link2, Unlink, ExternalLink, ChevronRight, BrainCircuit, Zap, Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
