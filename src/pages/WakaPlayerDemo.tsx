@@ -299,6 +299,34 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  const handleSendLocation = useCallback(
+    async (lat: number, lng: number) => {
+      addUserMessage(`📍 Position GPS : ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      const t0 = Date.now();
+      const response = await sendToAI(
+        `L'utilisateur partage sa position GPS : latitude=${lat}, longitude=${lng}. Utilise update_client_location si un client est identifié.`,
+        dataMode
+      );
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handleSendDocument = useCallback(
+    async (file: File) => {
+      const ext = file.name.split(".").pop()?.toUpperCase() || "FILE";
+      const sizeKB = Math.round(file.size / 1024);
+      addUserMessage(`📎 Document envoyé : ${file.name} (${ext}, ${sizeKB} KB)`);
+      const t0 = Date.now();
+      const response = await sendToAI(
+        `L'utilisateur a envoyé un document : ${file.name} (type: ${file.type}, taille: ${sizeKB} KB). Confirme la réception et propose les prochaines étapes.`,
+        dataMode
+      );
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
   const handleVoiceToggle = useCallback(
     async (active: boolean) => {
       if (!active) {
