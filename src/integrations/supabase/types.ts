@@ -525,6 +525,7 @@ export type Database = {
           nodes: Json
           status: Database["public"]["Enums"]["flow_status"]
           tenant_id: string
+          trigger_rules: Json
           updated_at: string
           workspace_id: string | null
         }
@@ -540,6 +541,7 @@ export type Database = {
           nodes?: Json
           status?: Database["public"]["Enums"]["flow_status"]
           tenant_id: string
+          trigger_rules?: Json
           updated_at?: string
           workspace_id?: string | null
         }
@@ -555,6 +557,7 @@ export type Database = {
           nodes?: Json
           status?: Database["public"]["Enums"]["flow_status"]
           tenant_id?: string
+          trigger_rules?: Json
           updated_at?: string
           workspace_id?: string | null
         }
