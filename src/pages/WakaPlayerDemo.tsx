@@ -1,6 +1,6 @@
 /**
  * Waka Sovereign Player — Demo page
- * Showcases all 3 data modes: libre, subventionné, zero-rated
+ * Full showcase of ALL sovereign capabilities beyond WhatsApp Business
  */
 
 import { useState, useCallback } from "react";
@@ -10,58 +10,157 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
+import type { CatalogProduct } from "@/components/player/sovereign-blocks";
 
 const INITIAL_MESSAGES: PlayerMessage[] = [
   {
     id: "sys-1",
     text: "⚡ WAKA NEXUS · Canal soberano activé",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 150_000),
+    timestamp: new Date(Date.now() - 300_000),
     isSystemEvent: true,
   },
   {
     id: "1",
-    text: "🇧🇫 Bienvenue sur WAKA !\n\nVotre canal intelligent, gratuit et sans limites.",
+    text: "🇧🇫 Bienvenue sur WAKA !\n\nVotre canal intelligent, gratuit et sans limites.\nTout ce que WhatsApp ne peut pas faire — nous le faisons.",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 120_000),
+    timestamp: new Date(Date.now() - 280_000),
     source: "WAKA NEXUS",
     reaction: "👋",
   },
+  // Rich Card — WhatsApp has templates, WAKA has freedom
   {
     id: "card-1",
     text: "",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 100_000),
+    timestamp: new Date(Date.now() - 260_000),
     richCard: {
       title: "Offre de Bienvenue",
-      description: "0% frais · +300 FCFA bonus",
+      description: "0% frais · +300 FCFA bonus · Sans limites",
       icon: "🎁",
       bgGradient: "linear-gradient(135deg, hsl(160,65%,35%), hsl(200,60%,40%))",
       actions: ["Activer maintenant", "En savoir plus"],
     },
   },
+  // Product Catalog — WhatsApp: max 30 items. WAKA: unlimited carousel
   {
-    id: "2",
-    text: "Bonjour ! Je veux voir mes options.",
-    direction: "inbound",
-    timestamp: new Date(Date.now() - 80_000),
-    reaction: "👍",
+    id: "catalog-1",
+    text: "Découvrez nos forfaits :",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 240_000),
+    source: "WAKA Commerce",
+    catalog: {
+      title: "Forfaits Internet Moov",
+      products: [
+        { id: "p1", name: "Forfait Jour", price: "200 FCFA", emoji: "📱", rating: 4, badge: "POPULAIRE", description: "1 Go · 24h" },
+        { id: "p2", name: "Forfait Semaine", price: "1.000 FCFA", emoji: "🚀", rating: 5, description: "5 Go · 7 jours" },
+        { id: "p3", name: "Forfait Mois", price: "3.500 FCFA", emoji: "💎", rating: 5, badge: "-20%", description: "20 Go · 30 jours" },
+        { id: "p4", name: "Nuit Illimitée", price: "100 FCFA", emoji: "🌙", rating: 4, description: "Illimité · 22h-06h" },
+      ],
+    },
   },
   {
-    id: "3",
-    text: "Voici vos services disponibles :",
+    id: "user-1",
+    text: "Je veux le Forfait Semaine !",
+    direction: "inbound",
+    timestamp: new Date(Date.now() - 220_000),
+    reaction: "👍",
+  },
+  // Inline Form — WhatsApp: IMPOSSIBLE. WAKA: full forms in chat
+  {
+    id: "form-1",
+    text: "Parfait ! Complétez vos informations :",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 60_000),
-    progress: 25,
-    progressLabel: "Module 1/4 — Introduction",
+    timestamp: new Date(Date.now() - 200_000),
+    source: "WAKA Forms",
+    inlineForm: {
+      title: "Activation Forfait Semaine",
+      icon: "📝",
+      submitLabel: "Activer le forfait",
+      fields: [
+        { id: "phone", label: "Numéro Moov", type: "phone", placeholder: "+226 XX XX XX XX", required: true },
+        { id: "plan", label: "Durée", type: "select", options: ["7 jours", "14 jours", "30 jours"], required: true },
+        { id: "email", label: "E-mail (optionnel)", type: "email", placeholder: "votre@email.com" },
+      ],
+    },
+  },
+  // Payment — WhatsApp: limited pay button. WAKA: full checkout
+  {
+    id: "payment-1",
+    text: "",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 180_000),
+    payment: {
+      title: "Récapitulatif commande",
+      icon: "🧾",
+      items: [
+        { label: "Forfait Semaine 5 Go", amount: "1.000" },
+        { label: "Bonus fidélité", amount: "-100" },
+        { label: "Taxes", amount: "90" },
+      ],
+      total: "990",
+      currency: "FCFA",
+      methods: ["mobile_money", "card"],
+    },
+  },
+  // Location Card — WhatsApp: static pin. WAKA: rich card
+  {
+    id: "location-1",
+    text: "Point de vente le plus proche :",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 160_000),
+    source: "WAKA Maps",
+    location: {
+      name: "Agence Moov Ouaga 2000",
+      address: "Av. de la Résistance du 17 Mai, Ouagadougou",
+      hours: "8h–18h",
+      phone: "+226 25 50 00 00",
+      emoji: "🏪",
+      distance: "1,2 km",
+    },
+  },
+  // Training Module — WhatsApp: NOT POSSIBLE. WAKA: capacity building
+  {
+    id: "training-1",
+    text: "Votre parcours de formation :",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 140_000),
+    source: "WAKA Academy",
+    training: {
+      title: "Formation Agent Moov Money",
+      overallProgress: 45,
+      modules: [
+        { id: "m1", name: "Introduction au Mobile Money", emoji: "📖", status: "completed" },
+        { id: "m2", name: "Opérations de base", emoji: "💵", status: "completed" },
+        { id: "m3", name: "Gestion des réclamations", emoji: "🎯", status: "current", progress: 60 },
+        { id: "m4", name: "Sécurité et conformité", emoji: "🔒", status: "locked" },
+        { id: "m5", name: "Certification finale", emoji: "🏅", status: "locked" },
+      ],
+    },
+  },
+  // Rating — WhatsApp: NOT POSSIBLE inline. WAKA: stars, NPS, emoji
+  {
+    id: "rating-1",
+    text: "Comment évaluez-vous votre expérience ?",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 120_000),
+    rating: { title: "Évaluation du service", type: "stars" },
+  },
+  // Interactive Menu
+  {
+    id: "menu-1",
+    text: "Que souhaitez-vous faire ensuite ?",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 100_000),
     source: "AXIOM Brain",
     menu: [
       { label: "Envoyer argent", icon: "💸", description: "Transfert instantané" },
       { label: "Payer facture", icon: "🧾", description: "Eau, électricité, TV" },
       { label: "Consulter solde", icon: "💰", description: "Solde et historique" },
-      { label: "Crédit Moov", icon: "📱", description: "Recharge téléphone" },
+      { label: "Support client", icon: "🆘", description: "Aide en direct" },
     ],
     menuTitle: "Services Moov Money",
+    quickReplies: ["📊 Tableau de bord", "🏅 Mon certificat", "❓ Aide"],
   },
 ];
 
@@ -121,15 +220,28 @@ export default function WakaPlayerDemo() {
         ...prev,
         { id: `qr-${Date.now()}`, text: label, direction: "inbound", timestamp: new Date() },
       ]);
-      addBotReply(`Vous avez choisi : ${label}`, {
-        richCard: {
-          title: "Résultat",
-          description: "Traitement en cours…",
-          icon: "⚡",
-          bgGradient: "linear-gradient(135deg, hsl(35,80%,50%), hsl(25,85%,45%))",
-          actions: ["Confirmer", "Annuler"],
-        },
-      });
+
+      if (label.includes("certificat")) {
+        addBotReply("Voici votre certificat :", {
+          certificate: {
+            title: "Agent Moov Money",
+            recipient: "Amadou Ouédraogo",
+            date: "13 mars 2026",
+            module: "Formation complète",
+            badge: "🏆",
+          },
+        });
+      } else {
+        addBotReply(`Vous avez choisi : ${label}`, {
+          richCard: {
+            title: "Résultat",
+            description: "Traitement en cours…",
+            icon: "⚡",
+            bgGradient: "linear-gradient(135deg, hsl(35,80%,50%), hsl(25,85%,45%))",
+            actions: ["Confirmer", "Annuler"],
+          },
+        });
+      }
     },
     [addBotReply]
   );
@@ -156,6 +268,65 @@ export default function WakaPlayerDemo() {
         { id: `card-${Date.now()}`, text: action, direction: "inbound", timestamp: new Date() },
       ]);
       addBotReply(`Action "${action}" confirmée ✅`);
+    },
+    [addBotReply]
+  );
+
+  const handleAddToCart = useCallback(
+    (product: CatalogProduct) => {
+      addBotReply(`${product.emoji || "📦"} "${product.name}" ajouté au panier — ${product.price}`, {
+        reaction: "🛒",
+        quickReplies: ["🛒 Voir panier", "🛍 Continuer"],
+      });
+    },
+    [addBotReply]
+  );
+
+  const handleFormSubmit = useCallback(
+    (values: Record<string, string>) => {
+      addBotReply("Formulaire reçu ! Activation en cours… ⏳", {
+        reaction: "✅",
+        payment: {
+          title: "Confirmation d'activation",
+          icon: "💳",
+          items: [
+            { label: "Forfait sélectionné", amount: "1.000" },
+            { label: "Frais d'activation", amount: "0" },
+          ],
+          total: "1.000",
+          currency: "FCFA",
+          methods: ["mobile_money"],
+        },
+      });
+    },
+    [addBotReply]
+  );
+
+  const handlePayment = useCallback(
+    (method: string) => {
+      addBotReply(`Paiement via ${method === "mobile_money" ? "Moov Money" : "carte"} confirmé ! 🎉`, {
+        reaction: "🎉",
+        rating: { title: "Comment s'est passé le paiement ?", type: "emoji" },
+      });
+    },
+    [addBotReply]
+  );
+
+  const handleRate = useCallback(
+    (value: number | string) => {
+      addBotReply(`Merci pour votre note ${typeof value === "string" ? value : `${value}/5 ⭐`} ! Votre avis compte.`, {
+        reaction: "💚",
+      });
+    },
+    [addBotReply]
+  );
+
+  const handleModuleClick = useCallback(
+    (moduleId: string) => {
+      addBotReply(`Module "${moduleId}" ouvert. Bonne formation ! 📚`, {
+        progress: 60,
+        progressLabel: "En cours de formation",
+      });
     },
     [addBotReply]
   );
@@ -232,6 +403,11 @@ export default function WakaPlayerDemo() {
                 onVoiceToggle={handleVoiceToggle}
                 onMenuSelect={handleMenuSelect}
                 onCardAction={handleCardAction}
+                onAddToCart={handleAddToCart}
+                onFormSubmit={handleFormSubmit}
+                onPayment={handlePayment}
+                onRate={handleRate}
+                onModuleClick={handleModuleClick}
               />
             </div>
 

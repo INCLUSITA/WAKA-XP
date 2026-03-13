@@ -10,22 +10,25 @@
  * But all conditional on data mode.
  */
 
-import { useState, useRef, useEffect, createContext, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Mic, MicOff, ChevronRight, CheckCheck, ChevronDown, ChevronUp, Zap, Wifi, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
 import { Progress } from "@/components/ui/progress";
+import { DataModeContext, useDataMode } from "./dataMode";
+import type { DataMode } from "./dataMode";
+import {
+  ProductCatalog, type CatalogProduct,
+  InlineForm, type FormField,
+  LocationCard, type LocationData,
+  PaymentCard, type PaymentCardData,
+  RatingWidget,
+  CertificateCard, type CertificateData,
+  TrainingProgress, type TrainingModule,
+} from "./sovereign-blocks";
 
-/* ── Data Mode ── */
-
-export type DataMode = "libre" | "subventionné" | "zero-rated";
-
-const DataModeContext = createContext<DataMode>("libre");
-
-function useDataMode() {
-  return useContext(DataModeContext);
-}
+export type { DataMode } from "./dataMode";
 
 /* ── Types ── */
 
@@ -59,6 +62,14 @@ export interface PlayerMessage {
   menuTitle?: string;
   /** Emoji reaction on this message */
   reaction?: string;
+  /** Sovereign blocks — capabilities beyond WhatsApp */
+  catalog?: { title?: string; products: CatalogProduct[] };
+  inlineForm?: { title: string; fields: FormField[]; submitLabel?: string; icon?: string };
+  location?: LocationData;
+  payment?: PaymentCardData;
+  rating?: { title: string; type?: "stars" | "emoji" | "nps" };
+  certificate?: CertificateData;
+  training?: { title: string; modules: TrainingModule[]; overallProgress: number };
 }
 
 interface WakaSovereignPlayerProps {
@@ -69,6 +80,11 @@ interface WakaSovereignPlayerProps {
   onVoiceToggle?: (active: boolean) => void;
   onMenuSelect?: (label: string) => void;
   onCardAction?: (action: string) => void;
+  onAddToCart?: (product: CatalogProduct) => void;
+  onFormSubmit?: (values: Record<string, string>) => void;
+  onPayment?: (method: string) => void;
+  onRate?: (value: number | string) => void;
+  onModuleClick?: (moduleId: string) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
@@ -351,6 +367,11 @@ export function WakaSovereignPlayer({
   onVoiceToggle,
   onMenuSelect,
   onCardAction,
+  onAddToCart,
+  onFormSubmit,
+  onPayment,
+  onRate,
+  onModuleClick,
   status = "online",
   statusBar,
   dataMode: externalMode,
@@ -571,6 +592,62 @@ export function WakaSovereignPlayer({
                             title={msg.menuTitle}
                             options={msg.menu}
                             onSelect={onMenuSelect}
+                          />
+                        </div>
+                      )}
+
+                      {/* ── Sovereign Blocks ── */}
+                      {msg.catalog && (
+                        <div className="mt-1.5">
+                          <ProductCatalog
+                            title={msg.catalog.title}
+                            products={msg.catalog.products}
+                            onAddToCart={onAddToCart}
+                          />
+                        </div>
+                      )}
+                      {msg.inlineForm && (
+                        <div className="mt-1.5">
+                          <InlineForm
+                            title={msg.inlineForm.title}
+                            fields={msg.inlineForm.fields}
+                            submitLabel={msg.inlineForm.submitLabel}
+                            icon={msg.inlineForm.icon}
+                            onSubmit={onFormSubmit}
+                          />
+                        </div>
+                      )}
+                      {msg.location && (
+                        <div className="mt-1.5">
+                          <LocationCard location={msg.location} />
+                        </div>
+                      )}
+                      {msg.payment && (
+                        <div className="mt-1.5">
+                          <PaymentCard payment={msg.payment} onPay={onPayment} />
+                        </div>
+                      )}
+                      {msg.rating && (
+                        <div className="mt-1.5">
+                          <RatingWidget
+                            title={msg.rating.title}
+                            type={msg.rating.type}
+                            onRate={onRate}
+                          />
+                        </div>
+                      )}
+                      {msg.certificate && (
+                        <div className="mt-1.5">
+                          <CertificateCard certificate={msg.certificate} />
+                        </div>
+                      )}
+                      {msg.training && (
+                        <div className="mt-1.5">
+                          <TrainingProgress
+                            title={msg.training.title}
+                            modules={msg.training.modules}
+                            overallProgress={msg.training.overallProgress}
+                            onModuleClick={onModuleClick}
                           />
                         </div>
                       )}
