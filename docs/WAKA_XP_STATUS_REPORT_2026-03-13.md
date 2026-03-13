@@ -23,6 +23,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | **Demo Builder / Sandbox AI** | Generación de demos JSX con IA conversacional | `/wakaflow` |
 | **Production Layer** | Ciclo de vida de candidatos a producción | `/production` |
 | **Simulation Engine** | Simulador WhatsApp con modo live | Integrado en Builder |
+| **Waka XP Player** | Simulador conversacional IA soberano con bloques nativos | `/player`, `/player/live` |
 | **Runtime / Runs** | Ejecución de backend con trazabilidad de pasos | `/runs` |
 | **Governance** | Multi-tenant, roles, RLS, versionado transversal | Transversal |
 
