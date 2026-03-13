@@ -367,7 +367,82 @@ Entorno de creación e iteración de demos basado en IA, estilo "Claude-like san
 - `waka-ai-apply` — Generación/rewrite de JSX con Gemini Flash
 - `waka-ai-proposal` — Propuestas de cambio IA
 
-### 5.5. Production Layer
+### 5.5. Waka XP Player (Simulador Conversacional IA Soberano)
+
+**Rutas:** `/player` (galería) · `/player/live` (simulador)
+
+Capa troncal del sistema que materializa la visión del **Simulator Shell** y del **AI Journey Generator** descritos en el documento estratégico (§8.5, §17.3). El Player es un simulador conversacional IA nativo que permite diseñar, probar y validar experiencias conversacionales completas sin necesidad de construir un flow clásico.
+
+#### Principio arquitectónico
+
+El Player representa el **primer artefacto verdaderamente journey-first** de Waka XP: en lugar de partir de nodos y conexiones (block-first), parte de una conversación IA que genera la experiencia completa, incluyendo mensajes, bloques soberanos interactivos y configuración de escenario.
+
+#### Bloques Soberanos (16+ tipos nativos)
+
+Componentes UI interactivos que la IA inyecta en la conversación para representar experiencias ricas:
+
+| Bloque | Descripción |
+|---|---|
+| `ProductCatalog` | Catálogo de productos con selección |
+| `PaymentCard` / `PaymentConfirmationCard` | Tarjetas de pago y confirmación |
+| `CreditSimulationCard` / `CreditContractCard` | Simulación y contrato de crédito |
+| `ServicePlansCard` | Planes de servicio con comparación |
+| `MoMoAccountCard` | Estado de cuenta Mobile Money |
+| `ClientStatusCard` | Estado del cliente |
+| `CertificateCard` | Certificados y documentos |
+| `LocationCard` | Ubicación con mapa |
+| `MediaCarousel` | Carrusel de imágenes/media |
+| `RatingWidget` | Valoración con estrellas |
+| `InlineForm` | Formularios inline |
+| `TrainingProgress` | Progreso de formación |
+| `DeviceLockConsentCard` | Consentimiento de bloqueo de dispositivo |
+
+#### Wizard de Creación Multi-Fuente
+
+El `FlowCreationWizard` permite crear flujos desde múltiples fuentes:
+
+- ✅ **Texto libre + IA** — Descripción en lenguaje natural que la IA convierte en conversación + scenario_config
+- ✅ **JSON TextIt/RapidPro** — Importación de flujos existentes con mapeo automático
+- ✅ **YAML de agente** — Definición de agente con endpoints, intenciones y personalidad
+- ✅ **Imágenes/logos** — Assets visuales que la IA usa para personalizar la experiencia
+
+#### Motor IA (AI Engine Selector)
+
+| Engine | Estado | Descripción |
+|---|---|---|
+| **WAKA AI** | ✅ Activo | Built-in via Lovable AI (Gemini) — sin configuración |
+| **Azure OpenAI** | 🔜 Coming Soon | GPT-4o via Waka's managed Azure deployment |
+| **BYOM** | 🔜 Demo | Bring Your Own Model — funcional cuando el usuario configure claves |
+
+#### Ciclo de vida de flujos
+
+- **Sandbox** — Flujo en desarrollo/experimentación
+- **Stable** — Flujo validado y protegido
+- **Production** — Flujo listo para despliegue
+
+#### Output de la generación IA
+
+Cada flujo generado produce dos artefactos persistidos en `player_saved_flows`:
+
+- `conversation_snapshot` — Array de mensajes (texto + bloques soberanos) que representan la conversación demo
+- `scenario_config` — Configuración del escenario (system prompt, endpoints, intents, persona) para que el Player continúe coherentemente en modo live
+
+#### Edge Functions del Player
+
+| Función | Descripción |
+|---|---|
+| `waka-player-ai` | Respuestas conversacionales IA en tiempo real con bloques soberanos |
+| `generate-player-flow` | Generación completa de flujos desde texto/JSON/YAML/imagen |
+
+#### Tablas de persistencia
+
+| Tabla | Descripción |
+|---|---|
+| `player_conversations` | Sesiones de conversación con metadata (canal, data_mode, tenant) |
+| `player_messages` | Mensajes individuales con bloques, modelo IA y latencia |
+| `player_saved_flows` | Flujos guardados con conversation_snapshot, scenario_config, ciclo de vida |
+
+### 5.6. Production Layer
 
 **Ruta:** `/production`
 
