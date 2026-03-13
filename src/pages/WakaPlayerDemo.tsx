@@ -698,7 +698,40 @@ export default function WakaPlayerDemo() {
               </div>
             </div>
 
-            {/* ── Lifecycle ── */}
+            {/* ── WAKA VOICE & Avatar ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Canales interactivos</h3>
+              <div className="space-y-1.5">
+                <Button
+                  variant={showVoiceCall ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowVoiceCall(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  Llamar WAKA VOICE
+                </Button>
+
+                <Button
+                  variant={showAvatar ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowAvatar(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <User className="h-3.5 w-3.5" />
+                  Abrir Avatar
+                </Button>
+
+                <div className="pt-1">
+                  <label className="text-[10px] text-muted-foreground block mb-1">URL del avatar</label>
+                  <Input
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    placeholder="https://avatar.waka.africa/agent"
+                    className="h-7 text-[10px]"
+                  />
+                </div>
+              </div>
             <div className="space-y-2">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ciclo de vida</h3>
               <div className="space-y-1.5">
