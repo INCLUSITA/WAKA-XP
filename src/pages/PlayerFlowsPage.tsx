@@ -414,16 +414,6 @@ export default function PlayerFlowsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Flow Context Selector */}
-      <FlowContextSelector
-        open={showFlowContext}
-        onClose={() => setShowFlowContext(false)}
-        onSelect={(ctx, name) => {
-          if (ctx && name) toast.success(`Contexto "${name}" listo para usar en nuevos flujos`);
-          setShowFlowContext(false);
-        }}
-        activeFlowName={null}
-      />
     </div>
   );
 }
