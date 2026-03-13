@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { TriggerRule } from "@/lib/triggerRules";
 import { toast } from "sonner";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
