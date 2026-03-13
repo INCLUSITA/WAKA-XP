@@ -471,6 +471,30 @@ export default function WakaPlayerDemo() {
 
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setShowFlowsPanel(true)} className="h-7 text-[11px] gap-1">
+                <FolderOpen className="h-3 w-3" />
+                Flujos
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Ver flujos guardados</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} className="h-7 text-[11px] gap-1" disabled={messages.length <= 2}>
+                <Save className="h-3 w-3" />
+                Guardar
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Guardar conversación como flujo</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button variant="outline" size="sm" onClick={handleNewConversation} className="h-7 text-[11px] gap-1">
                 <RotateCcw className="h-3 w-3" />
                 Nueva
