@@ -245,6 +245,10 @@ function ExperienceDetail({
               )}
             </TabsContent>
 
+            <TabsContent value="context">
+              <ExperienceContextTab experienceId={experience.id} />
+            </TabsContent>
+
             <TabsContent value="demos">
               <Card className="glass border-gradient rounded-xl p-8 text-center">
                 <Smartphone className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />

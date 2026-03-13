@@ -200,7 +200,7 @@ export function ExpressionInput({
     return acc;
   }, {});
 
-  const categoryOrder = ["Input", "Contact", "Results", "Webhook", "URNs", "Functions"];
+  const categoryOrder = ["Input", "Contact", "Results", "Context", "Webhook", "URNs", "Functions"];
 
   return (
     <div className="relative">
