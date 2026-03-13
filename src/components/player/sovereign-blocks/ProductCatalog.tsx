@@ -34,18 +34,18 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
 
   if (mode === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(160,30%,85%)] bg-white px-3 py-2 max-w-[90%]">
-        {title && <p className="text-[11px] font-bold text-[hsl(160,50%,25%)] mb-1">{title}</p>}
-        {products.map((p, i) => (
+      <div className="rounded-lg border border-[hsl(270,20%,88%)] bg-white px-3 py-2 max-w-[90%]">
+        {title && <p className="text-[11px] font-bold text-[hsl(270,40%,35%)] mb-1">{title}</p>}
+        {products.map((p) => (
           <button
             key={p.id}
-            onClick={() => onProductClick?.(p)}
-            className="flex items-center justify-between w-full py-1.5 text-left border-t border-[hsl(160,20%,92%)] first:border-0"
+            onClick={() => (onProductClick ?? onAddToCart)?.(p)}
+            className="flex items-center justify-between w-full py-1.5 text-left border-t border-[hsl(270,15%,93%)] first:border-0"
           >
             <span className="text-[11px] text-[hsl(220,15%,20%)]">
               {p.emoji || "•"} {p.name}
             </span>
-            <span className="text-[10px] font-bold text-[hsl(160,60%,30%)]">{p.price}</span>
+            <span className="text-[10px] font-bold text-[hsl(270,45%,40%)]">{p.price}</span>
           </button>
         ))}
       </div>
@@ -58,7 +58,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
   return (
     <div className="max-w-[90%]">
       {title && (
-        <p className="text-[12px] font-bold text-[hsl(160,50%,25%)] mb-1.5 px-1">{title}</p>
+        <p className="text-[12px] font-bold text-[hsl(270,40%,35%)] mb-1.5 px-1">{title}</p>
       )}
       <div className="relative">
         {/* Navigation arrows */}
@@ -89,14 +89,15 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
             {products.map((product) => (
               <motion.div
                 key={product.id}
-                className="flex-shrink-0 w-[70%] rounded-xl border border-[hsl(160,30%,88%)] bg-white overflow-hidden shadow-sm"
-                whileTap={mode === "libre" ? { scale: 0.97 } : {}}
+                onClick={() => (onProductClick ?? onAddToCart)?.(product)}
+                className="flex-shrink-0 w-[70%] rounded-xl border border-[hsl(270,20%,90%)] bg-white overflow-hidden shadow-sm cursor-pointer hover:border-[hsl(270,40%,70%)] hover:shadow-md transition-all"
+                whileTap={mode === "libre" ? { scale: 0.96 } : {}}
               >
                 {/* Product image area */}
                 <div
                   className="h-24 flex items-center justify-center relative"
                   style={{
-                    background: "linear-gradient(135deg, hsl(160,30%,95%), hsl(200,25%,94%))",
+                    background: "linear-gradient(135deg, hsl(270,20%,96%), hsl(280,18%,94%))",
                   }}
                 >
                   <span className="text-4xl">{product.emoji || "📦"}</span>
@@ -126,15 +127,15 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                     </div>
                   )}
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[13px] font-bold text-[hsl(160,60%,30%)]">{product.price}</span>
+                    <span className="text-[13px] font-bold text-[hsl(270,45%,40%)]">{product.price}</span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onAddToCart?.(product);
                       }}
-                      className="h-7 w-7 rounded-full bg-[hsl(160,55%,38%)] flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                      className="h-9 w-9 rounded-full bg-[hsl(270,45%,48%)] flex items-center justify-center shadow-md active:scale-90 transition-all hover:bg-[hsl(270,45%,55%)] hover:shadow-lg"
                     >
-                      <ShoppingCart className="h-3 w-3 text-white" />
+                      <ShoppingCart className="h-4 w-4 text-white" />
                     </button>
                   </div>
                 </div>
@@ -150,7 +151,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
               key={i}
               className={cn(
                 "h-1.5 rounded-full transition-all",
-                i === scrollIdx ? "w-4 bg-[hsl(160,55%,40%)]" : "w-1.5 bg-[hsl(220,10%,80%)]"
+                i === scrollIdx ? "w-4 bg-[hsl(270,45%,50%)]" : "w-1.5 bg-[hsl(220,10%,80%)]"
               )}
             />
           ))}
