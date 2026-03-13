@@ -568,7 +568,7 @@ export function WakaSovereignPlayer({
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
               <SalamandraSvg
                 className={cn(
-                  "text-[hsl(160,30%,70%)]",
+                  "text-[hsl(270,25%,75%)]",
                   mode === "libre" ? "h-[70%] w-[70%] opacity-[0.05]" : "h-[50%] w-[50%] opacity-[0.03]"
                 )}
               />
@@ -579,7 +579,7 @@ export function WakaSovereignPlayer({
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 {mode !== "zero-rated" && (
-                  <SalamandraSvg className="h-14 w-14 text-[hsl(160,40%,70%)] opacity-25 mb-3" />
+                  <SalamandraSvg className="h-14 w-14 text-[hsl(270,30%,75%)] opacity-25 mb-3" />
                 )}
                 <p className="text-[11px] text-[hsl(220,10%,60%)]">Intelligence Highway</p>
               </div>
