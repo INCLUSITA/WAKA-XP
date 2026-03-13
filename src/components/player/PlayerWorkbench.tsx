@@ -39,10 +39,6 @@ interface PlayerWorkbenchProps {
   onNewConversation: () => void;
   onSave: () => void;
   onOpenFlows: () => void;
-  onStartVoiceCall: () => void;
-  onStartAvatar: () => void;
-  avatarUrl: string;
-  onAvatarUrlChange: (url: string) => void;
 }
 
 interface UploadedAsset {
