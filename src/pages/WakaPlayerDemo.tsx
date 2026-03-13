@@ -1,18 +1,19 @@
 /**
  * Waka Sovereign Player — Demo page
- * Hybrid model: AI-powered intent engine + sovereign blocks
- * Unlike WhatsApp/Telegram rigid triggers, WAKA uses AI to understand intent
+ * Hybrid model: AI-powered intent engine + sovereign blocks + persistent conversations
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
 import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
+import { usePlayerConversation } from "@/hooks/usePlayerConversation";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -56,6 +57,23 @@ export default function WakaPlayerDemo() {
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const { sendToAI, isThinking } = useWakaPlayerAI();
+  const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
+  const historyLoaded = useRef(false);
+
+  // Load conversation history on mount
+  useEffect(() => {
+    if (historyLoaded.current || !conversationId) return;
+    historyLoaded.current = true;
+
+    loadHistory().then((history) => {
+      if (history.length > 0) {
+        setMessages(history);
+      } else {
+        // Save welcome messages for new conversations
+        WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
+      }
+    });
+  }, [conversationId, loadHistory, saveMessage]);
 
   const status = isThinking ? "typing" : "online";
 
@@ -68,10 +86,11 @@ export default function WakaPlayerDemo() {
       imageUrl,
     };
     setMessages((prev) => [...prev, userMsg]);
+    saveMessage(userMsg);
     return userMsg;
-  }, []);
+  }, [saveMessage]);
 
-  const addBotMessage = useCallback((partial: Partial<PlayerMessage>) => {
+  const addBotMessage = useCallback((partial: Partial<PlayerMessage>, extra?: { aiModel?: string; aiLatencyMs?: number }) => {
     const botMsg: PlayerMessage = {
       id: `bot-${Date.now()}`,
       text: "",
@@ -80,15 +99,17 @@ export default function WakaPlayerDemo() {
       ...partial,
     };
     setMessages((prev) => [...prev, botMsg]);
-  }, []);
+    saveMessage(botMsg, extra);
+  }, [saveMessage]);
 
-  // AI-powered send — the core innovation
   const handleSend = useCallback(
     async (text: string) => {
       addUserMessage(text);
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
+      const latency = Date.now() - t0;
       if (response) {
-        addBotMessage(response);
+        addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: latency });
       } else {
         addBotMessage({
           text: "Désolé, je n'ai pas pu traiter votre demande. Réessayez.",
@@ -99,13 +120,14 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
-  // Image send — multimodal vision
   const handleSendImage = useCallback(
     async (imageDataUrl: string, caption?: string) => {
       addUserMessage(caption || "📸 Photo envoyée", imageDataUrl);
+      const t0 = Date.now();
       const response = await sendToAI(caption || "", dataMode, imageDataUrl);
+      const latency = Date.now() - t0;
       if (response) {
-        addBotMessage(response);
+        addBotMessage(response, { aiModel: "gemini-2.5-flash", aiLatencyMs: latency });
       } else {
         addBotMessage({
           text: "Désolé, je n'ai pas pu analyser cette image. Réessayez.",
@@ -116,38 +138,32 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
-  // Quick replies also go through AI
   const handleQuickReply = useCallback(
     async (label: string) => {
       addUserMessage(label);
+      const t0 = Date.now();
       const response = await sendToAI(label, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
-  // Menu selections go through AI
   const handleMenuSelect = useCallback(
     async (label: string) => {
       addUserMessage(label);
+      const t0 = Date.now();
       const response = await sendToAI(`J'ai sélectionné : ${label}`, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
-  // Card actions go through AI
   const handleCardAction = useCallback(
     async (action: string) => {
       addUserMessage(action);
+      const t0 = Date.now();
       const response = await sendToAI(`Action : ${action}`, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -156,10 +172,9 @@ export default function WakaPlayerDemo() {
     async (product: CatalogProduct) => {
       const text = `Ajouter au panier : ${product.name} (${product.price})`;
       addUserMessage(text);
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -169,10 +184,9 @@ export default function WakaPlayerDemo() {
       const summary = Object.entries(values).map(([k, v]) => `${k}: ${v}`).join(", ");
       const text = `Formulaire soumis : ${summary}`;
       addUserMessage("Formulaire envoyé ✓");
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -181,10 +195,9 @@ export default function WakaPlayerDemo() {
     async (method: string) => {
       const text = `Paiement confirmé via ${method === "mobile_money" ? "Moov Money" : "carte bancaire"}`;
       addUserMessage("Paiement confirmé ✓");
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -193,10 +206,9 @@ export default function WakaPlayerDemo() {
     async (value: number | string) => {
       const text = `Note donnée : ${value}`;
       addUserMessage(`Note : ${value}`);
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -205,10 +217,9 @@ export default function WakaPlayerDemo() {
     async (moduleId: string) => {
       const text = `Ouvrir le module de formation : ${moduleId}`;
       addUserMessage(`Module : ${moduleId}`);
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -217,10 +228,9 @@ export default function WakaPlayerDemo() {
     async (slide: MediaSlide) => {
       const text = `Action sur média : ${slide.caption || slide.id}`;
       addUserMessage(slide.caption || "Média sélectionné");
+      const t0 = Date.now();
       const response = await sendToAI(text, dataMode);
-      if (response) {
-        addBotMessage(response);
-      }
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
@@ -228,18 +238,34 @@ export default function WakaPlayerDemo() {
   const handleVoiceToggle = useCallback(
     async (active: boolean) => {
       if (!active) {
-        setMessages((prev) => [
-          ...prev,
-          { id: `voice-${Date.now()}`, text: "", direction: "inbound" as const, timestamp: new Date(), isVoice: true },
-        ]);
+        const voiceMsg: PlayerMessage = {
+          id: `voice-${Date.now()}`,
+          text: "",
+          direction: "inbound",
+          timestamp: new Date(),
+          isVoice: true,
+        };
+        setMessages((prev) => [...prev, voiceMsg]);
+        saveMessage(voiceMsg);
+        const t0 = Date.now();
         const response = await sendToAI("(Message vocal reçu — l'utilisateur a envoyé un message audio)", dataMode);
-        if (response) {
-          addBotMessage(response);
-        }
+        if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
       }
     },
-    [addBotMessage, sendToAI, dataMode]
+    [addBotMessage, sendToAI, dataMode, saveMessage]
   );
+
+  const handleDataModeChange = useCallback((mode: DataMode) => {
+    setDataMode(mode);
+    updateDataMode(mode);
+  }, [updateDataMode]);
+
+  const handleNewConversation = useCallback(async () => {
+    await startNewConversation();
+    historyLoaded.current = false;
+    setMessages(WELCOME_MESSAGES);
+    WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
+  }, [startNewConversation, saveMessage]);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -265,6 +291,32 @@ export default function WakaPlayerDemo() {
             Thinking…
           </Badge>
         )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="secondary" className="text-[9px] gap-1 cursor-default">
+                <Database className="h-2.5 w-2.5" />
+                {messageCount} msgs
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Mensajes persistidos en esta conversación</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleNewConversation} className="h-7 text-[11px] gap-1">
+                <RotateCcw className="h-3 w-3" />
+                Nueva
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Iniciar una nueva conversación</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Body — iPhone frame */}
@@ -301,7 +353,7 @@ export default function WakaPlayerDemo() {
                 status={status}
                 statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
                 dataMode={dataMode}
-                onDataModeChange={setDataMode}
+                onDataModeChange={handleDataModeChange}
                 onSend={handleSend}
                 onSendImage={handleSendImage}
                 onQuickReply={handleQuickReply}
