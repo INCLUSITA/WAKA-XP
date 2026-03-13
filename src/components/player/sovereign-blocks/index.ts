@@ -6,3 +6,6 @@ export { RatingWidget } from "./RatingWidget";
 export { CertificateCard, type CertificateData } from "./CertificateCard";
 export { TrainingProgress, type TrainingModule } from "./TrainingProgress";
 export { MediaCarousel, type MediaSlide } from "./MediaCarousel";
+export { CreditSimulationCard, type CreditSimulationData } from "./CreditSimulationCard";
+export { ClientStatusCard, type ClientStatusData } from "./ClientStatusCard";
+export { MoMoAccountCard, type MoMoAccountData } from "./MoMoAccountCard";

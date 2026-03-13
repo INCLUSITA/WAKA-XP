@@ -27,6 +27,9 @@ import {
   CertificateCard, type CertificateData,
   TrainingProgress, type TrainingModule,
   MediaCarousel, type MediaSlide,
+  CreditSimulationCard, type CreditSimulationData,
+  ClientStatusCard, type ClientStatusData,
+  MoMoAccountCard, type MoMoAccountData,
 } from "./sovereign-blocks";
 
 export type { DataMode } from "./dataMode";
