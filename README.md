@@ -235,6 +235,8 @@ docs/
 | | `/editor` | Index (FlowEditor) | Classic Flow Editor |
 | | `/simulator` | PhoneSimulator | Simulador completo |
 | | `/production` | ProductionPage | Production Candidates |
+| **Player** | `/player` | PlayerFlowsPage | Galería de flujos del Player |
+| | `/player/live` | WakaPlayerDemo | Simulador conversacional IA live |
 | **Assets** | `/library` | LibraryPage | Librería de activos |
 | | `/demos` | Demos | Lista de demos |
 | | `/demo/:id` | DemoViewer | Visor de demo |
