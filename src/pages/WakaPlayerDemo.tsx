@@ -47,7 +47,7 @@ const MODE_LABELS: Record<DataMode, string> = {
 };
 
 const MODE_COLORS: Record<DataMode, string> = {
-  libre: "bg-primary/10 text-primary",
+  libre: "bg-[hsl(270,40%,50%)]/10 text-[hsl(270,40%,45%)]",
   "subventionné": "bg-[hsl(35,80%,50%)]/10 text-[hsl(35,70%,40%)]",
   "zero-rated": "bg-[hsl(220,10%,50%)]/10 text-[hsl(220,10%,40%)]",
 };
