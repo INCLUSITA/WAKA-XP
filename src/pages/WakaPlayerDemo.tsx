@@ -255,6 +255,50 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  const handleSelectPlan = useCallback(
+    async (sku: string, name: string) => {
+      const text = `Je choisis le plan : ${name} (SKU: ${sku})`;
+      addUserMessage(`Plan sélectionné : ${name}`);
+      const t0 = Date.now();
+      const response = await sendToAI(text, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handlePaymentConfirmAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action paiement : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handleCreditContractAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action contrat crédit : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handleDeviceLockConsent = useCallback(
+    async (accepted: boolean) => {
+      const text = accepted
+        ? "J'accepte le device lock. Veuillez créer mon crédit."
+        : "Je refuse le device lock.";
+      addUserMessage(accepted ? "✓ Device lock accepté" : "✗ Device lock refusé");
+      const t0 = Date.now();
+      const response = await sendToAI(text, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
   const handleVoiceToggle = useCallback(
     async (active: boolean) => {
       if (!active) {
