@@ -162,6 +162,8 @@ src/
 │   ├── IntegrationsPage.tsx         # Integraciones / conectores
 │   ├── WhatsAppTestPage.tsx         # Testing WhatsApp real
 │   ├── TenantsPage.tsx              # Gestión de tenants
+│   ├── PlayerFlowsPage.tsx          # ★ Galería de flujos del Player
+│   ├── WakaPlayerDemo.tsx           # ★ Player Live (simulador IA)
 │   ├── GlobalsPage.tsx              # Variables globales
 │   ├── WebhookLogs.tsx              # Logs de webhooks
 │   ├── SettingsPage.tsx             # Configuración
