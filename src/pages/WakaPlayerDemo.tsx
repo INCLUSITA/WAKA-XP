@@ -448,6 +448,8 @@ export default function WakaPlayerDemo() {
                 onDataModeChange={handleDataModeChange}
                 onSend={handleSend}
                 onSendImage={handleSendImage}
+                onSendLocation={handleSendLocation}
+                onSendDocument={handleSendDocument}
                 onQuickReply={handleQuickReply}
                 onVoiceToggle={handleVoiceToggle}
                 onMenuSelect={handleMenuSelect}
