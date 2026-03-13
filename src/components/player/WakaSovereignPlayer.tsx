@@ -274,18 +274,18 @@ function InteractiveMenu({
   const Wrapper = mode === "zero-rated" ? "div" : motion.div;
 
   return (
-    <div className="rounded-xl border border-[hsl(160,40%,85%)] bg-white overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-[hsl(270,25%,88%)] bg-white overflow-hidden shadow-sm">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-[hsl(160,40%,96%)]"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-[hsl(270,25%,96%)]"
       >
-        <span className="text-[12px] font-semibold text-[hsl(160,60%,25%)]">
+        <span className="text-[12px] font-semibold text-[hsl(270,40%,35%)]">
           {title || "Options"}
         </span>
         {open ? (
-          <ChevronUp className="h-3.5 w-3.5 text-[hsl(160,50%,40%)]" />
+          <ChevronUp className="h-3.5 w-3.5 text-[hsl(270,35%,50%)]" />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-[hsl(160,50%,40%)]" />
+          <ChevronDown className="h-3.5 w-3.5 text-[hsl(270,35%,50%)]" />
         )}
       </button>
       {open && (
@@ -294,7 +294,7 @@ function InteractiveMenu({
             <button
               key={i}
               onClick={() => onSelect?.(opt.label)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[hsl(160,30%,96%)] transition-colors border-t border-[hsl(160,20%,92%)] active:bg-[hsl(160,30%,92%)]"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[hsl(270,20%,97%)] transition-colors border-t border-[hsl(270,15%,93%)] active:bg-[hsl(270,20%,93%)]"
             >
               {opt.icon && <AnimatedEmoji emoji={opt.icon} size={18} />}
               <div className="flex-1 min-w-0">
