@@ -916,8 +916,8 @@ export function WakaSovereignPlayer({
             className={cn(
               "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
               showAttachMenu
-                ? "bg-[hsl(160,60%,35%)] text-white rotate-45"
-                : "text-[hsl(220,10%,50%)] hover:text-[hsl(160,60%,35%)] hover:bg-[hsl(160,30%,95%)]"
+                ? "bg-[hsl(270,45%,48%)] text-white rotate-45"
+                : "text-[hsl(220,10%,50%)] hover:text-[hsl(270,45%,48%)] hover:bg-[hsl(270,25%,95%)]"
             )}
           >
             <Paperclip className="h-4.5 w-4.5 transition-transform" />
@@ -932,7 +932,7 @@ export function WakaSovereignPlayer({
               placeholder={pendingImage ? "Légende (optionnel)…" : voiceActive ? "Écoute…" : "Message…"}
               disabled={voiceActive}
               className={cn(
-                "w-full h-9 rounded-full bg-[hsl(220,15%,96%)] border border-[hsl(220,15%,90%)] px-4 text-[13px] text-[hsl(220,15%,15%)] placeholder:text-[hsl(220,10%,65%)] focus:outline-none focus:ring-1 focus:ring-[hsl(160,60%,40%)]/30 transition-all",
+                "w-full h-9 rounded-full bg-[hsl(220,15%,96%)] border border-[hsl(220,15%,90%)] px-4 text-[13px] text-[hsl(220,15%,15%)] placeholder:text-[hsl(220,10%,65%)] focus:outline-none focus:ring-1 focus:ring-[hsl(270,45%,55%)]/30 transition-all",
                 voiceActive && "opacity-50 cursor-not-allowed"
               )}
             />
@@ -941,7 +941,7 @@ export function WakaSovereignPlayer({
           {inputText.trim() || pendingImage ? (
             <button
               onClick={handleSend}
-              className="h-9 w-9 rounded-full bg-[hsl(160,60%,35%)] flex items-center justify-center flex-shrink-0 shadow-sm hover:bg-[hsl(160,60%,38%)] transition-colors active:scale-95"
+              className="h-9 w-9 rounded-full bg-[hsl(270,45%,48%)] flex items-center justify-center flex-shrink-0 shadow-sm hover:bg-[hsl(270,45%,52%)] transition-colors active:scale-95"
             >
               <Send className="h-4 w-4 text-white" />
             </button>
@@ -952,7 +952,7 @@ export function WakaSovereignPlayer({
                 "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
                 voiceActive
                   ? "bg-destructive text-white shadow-sm animate-pulse"
-                  : "bg-[hsl(160,60%,35%)] text-white shadow-sm hover:bg-[hsl(160,60%,38%)]"
+                  : "bg-[hsl(270,45%,48%)] text-white shadow-sm hover:bg-[hsl(270,45%,52%)]"
               )}
             >
               {voiceActive ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}

@@ -378,7 +378,7 @@ export default function WakaPlayerDemo() {
           {MODE_LABELS[dataMode]}
         </Badge>
         {isThinking && (
-          <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,50%)]/30 text-[hsl(160,50%,40%)] animate-pulse gap-1">
+          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
             <Zap className="h-2.5 w-2.5" />
             Thinking…
           </Badge>
