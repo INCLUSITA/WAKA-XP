@@ -129,7 +129,7 @@ export default function PlayerFlowsPage() {
     setStatusTarget(null);
   }, [statusTarget, newStatus, updateFlowStatus]);
 
-  const openInPlayer = (flowId: string) => navigate(`/player?flow=${flowId}`);
+  const openInPlayer = (flowId: string) => navigate(`/player/live?flow=${flowId}`);
 
   return (
     <div className="flex flex-col h-full">
