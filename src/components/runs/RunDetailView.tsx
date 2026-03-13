@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight, Radio } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight, Radio, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,9 +89,10 @@ function StepCard({ step, index, isNew }: { step: FlowRunStep; index: number; is
 interface Props {
   run: FlowRun;
   onBack: () => void;
+  onOpenTimeline?: () => void;
 }
 
-export function RunDetailView({ run, onBack }: Props) {
+export function RunDetailView({ run, onBack, onOpenTimeline }: Props) {
   const { data: steps, isLoading: stepsLoading } = useFlowRunSteps(run.id);
   const [realtimeSteps, setRealtimeSteps] = useState<FlowRunStep[]>([]);
   const [newStepIds, setNewStepIds] = useState<Set<string>>(new Set());
@@ -170,6 +171,11 @@ export function RunDetailView({ run, onBack }: Props) {
             <span className="font-mono">{run.contact_urn?.split(":").slice(1).join(":") || "no contact"}</span>
           </div>
         </div>
+        {onOpenTimeline && (
+          <Button variant="outline" size="sm" onClick={onOpenTimeline} className="gap-1 text-xs border-primary/30 text-primary hover:bg-primary/10">
+            <MessageSquare className="h-3.5 w-3.5" /> Chat View
+          </Button>
+        )}
         <RunStatusBadge status={run.status} />
       </div>
 

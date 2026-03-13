@@ -28,7 +28,7 @@ export function SendMsgNode({ data, selected }: NodeProps) {
       }`}
     >
       {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} pinned={d._isPinnedStart} triggerReady={d._triggerReady} />}
-      {d._pulseCount > 0 && <PulseDot count={d._pulseCount} />}
+      {d._pulseCount > 0 && <PulseDot count={d._pulseCount} onClick={() => { const ids = d._pulseRunIds as string[]; if (ids?.[0] && d._onPulseClick) d._onPulseClick(ids[0]); }} />}
       {/* Header pill */}
       <div className="flex items-center gap-2 rounded-t-lg bg-node-send px-3 py-1.5">
         <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />

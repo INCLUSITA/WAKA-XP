@@ -58,6 +58,7 @@ import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
 import { FlowRunsPanel } from "./FlowRunsPanel";
 import { useActiveNodePulse } from "./NodePulseOverlay";
+import { ExecutionTimeline } from "@/components/runs/ExecutionTimeline";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
@@ -119,7 +120,8 @@ function FlowEditorInner() {
   const [showRuns, setShowRuns] = useState(false);
   const [pinnedStartNodeId, _setPinnedStartNodeId] = useState<string | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
-  const activePulseCounts = useActiveNodePulse(flowIdParam);
+  const pulseData = useActiveNodePulse(flowIdParam);
+  const [timelineRunId, setTimelineRunId] = useState<string | null>(null);
   // Wrap setPinnedStartNodeId to also persist isStart flag in node data
   const setPinnedStartNodeId = useCallback((nodeId: string | null) => {
     _setPinnedStartNodeId(nodeId);
@@ -1057,8 +1059,9 @@ function FlowEditorInner() {
               const isAmbiguous = !pinnedStartNodeId && rootSet.size > 1;
               const effectiveEntryId = pinnedStartNodeId || readiness.entryNodeId;
               const enrichNode = (n: Node, extra: Record<string, unknown> = {}) => {
-                const pulseCount = activePulseCounts[n.id] || 0;
-                return { ...n, data: { ...n.data, _pulseCount: pulseCount, ...extra } };
+                const pulseCount = pulseData.counts[n.id] || 0;
+                const pulseRunIds = pulseData.runIdsByNode[n.id] || [];
+                return { ...n, data: { ...n.data, _pulseCount: pulseCount, _pulseRunIds: pulseRunIds, _onPulseClick: (runId: string) => setTimelineRunId(runId), ...extra } };
               };
               if (rootSet.size === 0 && !effectiveEntryId) return nodes.map((n) => enrichNode(n));
               return nodes.map((n) => {
@@ -1241,6 +1244,13 @@ function FlowEditorInner() {
             onClose={() => setShowRuns(false)}
           />
         )}
+
+        {/* Execution Timeline Sheet (Pulse-to-Chat) */}
+        <ExecutionTimeline
+          runId={timelineRunId}
+          open={!!timelineRunId}
+          onOpenChange={(open) => { if (!open) setTimelineRunId(null); }}
+        />
       </div>
 
       {/* Drop-to-create node menu */}
