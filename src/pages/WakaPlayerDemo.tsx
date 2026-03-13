@@ -5,8 +5,9 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen, GitBranch } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen, GitBranch, Phone, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
+import { AvatarOverlay } from "@/components/player/AvatarOverlay";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -73,6 +76,9 @@ export default function WakaPlayerDemo() {
   const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
   const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("https://avatar.waka.africa/agent");
 
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
@@ -231,6 +237,15 @@ export default function WakaPlayerDemo() {
 
   const handleQuickReply = useCallback(
     async (label: string) => {
+      // Intercept voice/avatar quick replies
+      if (label.includes("Llamar") || label.includes("VOICE") || label.includes("📞")) {
+        setShowVoiceCall(true);
+        return;
+      }
+      if (label.includes("Avatar") || label.includes("🎭")) {
+        setShowAvatar(true);
+        return;
+      }
       addUserMessage(label);
       const t0 = Date.now();
       const response = await sendToAI(label, dataMode);
@@ -238,6 +253,24 @@ export default function WakaPlayerDemo() {
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
+
+  const handleVoiceCallEnd = useCallback((summary?: string) => {
+    setShowVoiceCall(false);
+    if (summary) {
+      addBotMessage({
+        text: `${summary}\n\n¿En qué más puedo ayudarle?`,
+        quickReplies: ["🏠 Menu principal", "📞 Llamar de nuevo", "💳 Mon solde"],
+      });
+    }
+  }, [addBotMessage]);
+
+  const handleAvatarClose = useCallback(() => {
+    setShowAvatar(false);
+    addBotMessage({
+      text: "🎭 Sesión de avatar finalizada. ¿Cómo puedo continuar ayudándole?",
+      quickReplies: ["🏠 Menu principal", "🎭 Volver al avatar", "📞 Llamar agente"],
+    });
+  }, [addBotMessage]);
 
   const handleMenuSelect = useCallback(
     async (label: string) => {
@@ -559,6 +592,22 @@ export default function WakaPlayerDemo() {
                   onDeviceLockConsent={handleDeviceLockConsent}
                 />
               </div>
+
+              {/* Voice Call Overlay — takes over phone screen */}
+              <VoiceCallOverlay
+                open={showVoiceCall}
+                onClose={handleVoiceCallEnd}
+                agentName="WAKA VOICE"
+              />
+
+              {/* Avatar Overlay — takes over phone screen */}
+              <AvatarOverlay
+                open={showAvatar}
+                onClose={handleAvatarClose}
+                avatarUrl={avatarUrl}
+                agentName="WAKA Avatar"
+              />
+
               <div className="flex justify-center py-2 bg-white">
                 <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
               </div>
@@ -646,6 +695,42 @@ export default function WakaPlayerDemo() {
                   <RotateCcw className="h-3.5 w-3.5" />
                   Nueva conversación
                 </Button>
+              </div>
+            </div>
+
+            {/* ── WAKA VOICE & Avatar ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Canales interactivos</h3>
+              <div className="space-y-1.5">
+                <Button
+                  variant={showVoiceCall ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowVoiceCall(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  Llamar WAKA VOICE
+                </Button>
+
+                <Button
+                  variant={showAvatar ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowAvatar(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <User className="h-3.5 w-3.5" />
+                  Abrir Avatar
+                </Button>
+
+                <div className="pt-1">
+                  <label className="text-[10px] text-muted-foreground block mb-1">URL del avatar</label>
+                  <Input
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    placeholder="https://avatar.waka.africa/agent"
+                    className="h-7 text-[10px]"
+                  />
+                </div>
               </div>
             </div>
 
