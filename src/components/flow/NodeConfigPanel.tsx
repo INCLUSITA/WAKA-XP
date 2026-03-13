@@ -498,6 +498,15 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
                   />
                 </>
               )}
+              {/* Omnichannel Preview */}
+              <Separator className="my-3" />
+              <div className="space-y-2">
+                <Label className="text-foreground text-[11px] uppercase tracking-wider">Channel Preview</Label>
+                <OmnichannelPreview
+                  messages={data.text ? [data.text as string] : []}
+                  quickReplies={(data.quick_replies as string[] || []).filter((r: string) => r.trim())}
+                />
+              </div>
             </>
           );
         })()}
