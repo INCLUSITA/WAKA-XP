@@ -668,7 +668,7 @@ export function WakaSovereignPlayer({
                               )}
                               <div className="flex items-center gap-1 ml-auto">
                                 <span className={cn("text-[9px]", isBot ? "text-[hsl(220,10%,65%)]" : "text-white/45")}>
-                                  {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                 </span>
                                 {!isBot && <CheckCheck className="h-2.5 w-2.5 text-white/50" />}
                               </div>
