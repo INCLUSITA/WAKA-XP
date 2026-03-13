@@ -29,6 +29,7 @@ const principalItems = [
   { title: "Production", url: "/production", icon: Rocket },
   { title: "Runs", url: "/runs", icon: ServerCog },
   { title: "Context Board", url: "/context", icon: BrainCircuit },
+  { title: "Waka XP Player", url: "/player", icon: Play },
 ];
 
 const assetsItems = [
