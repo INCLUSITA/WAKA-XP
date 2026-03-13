@@ -94,6 +94,8 @@ interface WakaSovereignPlayerProps {
   botName?: string;
   onSend?: (text: string) => void;
   onSendImage?: (imageDataUrl: string, caption?: string) => void;
+  onSendLocation?: (lat: number, lng: number) => void;
+  onSendDocument?: (file: File) => void;
   onQuickReply?: (label: string) => void;
   onVoiceToggle?: (active: boolean) => void;
   onMenuSelect?: (label: string) => void;
