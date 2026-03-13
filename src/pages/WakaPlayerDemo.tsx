@@ -436,6 +436,7 @@ export default function WakaPlayerDemo() {
                 onPayment={handlePayment}
                 onRate={handleRate}
                 onModuleClick={handleModuleClick}
+                onSlideAction={handleSlideAction}
               />
             </div>
 
