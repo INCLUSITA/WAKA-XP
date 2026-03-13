@@ -578,6 +578,21 @@ export default function WakaPlayerDemo() {
           <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
         </div>
       </div>
+
+      {/* Save Flow Dialog */}
+      <SaveFlowDialog
+        open={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleSaveFlow}
+        isSaving={isSaving}
+      />
+
+      {/* Saved Flows Panel */}
+      <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
+        <SheetContent side="right" className="w-[400px] p-0">
+          <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
