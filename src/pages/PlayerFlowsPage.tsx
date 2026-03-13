@@ -91,7 +91,7 @@ export default function PlayerFlowsPage() {
       setShowCreate(false);
       setCreateName("");
       setCreateDesc("");
-      navigate(`/player?flow=${id}`);
+      navigate(`/player/live?flow=${id}`);
     } else {
       toast.error("Error al crear el flujo");
     }
@@ -129,7 +129,7 @@ export default function PlayerFlowsPage() {
     setStatusTarget(null);
   }, [statusTarget, newStatus, updateFlowStatus]);
 
-  const openInPlayer = (flowId: string) => navigate(`/player?flow=${flowId}`);
+  const openInPlayer = (flowId: string) => navigate(`/player/live?flow=${flowId}`);
 
   return (
     <div className="flex flex-col h-full">
