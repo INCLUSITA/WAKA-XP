@@ -44,10 +44,46 @@ Deno.serve(async (req) => {
 
     console.log(`Telegram message from chat_id=${chatId} persisted`);
 
+    // ─── Flow Resume: find a waiting run for this contact ───
+    const contactUrn = `telegram:${chatId}`;
+    const { data: waitingRuns } = await supabase
+      .from("flow_runs")
+      .select("id, flow_id, tenant_id")
+      .eq("contact_urn", contactUrn)
+      .eq("status", "waiting")
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (waitingRuns && waitingRuns.length > 0) {
+      const waitingRun = waitingRuns[0];
+      console.log(`Resuming flow run ${waitingRun.id} for ${contactUrn}`);
+
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const runFlowUrl = `${supabaseUrl}/functions/v1/run-flow`;
+        const resumeResp = await fetch(runFlowUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            resume_run_id: waitingRun.id,
+            resume_input: text,
+          }),
+        });
+        const resumeResult = await resumeResp.json();
+        console.log("Resume result:", JSON.stringify(resumeResult));
+      } catch (resumeErr: any) {
+        console.error("Resume error:", resumeErr.message);
+      }
+    }
+
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Telegram webhook error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
