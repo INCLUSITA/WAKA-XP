@@ -8,7 +8,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Copy, Trash2, Play, Upload, FileJson, Pencil,
-  Shield, FlaskConical, Rocket, LayoutGrid, GitBranch,
+  Shield, FlaskConical, Rocket, LayoutGrid, GitBranch, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useSavedPlayerFlows, type SavedPlayerFlow, type FlowStatus } from "@/hooks/useSavedPlayerFlows";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
+import { FlowCreationWizard } from "@/components/player/FlowCreationWizard";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 
 const STATUS_META: Record<FlowStatus, { label: string; icon: typeof Shield; color: string }> = {
@@ -46,6 +48,7 @@ const MODE_LABELS: Record<string, string> = {
 
 export default function PlayerFlowsPage() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const {
     flows, isLoading, saveFlow, cloneFlow,
     deleteFlow, updateFlowStatus, updateFlowName,
@@ -54,7 +57,6 @@ export default function PlayerFlowsPage() {
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [showFlowContext, setShowFlowContext] = useState(false);
   const [cloneTarget, setCloneTarget] = useState<SavedPlayerFlow | null>(null);
   const [cloneName, setCloneName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<SavedPlayerFlow | null>(null);
@@ -62,11 +64,6 @@ export default function PlayerFlowsPage() {
   const [renameName, setRenameName] = useState("");
   const [statusTarget, setStatusTarget] = useState<SavedPlayerFlow | null>(null);
   const [newStatus, setNewStatus] = useState<FlowStatus>("sandbox");
-
-  // Create new flow dialog state
-  const [createName, setCreateName] = useState("");
-  const [createDesc, setCreateDesc] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
 
   const filtered = flows.filter((f) => {
     if (tab !== "all" && f.status !== tab) return false;
@@ -81,21 +78,6 @@ export default function PlayerFlowsPage() {
     production: flows.filter((f) => f.status === "production").length,
   };
 
-  const handleCreate = useCallback(async () => {
-    if (!createName.trim()) return;
-    setIsCreating(true);
-    const id = await saveFlow(createName.trim(), createDesc.trim(), [], "libre", "sandbox");
-    setIsCreating(false);
-    if (id) {
-      toast.success(`Flujo "${createName}" creado`);
-      setShowCreate(false);
-      setCreateName("");
-      setCreateDesc("");
-      navigate(`/player/live?flow=${id}`);
-    } else {
-      toast.error("Error al crear el flujo");
-    }
-  }, [createName, createDesc, saveFlow, navigate]);
 
   const handleClone = useCallback(async () => {
     if (!cloneTarget || !cloneName.trim()) return;
@@ -145,13 +127,13 @@ export default function PlayerFlowsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFlowContext(true)} className="gap-1.5 text-xs">
-            <GitBranch className="h-3.5 w-3.5" />
-            Importar contexto
+          <Button variant="outline" size="sm" onClick={() => navigate("/player/live")} className="gap-1.5 text-xs">
+            <Play className="h-3.5 w-3.5" />
+            Player libre
           </Button>
           <Button size="sm" onClick={() => setShowCreate(true)} className="gap-1.5 text-xs">
-            <Plus className="h-3.5 w-3.5" />
-            Nuevo flujo
+            <Sparkles className="h-3.5 w-3.5" />
+            Crear flujo
           </Button>
         </div>
       </div>
@@ -326,37 +308,15 @@ export default function PlayerFlowsPage() {
         </Tabs>
       </div>
 
-      {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <Plus className="h-4 w-4 text-primary" />
-              Nuevo flujo del Player
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="Nombre del flujo..."
-              className="text-sm"
-            />
-            <Textarea
-              value={createDesc}
-              onChange={(e) => setCreateDesc(e.target.value)}
-              placeholder="Descripción (opcional)..."
-              className="text-sm min-h-[60px]"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleCreate} disabled={!createName.trim() || isCreating}>
-              {isCreating ? "Creando..." : "Crear y abrir"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Flow Creation Wizard */}
+      {tenantId && (
+        <FlowCreationWizard
+          open={showCreate}
+          onClose={() => setShowCreate(false)}
+          onCreated={(flowId) => navigate(`/player/live?flow=${flowId}`)}
+          tenantId={tenantId}
+        />
+      )}
 
       {/* Clone Dialog */}
       <Dialog open={!!cloneTarget} onOpenChange={(o) => !o && setCloneTarget(null)}>
@@ -439,16 +399,6 @@ export default function PlayerFlowsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Flow Context Selector */}
-      <FlowContextSelector
-        open={showFlowContext}
-        onClose={() => setShowFlowContext(false)}
-        onSelect={(ctx, name) => {
-          if (ctx && name) toast.success(`Contexto "${name}" listo para usar en nuevos flujos`);
-          setShowFlowContext(false);
-        }}
-        activeFlowName={null}
-      />
     </div>
   );
 }
