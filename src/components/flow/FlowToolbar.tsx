@@ -2,7 +2,7 @@ import {
   MessageSquare, Clock, GitBranch, Globe, Download, Upload, Trash2, FileDown,
   ShieldCheck, Play, Languages, ChevronDown, History, Search,
   Save, UserCog, Mail, Bot, Workflow, Headphones, Zap, Coins, Sparkles, Link2, Rocket,
-  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus,
+  Layers, LayoutGrid, Database, Plus, Box, Radio, Hexagon, BrainCircuit, Users, UserMinus, Loader2,
 } from "lucide-react";
 import { Node, Edge } from "@xyflow/react";
 import { useNavigate } from "react-router-dom";
