@@ -165,6 +165,10 @@ async function generateWithAI(
   if (sourceData.instructions) {
     contextParts.push(`## Instrucciones del usuario\n${sourceData.instructions}`);
   }
+  if (sourceData.existingConfig && sourceData.mergeMode) {
+    const existing = sourceData.existingConfig;
+    contextParts.push(`## Configuración existente del flujo (MERGE MODE)\nEste flujo ya existe. Las nuevas instrucciones deben MEJORAR y COMBINAR con lo existente, no reemplazarlo.\n\n**System Prompt actual:**\n${existing.systemPrompt || "(vacío)"}\n\n**Intents actuales:** ${(existing.intents || []).join(", ") || "(ninguno)"}\n\n**Endpoints actuales:** ${JSON.stringify(existing.endpoints || [])}\n\n**Persona actual:** ${JSON.stringify(existing.persona || {})}`);
+  }
   if (sourceData.json) {
     const truncated = sourceData.json.length > 8000
       ? sourceData.json.substring(0, 8000) + "\n... (truncado)"
