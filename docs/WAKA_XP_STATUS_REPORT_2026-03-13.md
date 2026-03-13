@@ -154,7 +154,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ## 4. Infraestructura y Gobernanza
 
-### Base de datos (18 tablas activas en Supabase)
+### Base de datos (21 tablas activas en Supabase)
 
 | Tabla | Uso |
 |---|---|
