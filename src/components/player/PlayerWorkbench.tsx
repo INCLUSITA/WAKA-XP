@@ -11,13 +11,11 @@
 import { useState, useCallback, useRef } from "react";
 import {
   Send, Upload, FileJson, FileText, Image as ImageIcon, RotateCcw,
-  Save, Sparkles, Loader2, ChevronDown, ChevronUp, FolderOpen,
-  Phone, User, Pencil,
+  Save, Sparkles, Loader2, FolderOpen, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -40,10 +38,6 @@ interface PlayerWorkbenchProps {
   onNewConversation: () => void;
   onSave: () => void;
   onOpenFlows: () => void;
-  onStartVoiceCall: () => void;
-  onStartAvatar: () => void;
-  avatarUrl: string;
-  onAvatarUrlChange: (url: string) => void;
 }
 
 interface UploadedAsset {
@@ -57,13 +51,11 @@ interface UploadedAsset {
 export function PlayerWorkbench({
   flowId, flowTitle, scenarioConfig, messageCount, tenantId,
   onInstructionsSent, onNewConversation, onSave, onOpenFlows,
-  onStartVoiceCall, onStartAvatar, avatarUrl, onAvatarUrlChange,
 }: PlayerWorkbenchProps) {
   const [instructions, setInstructions] = useState(scenarioConfig?.systemPrompt || "");
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,47 +323,6 @@ export function PlayerWorkbench({
             </div>
           </div>
 
-          {/* ── Advanced: Voice & Avatar ── */}
-          <div className="space-y-2">
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-full"
-            >
-              {showAdvanced ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              Canales interactivos
-            </button>
-            {showAdvanced && (
-              <div className="space-y-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onStartVoiceCall}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Llamar WAKA VOICE
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onStartAvatar}
-                  className="w-full justify-start h-8 text-[11px] gap-2"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  Abrir Avatar
-                </Button>
-                <div>
-                  <label className="text-[10px] text-muted-foreground block mb-1">URL del avatar</label>
-                  <Input
-                    value={avatarUrl}
-                    onChange={(e) => onAvatarUrlChange(e.target.value)}
-                    placeholder="https://avatar.waka.africa/agent"
-                    className="h-7 text-[10px]"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* ── Current Config Preview ── */}
           {scenarioConfig?.systemPrompt && (
