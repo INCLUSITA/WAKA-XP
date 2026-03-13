@@ -63,6 +63,44 @@ export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null, compact 
     toast.success(`Estado cambiado a ${STATUS_CONFIG[status].label}`);
   };
 
+  // Compact mode: inline list, no header/filters
+  if (compact) {
+    const recentFlows = flows.slice(0, 5);
+    if (isLoading) return <p className="text-[10px] text-muted-foreground">Cargando...</p>;
+    if (recentFlows.length === 0) return <p className="text-[10px] text-muted-foreground">Sin flujos guardados</p>;
+    return (
+      <div className="space-y-1">
+        {recentFlows.map((flow) => {
+          const sc = STATUS_CONFIG[flow.status];
+          const isActive = activeFlowId === flow.id;
+          return (
+            <button
+              key={flow.id}
+              onClick={() => onLoad(flow.id)}
+              className={cn(
+                "w-full text-left rounded-md border p-2 transition-colors text-[11px]",
+                isActive
+                  ? "border-primary/50 bg-primary/10"
+                  : "border-border/40 hover:bg-muted/50"
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-foreground truncate flex-1">{flow.name}</span>
+                <Badge variant="outline" className={cn("text-[8px] gap-0.5 border h-4", sc.className)}>
+                  {sc.icon}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 text-[9px] text-muted-foreground">
+                <span>{flow.messageCount} msgs</span>
+                <span>{new Date(flow.updatedAt).toLocaleDateString()}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
