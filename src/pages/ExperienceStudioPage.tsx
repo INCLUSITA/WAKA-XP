@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { ExperienceContextTab } from "@/components/experience/ExperienceContextTab";
+import { ExperienceTriggersTab } from "@/components/experience/ExperienceTriggersTab";
 import { Tables } from "@/integrations/supabase/types";
 
 interface Experience {
