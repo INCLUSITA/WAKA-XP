@@ -838,7 +838,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + modeContext },
+          { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
           ...messages,
         ],
         tools: allTools,
