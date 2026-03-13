@@ -830,7 +830,7 @@ export function WakaSovereignPlayer({
                   <button
                     key={i}
                     onClick={() => onQuickReply?.(qr)}
-                    className="rounded-full border border-[hsl(160,50%,70%)] bg-white px-3 py-1.5 text-[11px] font-medium text-[hsl(160,60%,28%)] hover:bg-[hsl(160,40%,96%)] transition-colors active:scale-[0.97] shadow-sm"
+                    className="rounded-full border border-[hsl(270,40%,75%)] bg-white px-3 py-1.5 text-[11px] font-medium text-[hsl(270,45%,38%)] hover:bg-[hsl(270,25%,97%)] transition-colors active:scale-[0.97] shadow-sm"
                   >
                     {qr}
                   </button>
