@@ -1,21 +1,29 @@
 /**
- * Waka Sovereign Player — Demo / Preview page
- * Layout: iPhone-like phone frame centered on screen (matching OmnichannelPreview / Simulator aesthetic)
+ * Waka Sovereign Player — Demo page with full iPhone frame
  */
 
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WakaSovereignPlayer, type PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 
 const INITIAL_MESSAGES: PlayerMessage[] = [
   {
+    id: "sys-1",
+    text: "⚡ WAKA NEXUS — SESSION TRIGGER\nWAKA NEXUS — Contact détecté\nCanal : WhatsApp · Langue : FR",
+    direction: "outbound",
+    timestamp: new Date(Date.now() - 150_000),
+    isSystemEvent: true,
+    source: "WAKA NEXUS → WhatsApp",
+  },
+  {
     id: "1",
-    text: "👋 Bienvenue sur WAKA XP !\nJe suis votre assistant intelligent.",
+    text: "🇧🇫 Bonjour !\n\nIci WAKA XP 👋\n\nBienvenue sur votre assistant intelligent.",
     direction: "outbound",
     timestamp: new Date(Date.now() - 120_000),
+    source: "WAKA NEXUS → WhatsApp",
   },
   {
     id: "2",
@@ -25,18 +33,20 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
   },
   {
     id: "3",
-    text: "Excellent ! Commençons par un micro-module de formation. Voici votre progression :",
+    text: "Excellent ! Commençons par un micro-module de formation.\n\nVoici votre progression :",
     direction: "outbound",
     timestamp: new Date(Date.now() - 60_000),
     progress: 25,
     progressLabel: "Module 1/4 — Introduction",
+    source: "AXIOM Brain — Onboarding",
   },
   {
     id: "4",
-    text: "Quel type de forfait souhaitez-vous découvrir ?",
+    text: "Que souhaitez-vous faire ?",
     direction: "outbound",
     timestamp: new Date(Date.now() - 30_000),
-    quickReplies: ["📱 Data", "📞 Appels", "💬 SMS", "🌍 Roaming"],
+    quickReplies: ["📱 Découvrir Data", "📞 Forfaits Appels", "💬 Offres SMS", "🌍 Roaming"],
+    source: "AXIOM Brain — Re-engagement Offer",
   },
 ];
 
@@ -55,6 +65,7 @@ export default function WakaPlayerDemo() {
           text,
           direction: "outbound",
           timestamp: new Date(),
+          source: "AXIOM Brain → WhatsApp",
           ...extras,
         },
       ]);
@@ -83,7 +94,7 @@ export default function WakaPlayerDemo() {
         { id: `qr-${Date.now()}`, text: label, direction: "inbound", timestamp: new Date() },
       ]);
       addBotReply(`Excellent choix : ${label} !\n\n📊 Voici les offres disponibles dans cette catégorie.`, {
-        quickReplies: ["Voir détails", "Comparer", "Souscrire"],
+        quickReplies: ["✅ Souscrire", "📋 Voir détails", "🔄 Comparer"],
       });
     },
     [addBotReply]
@@ -96,7 +107,9 @@ export default function WakaPlayerDemo() {
           ...prev,
           { id: `voice-${Date.now()}`, text: "", direction: "inbound", timestamp: new Date(), isVoice: true },
         ]);
-        addBotReply("J'ai bien reçu votre message vocal. Laissez-moi l'analyser…");
+        addBotReply("J'ai bien reçu votre message vocal. Laissez-moi l'analyser…", {
+          source: "WAKA VOICE → AXIOM Brain",
+        });
       }
     },
     [addBotReply]
@@ -107,9 +120,12 @@ export default function WakaPlayerDemo() {
     setStatus("online");
   }, []);
 
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   return (
     <div className="flex h-full flex-col bg-background">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex items-center gap-3 border-b border-border px-6 py-3">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
@@ -120,33 +136,51 @@ export default function WakaPlayerDemo() {
         </Badge>
       </div>
 
-      {/* Body — centered phone frame */}
-      <div className="flex flex-1 items-center justify-center overflow-hidden py-6 bg-muted/30">
-        {/* iPhone-like frame matching OmnichannelPreview */}
-        <div className="w-[380px] h-[700px] rounded-[2.5rem] border-4 border-foreground/15 bg-foreground/5 p-1.5 shadow-2xl flex flex-col">
-          {/* Notch */}
-          <div className="mx-auto h-6 w-28 rounded-b-2xl bg-foreground/15 flex items-center justify-center gap-2 flex-shrink-0">
-            <div className="h-2 w-2 rounded-full bg-foreground/20" />
-            <div className="h-1.5 w-12 rounded-full bg-foreground/15" />
+      {/* Body — full iPhone in center */}
+      <div className="flex flex-1 items-center justify-center overflow-hidden bg-[hsl(225,30%,8%)]">
+        {/* iPhone 15 Pro frame */}
+        <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
+          {/* Outer shell */}
+          <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,10%,25%)] to-[hsl(220,10%,15%)] shadow-[0_0_60px_rgba(0,0,0,0.5)]" />
+          {/* Inner bezel */}
+          <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
+            {/* Status bar */}
+            <div className="relative flex items-center justify-between px-7 pt-3 pb-1 bg-[hsl(168,76%,26%)] z-20">
+              <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
+              {/* Dynamic Island */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[100px] h-[28px] bg-black rounded-full z-30" />
+              <div className="flex items-center gap-1.5">
+                <Signal className="h-3 w-3 text-white/70" />
+                <Wifi className="h-3 w-3 text-white/70" />
+                <BatteryFull className="h-3.5 w-3.5 text-white/70" />
+              </div>
+            </div>
+
+            {/* Player content */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <WakaSovereignPlayer
+                messages={messages}
+                botName="WAKA XP 🇧🇫"
+                botSubtitle="Business Account · WAKA"
+                status={status}
+                onSend={handleSend}
+                onQuickReply={handleQuickReply}
+                onVoiceToggle={handleVoiceToggle}
+                onReset={handleReset}
+              />
+            </div>
+
+            {/* Home indicator */}
+            <div className="flex justify-center py-2 bg-[hsl(225,25%,10%)]">
+              <div className="h-[5px] w-[130px] rounded-full bg-white/20" />
+            </div>
           </div>
 
-          {/* Screen */}
-          <div className="flex-1 rounded-[2rem] overflow-hidden flex flex-col min-h-0">
-            <WakaSovereignPlayer
-              messages={messages}
-              botName="WAKA XP"
-              status={status}
-              onSend={handleSend}
-              onQuickReply={handleQuickReply}
-              onVoiceToggle={handleVoiceToggle}
-              onReset={handleReset}
-            />
-          </div>
-
-          {/* Home indicator */}
-          <div className="flex justify-center py-2 flex-shrink-0">
-            <div className="h-1 w-28 rounded-full bg-foreground/10" />
-          </div>
+          {/* Side buttons */}
+          <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,10%,30%)]" />
+          <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,10%,30%)]" />
+          <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,10%,30%)]" />
+          <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,10%,30%)]" />
         </div>
       </div>
     </div>
