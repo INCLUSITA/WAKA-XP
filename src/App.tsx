@@ -65,6 +65,7 @@ const App = () => {
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
               <Route path="/runs" element={<RunsPage />} />
+              <Route path="/context" element={<ContextBoardPage />} />
               {/* Assets & Resources */}
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/demos" element={<Demos />} />

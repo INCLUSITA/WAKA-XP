@@ -28,6 +28,7 @@ const principalItems = [
   { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
   { title: "Runs", url: "/runs", icon: ServerCog },
+  { title: "Context Board", url: "/context", icon: BrainCircuit },
 ];
 
 const assetsItems = [
