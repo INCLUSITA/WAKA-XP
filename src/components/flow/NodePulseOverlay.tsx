@@ -4,26 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { cn } from "@/lib/utils";
 
-interface ActiveNodeCounts {
-  [nodeUuid: string]: number;
+interface ActiveNodeData {
+  counts: Record<string, number>;
+  runIdsByNode: Record<string, string[]>;
 }
 
 /**
  * Queries flow_run_steps for recently active nodes and provides pulse data.
- * This is a data hook — the actual pulse rendering happens in the node components.
  */
 export function useActiveNodePulse(flowId: string | null) {
   const { tenantId } = useWorkspace();
-  const [activeCounts, setActiveCounts] = useState<ActiveNodeCounts>({});
+  const [data, setData] = useState<ActiveNodeData>({ counts: {}, runIdsByNode: {} });
 
   useEffect(() => {
     if (!flowId || !tenantId) {
-      setActiveCounts({});
+      setData({ counts: {}, runIdsByNode: {} });
       return;
     }
 
     const fetchActive = async () => {
-      // Find runs that are currently active or waiting for this flow
       const { data: runs } = await supabase
         .from("flow_runs")
         .select("id")
@@ -33,53 +32,42 @@ export function useActiveNodePulse(flowId: string | null) {
         .limit(50);
 
       if (!runs || runs.length === 0) {
-        setActiveCounts({});
+        setData({ counts: {}, runIdsByNode: {} });
         return;
       }
 
       const runIds = runs.map((r) => r.id);
 
-      // Get the latest step for each active run
       const { data: steps } = await supabase
         .from("flow_run_steps")
-        .select("node_uuid")
+        .select("node_uuid, run_id")
         .in("run_id", runIds)
         .order("created_at", { ascending: false })
         .limit(100);
 
       if (!steps) {
-        setActiveCounts({});
+        setData({ counts: {}, runIdsByNode: {} });
         return;
       }
 
-      // Count contacts at each node
-      const counts: ActiveNodeCounts = {};
-      // We only care about the latest step per run — approximate by counting all recent steps
+      const counts: Record<string, number> = {};
+      const runIdsByNode: Record<string, string[]> = {};
       for (const step of steps) {
         counts[step.node_uuid] = (counts[step.node_uuid] || 0) + 1;
+        if (!runIdsByNode[step.node_uuid]) runIdsByNode[step.node_uuid] = [];
+        if (!runIdsByNode[step.node_uuid].includes(step.run_id)) {
+          runIdsByNode[step.node_uuid].push(step.run_id);
+        }
       }
-      setActiveCounts(counts);
+      setData({ counts, runIdsByNode });
     };
 
     fetchActive();
-
-    // Refresh every 10 seconds
     const interval = setInterval(fetchActive, 10_000);
 
-    // Also subscribe to realtime for immediate updates
     const channel = supabase
       .channel(`pulse-${flowId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "flow_run_steps",
-        },
-        () => {
-          fetchActive();
-        }
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "flow_run_steps" }, () => fetchActive())
       .subscribe();
 
     return () => {
@@ -88,7 +76,7 @@ export function useActiveNodePulse(flowId: string | null) {
     };
   }, [flowId, tenantId]);
 
-  return activeCounts;
+  return data;
 }
 
 /**
