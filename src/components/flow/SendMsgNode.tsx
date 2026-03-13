@@ -1,6 +1,7 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles, FileCheck } from "lucide-react";
 import { EntryNodeMarker } from "./EntryNodeMarker";
+import { PulseDot } from "./NodePulseOverlay";
 
 function AttachmentIcon({ mime }: { mime?: string }) {
   const cls = "h-3 w-3 text-muted-foreground";
@@ -27,6 +28,7 @@ export function SendMsgNode({ data, selected }: NodeProps) {
       }`}
     >
       {d._isEntryNode && <EntryNodeMarker inferred={d._entryInferred} ambiguous={d._entryAmbiguous} pinned={d._isPinnedStart} triggerReady={d._triggerReady} />}
+      {d._pulseCount > 0 && <PulseDot count={d._pulseCount} />}
       {/* Header pill */}
       <div className="flex items-center gap-2 rounded-t-lg bg-node-send px-3 py-1.5">
         <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />

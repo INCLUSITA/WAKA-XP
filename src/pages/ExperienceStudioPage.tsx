@@ -10,7 +10,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Sparkles, Loader2, Pencil, Copy, Trash2, Eye, ArrowLeft,
-  Hammer, Smartphone, Rocket, History, Link2, Unlink, ExternalLink, ChevronRight, BrainCircuit,
+  Hammer, Smartphone, Rocket, History, Link2, Unlink, ExternalLink, ChevronRight, BrainCircuit, Zap, Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { VersionHistoryPanel } from "@/components/versioning/VersionHistoryPanel";
 import { ExperienceContextTab } from "@/components/experience/ExperienceContextTab";
+import { ExperienceTriggersTab } from "@/components/experience/ExperienceTriggersTab";
 import { Tables } from "@/integrations/supabase/types";
 
 interface Experience {
@@ -194,7 +195,8 @@ function ExperienceDetail({
           <Tabs defaultValue="overview">
             <TabsList className="bg-secondary/50 border border-border/50 mb-6">
               <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="context" className="text-xs flex items-center gap-1"><BrainCircuit className="h-3 w-3" />Context</TabsTrigger>
+              <TabsTrigger value="triggers" className="text-xs flex items-center gap-1"><Zap className="h-3 w-3" />Keywords & Triggers</TabsTrigger>
+              <TabsTrigger value="context" className="text-xs flex items-center gap-1"><Database className="h-3 w-3" />Context Board</TabsTrigger>
               <TabsTrigger value="demos" className="text-xs">Demos</TabsTrigger>
               <TabsTrigger value="flows" className="text-xs">Flows ({linkedFlows.length})</TabsTrigger>
               <TabsTrigger value="candidates" className="text-xs">Candidates ({candidates.length})</TabsTrigger>
@@ -243,6 +245,10 @@ function ExperienceDetail({
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="triggers">
+              <ExperienceTriggersTab experienceId={experience.id} />
             </TabsContent>
 
             <TabsContent value="context">
