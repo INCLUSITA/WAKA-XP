@@ -216,7 +216,7 @@ export function WakaSovereignPlayer({
                         "max-w-[82%] rounded-2xl px-3.5 py-2.5 shadow-md",
                         msg.direction === "outbound"
                           ? "bg-primary text-primary-foreground rounded-br-md shadow-primary/20"
-                          : "bg-white dark:bg-card text-foreground rounded-bl-md border border-border/40 shadow-black/5"
+                          : "bg-card text-foreground rounded-bl-md border border-border/40 shadow-black/5"
                       )}
                     >
                       {/* Voice message UI */}
