@@ -434,6 +434,16 @@ export default function WakaPlayerDemo() {
     toast.success(`Flujo "${full.name}" cargado`);
   }, [loadFlowFull]);
 
+  const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
+    if (flowContext && flowName) {
+      setFlowContext(flowContext);
+      setActiveFlowContextName(flowName);
+    } else {
+      setFlowContext(null);
+      setActiveFlowContextName(null);
+    }
+  }, [setFlowContext]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
