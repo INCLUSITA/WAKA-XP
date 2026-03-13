@@ -865,23 +865,45 @@ serve(async (req) => {
 
     const result: Record<string, any> = { text: "", blocks: {} };
 
-    // Check if AI wants to call tools
-    const toolCalls = choice?.message?.tool_calls || [];
-    const coreToolCalls = toolCalls.filter(
-      (tc: any) => tc.type === "function" && !SOVEREIGN_BLOCK_NAMES.has(tc.function.name)
-    );
-    const uiToolCalls = toolCalls.filter(
-      (tc: any) => tc.type === "function" && SOVEREIGN_BLOCK_NAMES.has(tc.function.name)
-    );
+    // Multi-pass loop: keep executing CORE tool calls until AI produces a final response
+    const MAX_PASSES = 5;
+    let conversationMessages = [
+      { role: "system", content: SYSTEM_PROMPT + modeContext },
+      ...messages,
+    ];
+    let pass = 0;
 
-    // If there are WAKA CORE tool calls, execute them and do a second AI call
-    if (coreToolCalls.length > 0) {
+    while (pass < MAX_PASSES) {
+      pass++;
+      const toolCalls = choice?.message?.tool_calls || [];
+      const coreToolCalls = toolCalls.filter(
+        (tc: any) => tc.type === "function" && !SOVEREIGN_BLOCK_NAMES.has(tc.function.name)
+      );
+      const uiToolCalls = toolCalls.filter(
+        (tc: any) => tc.type === "function" && SOVEREIGN_BLOCK_NAMES.has(tc.function.name)
+      );
+
+      // Collect UI blocks from this pass
+      for (const tc of uiToolCalls) {
+        try {
+          const args = JSON.parse(tc.function.arguments);
+          result.blocks[tc.function.name] = args;
+        } catch { /* skip */ }
+      }
+
+      // If no CORE tool calls, we're done — AI has produced its final response
+      if (coreToolCalls.length === 0) {
+        break;
+      }
+
+      console.log(`Pass ${pass}: Executing ${coreToolCalls.length} CORE tool calls: ${coreToolCalls.map((tc: any) => tc.function.name).join(", ")}`);
+
+      // Execute all CORE API calls
       const toolResults: Array<{ role: string; tool_call_id: string; content: string }> = [];
 
       for (const tc of coreToolCalls) {
         let args: Record<string, unknown> = {};
         try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
-
         const apiResult = await executeWakaCoreCall(tc.function.name, args, WAKA_API_KEY);
         toolResults.push({
           role: "tool",
@@ -890,12 +912,8 @@ serve(async (req) => {
         });
       }
 
-      // Also handle any UI tool calls from the first pass
+      // Also acknowledge UI tool calls so the model doesn't complain
       for (const tc of uiToolCalls) {
-        try {
-          const args = JSON.parse(tc.function.arguments);
-          result.blocks[tc.function.name] = args;
-        } catch { /* skip */ }
         toolResults.push({
           role: "tool",
           tool_call_id: tc.id,
@@ -903,8 +921,15 @@ serve(async (req) => {
         });
       }
 
-      // Second AI call with tool results — AI will now format the response
-      const secondResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      // Build next conversation with assistant message + tool results
+      conversationMessages = [
+        ...conversationMessages,
+        choice.message,
+        ...toolResults,
+      ];
+
+      // Next AI call
+      const nextResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -912,27 +937,29 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT + modeContext },
-            ...messages,
-            choice.message,
-            ...toolResults,
-          ],
+          messages: conversationMessages,
           tools: allTools,
           stream: false,
         }),
       });
 
-      if (secondResponse.ok) {
-        const secondData = await secondResponse.json();
-        choice = secondData.choices?.[0];
+      if (!nextResponse.ok) {
+        console.error(`Pass ${pass} AI call failed:`, nextResponse.status);
+        break;
       }
+
+      const nextData = await nextResponse.json();
+      choice = nextData.choices?.[0];
+    }
+
+    if (pass >= MAX_PASSES) {
+      console.warn("Hit max passes limit, returning partial result");
     }
 
     // Extract final text
     result.text = choice?.message?.content || "";
 
-    // Process tool calls from final response (UI blocks)
+    // Process any remaining UI tool calls from the final response
     const finalToolCalls = choice?.message?.tool_calls || [];
     for (const tc of finalToolCalls) {
       if (tc.type !== "function") continue;
