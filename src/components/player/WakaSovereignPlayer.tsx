@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
 import { Progress } from "@/components/ui/progress";
+import wakaLogo from "@/assets/waka-salamandra.jpg";
 import { DataModeContext, useDataMode } from "./dataMode";
 import type { DataMode } from "./dataMode";
 import {
@@ -150,7 +151,7 @@ function TypingIndicator() {
   const mode = useDataMode();
 
   if (mode === "zero-rated") {
-    return <span className="text-[11px] text-[hsl(160,40%,45%)] italic">…</span>;
+    return <span className="text-[11px] text-[hsl(270,30%,55%)] italic">…</span>;
   }
 
   return (
@@ -158,7 +159,7 @@ function TypingIndicator() {
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="h-[6px] w-[6px] rounded-full bg-[hsl(160,50%,55%)]"
+          className="h-[6px] w-[6px] rounded-full bg-[hsl(270,45%,60%)]"
           animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
           transition={{
             duration: 0.8,
@@ -195,7 +196,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
   const mode = useDataMode();
 
   if (mode === "zero-rated") {
-    return <span className="text-[10px] text-[hsl(160,40%,45%)]">🎤 0:12</span>;
+    return <span className="text-[10px] text-[hsl(270,30%,55%)]">🎤 0:12</span>;
   }
 
   const bars = mode === "libre" ? [0.6, 1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7] : [0.6, 1, 0.5, 0.8];
@@ -205,7 +206,7 @@ function VoiceWaveform({ active }: { active: boolean }) {
       {bars.map((h, i) => (
         <motion.div
           key={i}
-          className="w-[2px] rounded-full bg-[hsl(160,84%,39%)]"
+          className="w-[2px] rounded-full bg-[hsl(270,50%,50%)]"
           animate={
             active
               ? { height: [`${h * 8}px`, `${h * 20}px`, `${h * 12}px`], opacity: [0.4, 0.9, 0.5] }
@@ -237,7 +238,7 @@ function DataModeSelector({
   ];
 
   return (
-    <div className="flex items-center gap-0.5 bg-black/5 rounded-full p-0.5">
+    <div className="flex items-center gap-0.5 bg-white/10 rounded-full p-0.5">
       {modes.map((m) => (
         <button
           key={m.key}
@@ -245,8 +246,8 @@ function DataModeSelector({
           className={cn(
             "flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-all",
             mode === m.key
-              ? "bg-white shadow-sm text-[hsl(160,60%,28%)]"
-              : "text-[hsl(220,10%,50%)] hover:text-[hsl(220,10%,30%)]"
+              ? "bg-white shadow-sm text-[hsl(270,40%,40%)]"
+              : "text-white/60 hover:text-white/80"
           )}
           title={m.desc}
         >
@@ -273,18 +274,18 @@ function InteractiveMenu({
   const Wrapper = mode === "zero-rated" ? "div" : motion.div;
 
   return (
-    <div className="rounded-xl border border-[hsl(160,40%,85%)] bg-white overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-[hsl(270,25%,88%)] bg-white overflow-hidden shadow-sm">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-[hsl(160,40%,96%)]"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-[hsl(270,25%,96%)]"
       >
-        <span className="text-[12px] font-semibold text-[hsl(160,60%,25%)]">
+        <span className="text-[12px] font-semibold text-[hsl(270,40%,35%)]">
           {title || "Options"}
         </span>
         {open ? (
-          <ChevronUp className="h-3.5 w-3.5 text-[hsl(160,50%,40%)]" />
+          <ChevronUp className="h-3.5 w-3.5 text-[hsl(270,35%,50%)]" />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-[hsl(160,50%,40%)]" />
+          <ChevronDown className="h-3.5 w-3.5 text-[hsl(270,35%,50%)]" />
         )}
       </button>
       {open && (
@@ -293,7 +294,7 @@ function InteractiveMenu({
             <button
               key={i}
               onClick={() => onSelect?.(opt.label)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[hsl(160,30%,96%)] transition-colors border-t border-[hsl(160,20%,92%)] active:bg-[hsl(160,30%,92%)]"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[hsl(270,20%,97%)] transition-colors border-t border-[hsl(270,15%,93%)] active:bg-[hsl(270,20%,93%)]"
             >
               {opt.icon && <AnimatedEmoji emoji={opt.icon} size={18} />}
               <div className="flex-1 min-w-0">
@@ -324,7 +325,7 @@ function RichCardBubble({
   // Zero-rated: text-only card
   if (mode === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(160,30%,85%)] bg-white px-3 py-2 max-w-[85%]">
+      <div className="rounded-lg border border-[hsl(270,20%,88%)] bg-white px-3 py-2 max-w-[85%]">
         <p className="text-[12px] font-bold text-[hsl(220,15%,20%)]">
           {card.icon} {card.title}
         </p>
@@ -335,7 +336,7 @@ function RichCardBubble({
           <button
             key={i}
             onClick={() => onAction?.(a)}
-            className="block w-full text-left text-[11px] text-[hsl(160,60%,30%)] font-medium mt-1 underline"
+            className="block w-full text-left text-[11px] text-[hsl(270,45%,40%)] font-medium mt-1 underline"
           >
             → {a}
           </button>
@@ -349,12 +350,12 @@ function RichCardBubble({
       initial={mode === "libre" ? { opacity: 0, y: 12, scale: 0.95 } : { opacity: 0 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="rounded-xl border border-[hsl(160,30%,85%)] bg-white overflow-hidden shadow-sm max-w-[85%]"
+      className="rounded-xl border border-[hsl(270,20%,88%)] bg-white overflow-hidden shadow-sm max-w-[85%]"
     >
       <div
         className="px-3 py-4 flex items-center gap-2.5"
         style={{
-          background: card.bgGradient || "linear-gradient(135deg, hsl(160,70%,40%), hsl(200,70%,45%))",
+          background: card.bgGradient || "linear-gradient(135deg, hsl(270,50%,45%), hsl(300,40%,50%))",
         }}
       >
         {card.icon && <AnimatedEmoji emoji={card.icon} size={28} />}
@@ -366,12 +367,12 @@ function RichCardBubble({
         </div>
       </div>
       {card.actions && card.actions.length > 0 && (
-        <div className="divide-y divide-[hsl(160,20%,92%)]">
+        <div className="divide-y divide-[hsl(270,15%,93%)]">
           {card.actions.map((action, i) => (
             <button
               key={i}
               onClick={() => onAction?.(action)}
-              className="w-full px-3 py-2.5 text-[12px] font-medium text-[hsl(160,70%,30%)] hover:bg-[hsl(160,30%,96%)] transition-colors text-center active:bg-[hsl(160,30%,92%)]"
+              className="w-full px-3 py-2.5 text-[12px] font-medium text-[hsl(270,50%,40%)] hover:bg-[hsl(270,20%,97%)] transition-colors text-center active:bg-[hsl(270,20%,93%)]"
             >
               {action}
             </button>
@@ -517,12 +518,12 @@ export function WakaSovereignPlayer({
             style={{
               background:
                 mode === "zero-rated"
-                  ? "hsl(160,50%,30%)"
-                  : "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
+                  ? "hsl(270,35%,35%)"
+                  : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
             }}
           >
-            <div className="h-10 w-10 rounded-full bg-white/12 flex items-center justify-center flex-shrink-0 border border-white/15">
-              <SalamandraSvg className="h-6 w-6 text-white/85" />
+            <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/25 shadow-md">
+              <img src={wakaLogo} alt="WAKA" className="h-full w-full object-cover" />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -547,12 +548,12 @@ export function WakaSovereignPlayer({
 
         {/* ── Persistent status bar ── */}
         {statusBar && mode !== "zero-rated" && (
-          <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(160,30%,95%)] border-b border-[hsl(160,20%,90%)] flex-shrink-0">
-            <span className="text-[10px] text-[hsl(160,30%,40%)] font-medium">{statusBar.label}</span>
+          <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(270,20%,96%)] border-b border-[hsl(270,15%,91%)] flex-shrink-0">
+            <span className="text-[10px] text-[hsl(270,25%,50%)] font-medium">{statusBar.label}</span>
             <span
               className={cn(
                 "text-[11px] font-bold",
-                statusBar.accent ? "text-[hsl(160,70%,35%)]" : "text-[hsl(220,15%,30%)]"
+                statusBar.accent ? "text-[hsl(270,50%,42%)]" : "text-[hsl(220,15%,30%)]"
               )}
             >
               {statusBar.value}
@@ -567,7 +568,7 @@ export function WakaSovereignPlayer({
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
               <SalamandraSvg
                 className={cn(
-                  "text-[hsl(160,30%,70%)]",
+                  "text-[hsl(270,25%,75%)]",
                   mode === "libre" ? "h-[70%] w-[70%] opacity-[0.05]" : "h-[50%] w-[50%] opacity-[0.03]"
                 )}
               />
@@ -578,7 +579,7 @@ export function WakaSovereignPlayer({
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 {mode !== "zero-rated" && (
-                  <SalamandraSvg className="h-14 w-14 text-[hsl(160,40%,70%)] opacity-25 mb-3" />
+                  <SalamandraSvg className="h-14 w-14 text-[hsl(270,30%,75%)] opacity-25 mb-3" />
                 )}
                 <p className="text-[11px] text-[hsl(220,10%,60%)]">Intelligence Highway</p>
               </div>
@@ -589,8 +590,8 @@ export function WakaSovereignPlayer({
                   if (msg.isSystemEvent) {
                     return (
                       <div key={msg.id} className="flex justify-center my-1.5">
-                        <div className="bg-[hsl(160,25%,92%)] rounded-lg px-3 py-1.5 max-w-[90%] border border-[hsl(160,20%,87%)]">
-                          <p className="text-[10px] text-[hsl(160,30%,35%)] font-medium leading-relaxed whitespace-pre-wrap text-center">
+                        <div className="bg-[hsl(270,20%,93%)] rounded-lg px-3 py-1.5 max-w-[90%] border border-[hsl(270,15%,88%)]">
+                          <p className="text-[10px] text-[hsl(270,30%,40%)] font-medium leading-relaxed whitespace-pre-wrap text-center">
                             {msg.text}
                           </p>
                         </div>
@@ -629,13 +630,13 @@ export function WakaSovereignPlayer({
                               "max-w-[85%] rounded-2xl px-3.5 py-2 shadow-sm",
                               isBot
                                 ? "bg-white text-[hsl(220,15%,15%)] rounded-bl-md border border-[hsl(220,15%,92%)]"
-                                : "bg-[hsl(160,55%,38%)] text-white rounded-br-md"
+                                : "bg-[hsl(270,45%,50%)] text-white rounded-br-md"
                             )}
                           >
                             {msg.isVoice ? (
                               <div className="flex items-center gap-2 min-w-[120px]">
-                                <div className="h-6 w-6 rounded-full bg-[hsl(160,50%,90%)] flex items-center justify-center flex-shrink-0">
-                                  <Mic className="h-3 w-3 text-[hsl(160,60%,35%)]" />
+                                <div className="h-6 w-6 rounded-full bg-[hsl(270,30%,92%)] flex items-center justify-center flex-shrink-0">
+                                  <Mic className="h-3 w-3 text-[hsl(270,50%,45%)]" />
                                 </div>
                                 <VoiceWaveform active={false} />
                                 <span className="text-[9px] opacity-50 ml-auto">0:12</span>
@@ -829,7 +830,7 @@ export function WakaSovereignPlayer({
                   <button
                     key={i}
                     onClick={() => onQuickReply?.(qr)}
-                    className="rounded-full border border-[hsl(160,50%,70%)] bg-white px-3 py-1.5 text-[11px] font-medium text-[hsl(160,60%,28%)] hover:bg-[hsl(160,40%,96%)] transition-colors active:scale-[0.97] shadow-sm"
+                    className="rounded-full border border-[hsl(270,40%,75%)] bg-white px-3 py-1.5 text-[11px] font-medium text-[hsl(270,45%,38%)] hover:bg-[hsl(270,25%,97%)] transition-colors active:scale-[0.97] shadow-sm"
                   >
                     {qr}
                   </button>
@@ -867,9 +868,9 @@ export function WakaSovereignPlayer({
             >
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(270,60%,55%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(270,50%,55%)] flex items-center justify-center">
                   <Camera className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -879,9 +880,9 @@ export function WakaSovereignPlayer({
               </button>
               <button
                 onClick={() => docInputRef.current?.click()}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(210,60%,50%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(270,40%,48%)] flex items-center justify-center">
                   <Paperclip className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -891,9 +892,9 @@ export function WakaSovereignPlayer({
               </button>
               <button
                 onClick={handleShareLocation}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(160,30%,96%)] transition-colors text-left"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-[hsl(270,20%,97%)] transition-colors text-left"
               >
-                <div className="h-8 w-8 rounded-full bg-[hsl(140,60%,40%)] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[hsl(35,70%,50%)] flex items-center justify-center">
                   <MapPin className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -915,8 +916,8 @@ export function WakaSovereignPlayer({
             className={cn(
               "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
               showAttachMenu
-                ? "bg-[hsl(160,60%,35%)] text-white rotate-45"
-                : "text-[hsl(220,10%,50%)] hover:text-[hsl(160,60%,35%)] hover:bg-[hsl(160,30%,95%)]"
+                ? "bg-[hsl(270,45%,48%)] text-white rotate-45"
+                : "text-[hsl(220,10%,50%)] hover:text-[hsl(270,45%,48%)] hover:bg-[hsl(270,25%,95%)]"
             )}
           >
             <Paperclip className="h-4.5 w-4.5 transition-transform" />
@@ -931,7 +932,7 @@ export function WakaSovereignPlayer({
               placeholder={pendingImage ? "Légende (optionnel)…" : voiceActive ? "Écoute…" : "Message…"}
               disabled={voiceActive}
               className={cn(
-                "w-full h-9 rounded-full bg-[hsl(220,15%,96%)] border border-[hsl(220,15%,90%)] px-4 text-[13px] text-[hsl(220,15%,15%)] placeholder:text-[hsl(220,10%,65%)] focus:outline-none focus:ring-1 focus:ring-[hsl(160,60%,40%)]/30 transition-all",
+                "w-full h-9 rounded-full bg-[hsl(220,15%,96%)] border border-[hsl(220,15%,90%)] px-4 text-[13px] text-[hsl(220,15%,15%)] placeholder:text-[hsl(220,10%,65%)] focus:outline-none focus:ring-1 focus:ring-[hsl(270,45%,55%)]/30 transition-all",
                 voiceActive && "opacity-50 cursor-not-allowed"
               )}
             />
@@ -940,7 +941,7 @@ export function WakaSovereignPlayer({
           {inputText.trim() || pendingImage ? (
             <button
               onClick={handleSend}
-              className="h-9 w-9 rounded-full bg-[hsl(160,60%,35%)] flex items-center justify-center flex-shrink-0 shadow-sm hover:bg-[hsl(160,60%,38%)] transition-colors active:scale-95"
+              className="h-9 w-9 rounded-full bg-[hsl(270,45%,48%)] flex items-center justify-center flex-shrink-0 shadow-sm hover:bg-[hsl(270,45%,52%)] transition-colors active:scale-95"
             >
               <Send className="h-4 w-4 text-white" />
             </button>
@@ -951,7 +952,7 @@ export function WakaSovereignPlayer({
                 "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95",
                 voiceActive
                   ? "bg-destructive text-white shadow-sm animate-pulse"
-                  : "bg-[hsl(160,60%,35%)] text-white shadow-sm hover:bg-[hsl(160,60%,38%)]"
+                  : "bg-[hsl(270,45%,48%)] text-white shadow-sm hover:bg-[hsl(270,45%,52%)]"
               )}
             >
               {voiceActive ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}

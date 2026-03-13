@@ -47,7 +47,7 @@ const MODE_LABELS: Record<DataMode, string> = {
 };
 
 const MODE_COLORS: Record<DataMode, string> = {
-  libre: "bg-primary/10 text-primary",
+  libre: "bg-[hsl(270,40%,50%)]/10 text-[hsl(270,40%,45%)]",
   "subventionné": "bg-[hsl(35,80%,50%)]/10 text-[hsl(35,70%,40%)]",
   "zero-rated": "bg-[hsl(220,10%,50%)]/10 text-[hsl(220,10%,40%)]",
 };
@@ -378,7 +378,7 @@ export default function WakaPlayerDemo() {
           {MODE_LABELS[dataMode]}
         </Badge>
         {isThinking && (
-          <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,50%)]/30 text-[hsl(160,50%,40%)] animate-pulse gap-1">
+          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
             <Zap className="h-2.5 w-2.5" />
             Thinking…
           </Badge>
@@ -424,8 +424,8 @@ export default function WakaPlayerDemo() {
               style={{
                 background:
                   dataMode === "zero-rated"
-                    ? "hsl(160,50%,30%)"
-                    : "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
+                    ? "hsl(270,35%,35%)"
+                    : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
               }}
             >
               <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
