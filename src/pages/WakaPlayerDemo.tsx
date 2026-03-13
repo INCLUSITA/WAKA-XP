@@ -15,6 +15,7 @@ import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
 import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
