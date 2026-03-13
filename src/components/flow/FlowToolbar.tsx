@@ -103,6 +103,7 @@ export function FlowToolbar({
   onLoadSample,
   onValidate,
   onSimulate,
+  onOpenSimulatorShell,
   onTranslate,
   onVersions,
   onRuns,
