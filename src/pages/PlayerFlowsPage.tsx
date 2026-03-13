@@ -78,21 +78,6 @@ export default function PlayerFlowsPage() {
     production: flows.filter((f) => f.status === "production").length,
   };
 
-  const handleCreate = useCallback(async () => {
-    if (!createName.trim()) return;
-    setIsCreating(true);
-    const id = await saveFlow(createName.trim(), createDesc.trim(), [], "libre", "sandbox");
-    setIsCreating(false);
-    if (id) {
-      toast.success(`Flujo "${createName}" creado`);
-      setShowCreate(false);
-      setCreateName("");
-      setCreateDesc("");
-      navigate(`/player/live?flow=${id}`);
-    } else {
-      toast.error("Error al crear el flujo");
-    }
-  }, [createName, createDesc, saveFlow, navigate]);
 
   const handleClone = useCallback(async () => {
     if (!cloneTarget || !cloneName.trim()) return;
