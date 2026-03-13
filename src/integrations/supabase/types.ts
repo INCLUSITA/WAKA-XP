@@ -216,6 +216,106 @@ export type Database = {
           },
         ]
       }
+      experience_context_values: {
+        Row: {
+          entity_data: Json | null
+          entity_id: string
+          experience_id: string | null
+          id: string
+          last_updated: string | null
+          run_id: string | null
+        }
+        Insert: {
+          entity_data?: Json | null
+          entity_id: string
+          experience_id?: string | null
+          id?: string
+          last_updated?: string | null
+          run_id?: string | null
+        }
+        Update: {
+          entity_data?: Json | null
+          entity_id?: string
+          experience_id?: string | null
+          id?: string
+          last_updated?: string | null
+          run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_context_values_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "experience_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_context_values_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_context_values_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "flow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experience_entities: {
+        Row: {
+          created_at: string | null
+          data_schema: Json | null
+          description: string | null
+          entity_type: string
+          experience_id: string | null
+          id: string
+          name: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_schema?: Json | null
+          description?: string | null
+          entity_type?: string
+          experience_id?: string | null
+          id?: string
+          name: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_schema?: Json | null
+          description?: string | null
+          entity_type?: string
+          experience_id?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_entities_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiences: {
         Row: {
           created_at: string
