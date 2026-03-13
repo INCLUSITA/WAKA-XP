@@ -27,9 +27,11 @@ interface SavedFlowsPanelProps {
   onLoad: (flowId: string) => void;
   onClose: () => void;
   activeFlowId?: string | null;
+  /** Compact mode: no header/filters, show only recent flows inline */
+  compact?: boolean;
 }
 
-export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null }: SavedFlowsPanelProps) {
+export function SavedFlowsPanel({ onLoad, onClose, activeFlowId = null, compact = false }: SavedFlowsPanelProps) {
   const { flows, isLoading, updateFlowStatus, deleteFlow, cloneFlow } = useSavedPlayerFlows();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<FlowStatus | "all">("all");
