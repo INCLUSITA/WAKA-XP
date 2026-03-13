@@ -493,6 +493,9 @@ Gestión de Production Candidates con ciclo de vida completo.
 | `globals` | Variables globales clave-valor por tenant |
 | `webhook_logs` | Logs de webhooks con payload y response |
 | `uploaded_demos` | Demos subidas/generadas por usuarios |
+| `player_conversations` | Sesiones de conversación del Player IA |
+| `player_messages` | Mensajes del Player con bloques y metadata IA |
+| `player_saved_flows` | Flujos conversacionales guardados del Player |
 | `whatsapp_messages` | Mensajes WhatsApp reales (inbound/outbound) |
 
 ---
