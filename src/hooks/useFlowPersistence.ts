@@ -49,7 +49,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
   }, []);
 
   const saveFlow = useCallback(
-    async (nodes: Node[], edges: Edge[], name: string) => {
+    async (nodes: Node[], edges: Edge[], name: string, triggerRules?: TriggerRule[]) => {
       if (!tenantId) {
         setSaveStatus("error");
         toast.error("No tenant context available");
