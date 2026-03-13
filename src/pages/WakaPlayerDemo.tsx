@@ -477,176 +477,216 @@ export default function WakaPlayerDemo() {
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      {/* Page Header */}
-      <div className="flex items-center gap-3 border-b border-border px-6 py-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
-        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
-          <Bot className="h-3 w-3" />
-          AI-POWERED
-        </Badge>
-        <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
-          {MODE_LABELS[dataMode]}
-        </Badge>
-        {activeFlowTitle && (
-          <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
-            {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+    <div className="flex h-full bg-background">
+      {/* ─── Left: Phone Simulator ─── */}
+      <div className="flex flex-1 flex-col">
+        {/* Minimal page header */}
+        <div className="flex items-center gap-3 border-b border-border px-6 py-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
+          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
+            <Bot className="h-3 w-3" />
+            AI-POWERED
           </Badge>
-        )}
-        {isThinking && (
-          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
-            <Zap className="h-2.5 w-2.5" />
-            Thinking…
+          <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
+            {MODE_LABELS[dataMode]}
           </Badge>
-        )}
-        {activeFlowContextName && (
-          <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] gap-1 cursor-pointer" onClick={() => setShowFlowContextSelector(true)}>
-            <GitBranch className="h-2.5 w-2.5" />
-            {activeFlowContextName.length > 25 ? activeFlowContextName.slice(0, 25) + "…" : activeFlowContextName}
-          </Badge>
-        )}
+          {activeFlowTitle && (
+            <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
+              {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+            </Badge>
+          )}
+          {isThinking && (
+            <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
+              <Zap className="h-2.5 w-2.5" />
+              Thinking…
+            </Badge>
+          )}
+        </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="secondary" className="text-[9px] gap-1 cursor-default">
-                <Database className="h-2.5 w-2.5" />
-                {messageCount} msgs
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Mensajes persistidos en esta conversación</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={activeFlowContextName ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowFlowContextSelector(true)}
-                className="h-7 text-[11px] gap-1"
+        {/* Body — iPhone frame */}
+        <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
+          <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
+            <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
+            <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
+              <div
+                className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
+                style={{
+                  background:
+                    dataMode === "zero-rated"
+                      ? "hsl(270,35%,35%)"
+                      : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
+                }}
               >
-                <GitBranch className="h-3 w-3" />
-                Contexto
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Cargar un flujo TextIt como contexto IA</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={() => setShowFlowsPanel(true)} className="h-7 text-[11px] gap-1">
-                <FolderOpen className="h-3 w-3" />
-                Flujos
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Ver flujos guardados</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} className="h-7 text-[11px] gap-1" disabled={messages.length <= 2}>
-                <Save className="h-3 w-3" />
-                Guardar
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Guardar conversación como flujo</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleNewConversation} className="h-7 text-[11px] gap-1">
-                <RotateCcw className="h-3 w-3" />
-                Nueva
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Iniciar una nueva conversación</p>
-            </TooltipContent>
-          </Tooltip>
+                <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
+                <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[100px] h-[28px] bg-black rounded-full z-30" />
+                <div className="flex items-center gap-1.5">
+                  <Signal className="h-3 w-3 text-white/70" />
+                  <Wifi className="h-3 w-3 text-white/70" />
+                  <BatteryFull className="h-3.5 w-3.5 text-white/70" />
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                <WakaSovereignPlayer
+                  messages={messages}
+                  botName="WAKA XP 🇧🇫"
+                  status={status}
+                  statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
+                  dataMode={dataMode}
+                  onDataModeChange={handleDataModeChange}
+                  onSend={handleSend}
+                  onSendImage={handleSendImage}
+                  onSendLocation={handleSendLocation}
+                  onSendDocument={handleSendDocument}
+                  onQuickReply={handleQuickReply}
+                  onVoiceToggle={handleVoiceToggle}
+                  onMenuSelect={handleMenuSelect}
+                  onCardAction={handleCardAction}
+                  onAddToCart={handleAddToCart}
+                  onFormSubmit={handleFormSubmit}
+                  onPayment={handlePayment}
+                  onRate={handleRate}
+                  onModuleClick={handleModuleClick}
+                  onSlideAction={handleSlideAction}
+                  onCreditAction={handleCreditAction}
+                  onMomoAction={handleMomoAction}
+                  onSelectPlan={handleSelectPlan}
+                  onPaymentConfirmAction={handlePaymentConfirmAction}
+                  onCreditContractAction={handleCreditContractAction}
+                  onDeviceLockConsent={handleDeviceLockConsent}
+                />
+              </div>
+              <div className="flex justify-center py-2 bg-white">
+                <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
+              </div>
+            </div>
+            <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,8%,72%)]" />
+            <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
+            <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
+            <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
+          </div>
         </div>
       </div>
 
-      {/* Body — iPhone frame */}
-      <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
-        <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
-          {/* Outer shell */}
-          <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
-          {/* Inner bezel */}
-          <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
-            {/* Status bar */}
-            <div
-              className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
-              style={{
-                background:
-                  dataMode === "zero-rated"
-                    ? "hsl(270,35%,35%)"
-                    : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
-              }}
-            >
-              <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
-              <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[100px] h-[28px] bg-black rounded-full z-30" />
-              <div className="flex items-center gap-1.5">
-                <Signal className="h-3 w-3 text-white/70" />
-                <Wifi className="h-3 w-3 text-white/70" />
-                <BatteryFull className="h-3.5 w-3.5 text-white/70" />
+      {/* ─── Right: Persistent Toolbox Panel ─── */}
+      <div className="w-[320px] border-l border-border bg-card flex flex-col shrink-0">
+        {/* Toolbox Header */}
+        <div className="px-4 py-3 border-b border-border">
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            Panel de control
+          </h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Herramientas de iteración y producción
+          </p>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-4">
+            {/* ── Session Info ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Sesión</h3>
+              <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Mensajes</span>
+                  <Badge variant="secondary" className="text-[9px] gap-1">
+                    <Database className="h-2.5 w-2.5" />
+                    {messageCount}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Modo datos</span>
+                  <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
+                    {MODE_LABELS[dataMode]}
+                  </Badge>
+                </div>
+                {activeFlowContextName && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">Contexto IA</span>
+                    <Badge variant="outline" className="text-[9px] gap-1 max-w-[140px] truncate">
+                      <GitBranch className="h-2.5 w-2.5 shrink-0" />
+                      {activeFlowContextName}
+                    </Badge>
+                  </div>
+                )}
+                {activeFlowTitle && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">Flujo activo</span>
+                    <Badge variant="outline" className="text-[9px] border-primary/30 text-primary max-w-[140px] truncate">
+                      {activeFlowTitle}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Player */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <WakaSovereignPlayer
-                messages={messages}
-                botName="WAKA XP 🇧🇫"
-                status={status}
-                statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
-                dataMode={dataMode}
-                onDataModeChange={handleDataModeChange}
-                onSend={handleSend}
-                onSendImage={handleSendImage}
-                onSendLocation={handleSendLocation}
-                onSendDocument={handleSendDocument}
-                onQuickReply={handleQuickReply}
-                onVoiceToggle={handleVoiceToggle}
-                onMenuSelect={handleMenuSelect}
-                onCardAction={handleCardAction}
-                onAddToCart={handleAddToCart}
-                onFormSubmit={handleFormSubmit}
-                onPayment={handlePayment}
-                onRate={handleRate}
-                onModuleClick={handleModuleClick}
-                onSlideAction={handleSlideAction}
-                onCreditAction={handleCreditAction}
-                onMomoAction={handleMomoAction}
-                onSelectPlan={handleSelectPlan}
-                onPaymentConfirmAction={handlePaymentConfirmAction}
-                onCreditContractAction={handleCreditContractAction}
-                onDeviceLockConsent={handleDeviceLockConsent}
+            {/* ── Iteration Tools ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Iteración</h3>
+              <div className="space-y-1.5">
+                <Button
+                  variant={activeFlowContextName ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFlowContextSelector(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <GitBranch className="h-3.5 w-3.5" />
+                  {activeFlowContextName ? "Cambiar contexto IA" : "Cargar contexto IA"}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNewConversation}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Nueva conversación
+                </Button>
+              </div>
+            </div>
+
+            {/* ── Lifecycle ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ciclo de vida</h3>
+              <div className="space-y-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                  disabled={messages.length <= 2}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Guardar como flujo
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFlowsPanel(true)}
+                  className="w-full justify-start h-8 text-[11px] gap-2"
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  Ver flujos guardados
+                </Button>
+              </div>
+            </div>
+
+            {/* ── Saved Flows Quick List ── */}
+            <div className="space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Flujos recientes</h3>
+              <SavedFlowsPanel
+                onLoad={handleLoadFlow}
+                onClose={() => {}}
+                activeFlowId={activeFlowId}
+                compact
               />
             </div>
-
-            {/* Home indicator */}
-            <div className="flex justify-center py-2 bg-white">
-              <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
-            </div>
           </div>
-
-          {/* Side buttons */}
-          <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,8%,72%)]" />
-          <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
-          <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
-          <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
-        </div>
+        </ScrollArea>
       </div>
 
       {/* Save Flow Dialog */}
@@ -657,7 +697,7 @@ export default function WakaPlayerDemo() {
         isSaving={isSaving}
       />
 
-      {/* Saved Flows Panel */}
+      {/* Saved Flows Full Panel */}
       <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
         <SheetContent side="right" className="w-[400px] p-0">
           <SavedFlowsPanel
