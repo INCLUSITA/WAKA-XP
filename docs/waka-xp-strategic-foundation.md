@@ -1063,6 +1063,96 @@ Waka XP debe combinar un mural estructurado con una Context Layer visible y reut
 
 ---
 
+## 19b. Waka XP Player: materialización del Simulator Shell y del AI Journey Generator
+
+> **Nota de evolución (13 de marzo de 2026):** Esta sección documenta una implementación troncal que materializa varios de los conceptos estratégicos definidos en §8 (Experience Studio), §9 (Del mockup a la producción), §13 (Papel de la IA) y §17.3 (Componentes de mayor leverage). El Waka XP Player es la primera expresión completa de un **simulador conversacional IA nativo, journey-first y soberano** dentro del sistema.
+
+### 19b.1. Qué es el Waka XP Player
+
+El Player es un simulador conversacional IA integrado en Waka XP que permite:
+
+- diseñar experiencias conversacionales completas mediante IA generativa,
+- visualizar la experiencia en tiempo real con bloques interactivos soberanos,
+- guardar, versionar y gestionar flujos conversacionales con ciclo de vida,
+- y generar artefactos reutilizables (conversation_snapshot + scenario_config) que constituyen pre-runtimes de producción.
+
+### 19b.2. Por qué es una capa troncal
+
+El Player no es una feature aislada. Representa un **cambio de paradigma** en Waka XP:
+
+- **Del block-first al journey-first:** En lugar de partir de nodos y conexiones, el Player parte de una conversación guiada por IA que genera la experiencia completa.
+- **Del mockup artesanal al pre-runtime generativo:** Los flujos del Player no son demos estáticas. Son artefactos vivos con scenario_config que permite continuar la conversación coherentemente.
+- **Del canal único al modelo soberano:** Los Bloques Soberanos representan experiencias ricas (pagos, catálogos, formularios, créditos, ubicaciones) que trascienden las limitaciones de un canal específico.
+
+### 19b.3. Relación con los conceptos estratégicos
+
+| Concepto estratégico (§) | Expresión en el Player |
+|---|---|
+| Simulator Shell (§8.5) | El Player ES el primer Simulator Shell nativo reutilizable |
+| Scenario Editor (§8.6) | El FlowCreationWizard permite definir escenarios desde múltiples fuentes |
+| AI Journey Generator (§17.3) | La IA genera conversation_snapshot + scenario_config desde un briefing |
+| Separación datos/shell/simulación (§16.1) | scenario_config (datos), Player shell (visual), IA (simulación) |
+| Del mockup al pre-runtime (§9.5) | Cada flujo guardado es un pre-runtime con artefactos ejecutables |
+| IA transversal (§13.3) | La IA no es un bloque del Player; es su tejido fundamental |
+
+### 19b.4. Bloques Soberanos
+
+Los Bloques Soberanos son componentes UI nativos que la IA inyecta en la conversación para representar experiencias ricas e interactivas. Constituyen la primera materialización de la visión de un **shell visual reutilizable** (§16.2).
+
+Son 16+ tipos: ProductCatalog, PaymentCard, CreditSimulation, ServicePlans, MoMoAccount, ClientStatus, Certificate, Location, MediaCarousel, Rating, InlineForm, TrainingProgress, DeviceLockConsent, PaymentConfirmation, CreditContract.
+
+### 19b.5. Wizard de Creación Multi-Fuente
+
+El FlowCreationWizard implementa la visión del §8.3 (crear demo desde múltiples orígenes):
+
+- **Texto libre + IA** — Un briefing en lenguaje natural genera el flujo completo
+- **JSON TextIt/RapidPro** — Importación con mapeo automático (§7.4, compatibilidad sin dependencia)
+- **YAML de agente** — Definición de endpoints, intenciones y personalidad
+- **Imágenes/logos como contexto** — Assets visuales para personalización
+
+### 19b.6. Motor IA configurable
+
+El AI Engine Selector del Player permite elegir entre:
+
+- **WAKA AI (default)** — Funciona sin configuración, powered by Lovable AI
+- **Azure OpenAI** — Routing via Azure de WAKA (coming soon)
+- **BYOM (Bring Your Own Model)** — Para usuarios que aportan sus propias claves
+
+Esto materializa el principio de §13.2: la IA debe ser transversal pero también gobernable y configurable.
+
+### 19b.7. Ciclo de vida de flujos del Player
+
+Los flujos del Player siguen un ciclo de vida que refleja directamente el §9.3 (Promote to Production):
+
+- **Sandbox** → Flujo en desarrollo o experimentación
+- **Stable** → Flujo validado y protegido
+- **Production** → Flujo promovido, listo para despliegue
+
+La clonación (Stable → Sandbox) permite iterar sobre flujos validados sin romperlos, respetando el principio de §7.3 (no romper activos existentes).
+
+### 19b.8. Output generativo dual
+
+Cada flujo generado por la IA produce dos artefactos complementarios:
+
+- `conversation_snapshot` — La conversación demo completa (mensajes + bloques soberanos)
+- `scenario_config` — System prompt, endpoints, intents, persona, para que el Player continúe la conversación coherentemente en modo live
+
+Esta dualidad es la primera expresión del §9.4 (blueprint ejecutable): el flujo no es solo visual, también contiene las instrucciones de ejecución futura.
+
+### 19b.9. Impacto en el roadmap
+
+Con el Player operativo, el estado de los componentes de mayor leverage (§17.3) se actualiza así:
+
+| Componente | Estado anterior | Estado actual |
+|---|---|---|
+| Simulator Shell | 🟡 Parcial | ✅ Operativo (Player + bloques soberanos) |
+| Scenario Editor | ❌ No iniciado | 🟡 Parcial (FlowCreationWizard) |
+| AI Journey Generator | 🟡 Parcial | ✅ Operativo (genera conversation + config) |
+| Scenario-to-Flow Bridge | 🟡 Parcial | 🟡 Parcial (WakaFlow Mapper + Player flows) |
+| Blueprint Generator | ❌ No iniciado | ❌ No iniciado |
+
+---
+
 ## 20. Roadmap estratégico de madurez
 
 ### Fase 1 — Builder + compatibilidad heredada
