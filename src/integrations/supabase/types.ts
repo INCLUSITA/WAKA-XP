@@ -717,6 +717,65 @@ export type Database = {
           },
         ]
       }
+      player_saved_flows: {
+        Row: {
+          conversation_snapshot: Json
+          created_at: string
+          created_by: string | null
+          data_mode: string
+          description: string | null
+          id: string
+          message_count: number
+          name: string
+          scenario_config: Json
+          source_id: string | null
+          source_name: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          data_mode?: string
+          description?: string | null
+          id?: string
+          message_count?: number
+          name: string
+          scenario_config?: Json
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          data_mode?: string
+          description?: string | null
+          id?: string
+          message_count?: number
+          name?: string
+          scenario_config?: Json
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_saved_flows_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_candidates: {
         Row: {
           created_at: string

@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Database, Save, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,12 @@ import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/compon
 import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
+import { useSavedPlayerFlows } from "@/hooks/useSavedPlayerFlows";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { toast } from "sonner";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -58,7 +63,11 @@ export default function WakaPlayerDemo() {
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const { sendToAI, isThinking } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
+  const { saveFlow, loadFlowFull } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showFlowsPanel, setShowFlowsPanel] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load conversation history on mount
   useEffect(() => {
@@ -405,6 +414,23 @@ export default function WakaPlayerDemo() {
     WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
   }, [startNewConversation, saveMessage]);
 
+  const handleSaveFlow = useCallback(async (name: string, description: string, status: "stable" | "sandbox" | "production") => {
+    setIsSaving(true);
+    const id = await saveFlow(name, description, messages, dataMode, status);
+    setIsSaving(false);
+    if (id) toast.success(`Flujo "${name}" guardado`);
+    else toast.error("Error al guardar el flujo");
+  }, [saveFlow, messages, dataMode]);
+
+  const handleLoadFlow = useCallback(async (flowId: string) => {
+    const full = await loadFlowFull(flowId);
+    if (!full) { toast.error("No se pudo cargar el flujo"); return; }
+    setMessages(full.conversationSnapshot);
+    setDataMode(full.dataMode);
+    setShowFlowsPanel(false);
+    toast.success(`Flujo "${full.name}" cargado`);
+  }, [loadFlowFull]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -440,6 +466,30 @@ export default function WakaPlayerDemo() {
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">Mensajes persistidos en esta conversación</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setShowFlowsPanel(true)} className="h-7 text-[11px] gap-1">
+                <FolderOpen className="h-3 w-3" />
+                Flujos
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Ver flujos guardados</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} className="h-7 text-[11px] gap-1" disabled={messages.length <= 2}>
+                <Save className="h-3 w-3" />
+                Guardar
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Guardar conversación como flujo</p>
             </TooltipContent>
           </Tooltip>
 
@@ -528,6 +578,21 @@ export default function WakaPlayerDemo() {
           <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
         </div>
       </div>
+
+      {/* Save Flow Dialog */}
+      <SaveFlowDialog
+        open={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleSaveFlow}
+        isSaving={isSaving}
+      />
+
+      {/* Saved Flows Panel */}
+      <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
+        <SheetContent side="right" className="w-[400px] p-0">
+          <SavedFlowsPanel onLoad={handleLoadFlow} onClose={() => setShowFlowsPanel(false)} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
