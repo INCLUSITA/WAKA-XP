@@ -655,6 +655,15 @@ export function WakaSovereignPlayer({
                           />
                         </div>
                       )}
+                      {msg.mediaCarousel && (
+                        <div className="mt-1.5">
+                          <MediaCarousel
+                            title={msg.mediaCarousel.title}
+                            slides={msg.mediaCarousel.slides}
+                            onSlideAction={onSlideAction}
+                          />
+                        </div>
+                      )}
                     </BubbleWrapper>
                   );
                 })}
