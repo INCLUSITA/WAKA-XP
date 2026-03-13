@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
-import type { CatalogProduct } from "@/components/player/sovereign-blocks";
+import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
 
 const INITIAL_MESSAGES: PlayerMessage[] = [
   {
