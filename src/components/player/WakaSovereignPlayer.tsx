@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
 import { Progress } from "@/components/ui/progress";
+import wakaLogo from "@/assets/waka-salamandra.jpg";
 import { DataModeContext, useDataMode } from "./dataMode";
 import type { DataMode } from "./dataMode";
 import {
