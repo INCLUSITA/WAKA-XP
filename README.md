@@ -208,6 +208,9 @@ supabase/
 ├── functions/
 │   ├── waka-ai-apply/index.ts       # Generación/rewrite de JSX con IA
 │   ├── waka-ai-proposal/index.ts    # Propuestas de cambio IA
+│   ├── waka-player-ai/index.ts      # ★ Motor conversacional IA del Player
+│   ├── generate-player-flow/index.ts # ★ Generación de flujos desde texto/JSON/YAML/imagen
+│   ├── run-flow/index.ts            # Ejecución de flujos en backend
 │   ├── whatsapp-send/index.ts       # Envío de mensajes WhatsApp reales
 │   └── whatsapp-webhook/index.ts    # Recepción de webhooks WhatsApp
 └── config.toml                      # Configuración Supabase (auto-generado)
