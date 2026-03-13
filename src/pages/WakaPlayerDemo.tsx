@@ -491,12 +491,17 @@ export default function WakaPlayerDemo() {
         <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
           {MODE_LABELS[dataMode]}
         </Badge>
+        {activeFlowTitle && (
+          <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
+            {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+          </Badge>
+        )}
         {isThinking && (
           <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
             <Zap className="h-2.5 w-2.5" />
             Thinking…
           </Badge>
-        )}
+        )
         {activeFlowContextName && (
           <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] gap-1 cursor-pointer" onClick={() => setShowFlowContextSelector(true)}>
             <GitBranch className="h-2.5 w-2.5" />
