@@ -559,8 +559,15 @@ Sistema unificado de versionado aplicable a los 4 tipos de activo:
 |---|---|
 | `waka-ai-apply` | Genera/reescribe JSX de demos usando Lovable AI (Gemini Flash) |
 | `waka-ai-proposal` | Genera propuestas de cambio IA para artefactos |
+| `waka-player-ai` | Motor conversacional IA del Player con bloques soberanos |
+| `generate-player-flow` | Generación de flujos Player desde texto/JSON/YAML/imagen |
+| `run-flow` | Ejecución de flujos en backend |
 | `whatsapp-send` | Envía mensajes WhatsApp reales via API |
 | `whatsapp-webhook` | Recibe y almacena mensajes entrantes de WhatsApp |
+| `telegram-send` | Envío de mensajes Telegram |
+| `telegram-setup` | Configuración de bot Telegram |
+| `telegram-webhook` | Recepción de webhooks Telegram |
+| `connection-health-check` | Health check de conexiones de canales |
 
 ---
 
