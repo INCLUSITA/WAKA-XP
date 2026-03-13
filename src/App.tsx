@@ -63,6 +63,7 @@ const App = () => {
               <Route path="/studio" element={<ExperienceStudioPage />} />
               <Route path="/wakaflow" element={<WakaFlowPreview />} />
               <Route path="/simulator" element={<PhoneSimulator />} />
+              <Route path="/simulator-shell" element={<SimulatorShell />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
               <Route path="/runs" element={<RunsPage />} />
