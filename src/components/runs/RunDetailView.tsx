@@ -89,6 +89,7 @@ function StepCard({ step, index, isNew }: { step: FlowRunStep; index: number; is
 interface Props {
   run: FlowRun;
   onBack: () => void;
+  onOpenTimeline?: () => void;
 }
 
 export function RunDetailView({ run, onBack }: Props) {
