@@ -61,8 +61,9 @@ export interface PlayerMessage {
   richCard?: RichCard;
   menu?: MenuOption[];
   menuTitle?: string;
-  /** Emoji reaction on this message */
   reaction?: string;
+  /** Image attached to this message (data URL or src) */
+  imageUrl?: string;
   /** Sovereign blocks — capabilities beyond WhatsApp */
   catalog?: { title?: string; products: CatalogProduct[] };
   inlineForm?: { title: string; fields: FormField[]; submitLabel?: string; icon?: string };
