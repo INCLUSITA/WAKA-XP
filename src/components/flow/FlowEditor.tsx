@@ -58,6 +58,7 @@ import { DropNodeMenu, DropMenuPosition } from "./DropNodeMenu";
 import { NodeSearchPanel } from "./NodeSearchPanel";
 import { FlowRunsPanel } from "./FlowRunsPanel";
 import { useActiveNodePulse } from "./NodePulseOverlay";
+import { ExecutionTimeline } from "@/components/runs/ExecutionTimeline";
 const nodeTypes = {
   sendMsg: SendMsgNode,
   waitResponse: WaitResponseNode,
