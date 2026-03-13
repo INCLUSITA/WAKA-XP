@@ -34,6 +34,7 @@ import ShareDemo from "./pages/ShareDemo";
 import SharedDemo from "./pages/SharedDemo";
 import DemoSharesPage from "./pages/DemoSharesPage";
 import RunsPage from "./pages/RunsPage";
+import ContextBoardPage from "./pages/ContextBoardPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,7 @@ const App = () => {
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
               <Route path="/runs" element={<RunsPage />} />
+              <Route path="/context" element={<ContextBoardPage />} />
               {/* Assets & Resources */}
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/demos" element={<Demos />} />

@@ -1,7 +1,7 @@
 import {
   Home, Map, Sparkles, Hammer, Rocket, Smartphone, Layers,
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
-  Plug, Building2, Settings, MessageSquare, 
+  Plug, Building2, Settings, MessageSquare, BrainCircuit,
   Archive, Globe as GlobIcon, Clock, Webhook,
   Download, ShieldCheck, ServerCog,
 } from "lucide-react";
@@ -28,6 +28,7 @@ const principalItems = [
   { title: "Simulator", url: "/simulator", icon: Smartphone },
   { title: "Production", url: "/production", icon: Rocket },
   { title: "Runs", url: "/runs", icon: ServerCog },
+  { title: "Context Board", url: "/context", icon: BrainCircuit },
 ];
 
 const assetsItems = [
