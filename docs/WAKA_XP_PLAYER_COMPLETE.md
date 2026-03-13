@@ -37,9 +37,12 @@ El Waka XP Player es un **simulador conversacional IA nativo** que permite dise�
 src/
 ├── pages/
 │   ├── PlayerFlowsPage.tsx          # ★ Galería de flujos (404 líneas)
-│   └── WakaPlayerDemo.tsx           # ★ Página del Player live (680 líneas)
+│   └── WakaPlayerDemo.tsx           # ★ Página del Player live (~690 líneas)
 ├── components/player/
-│   ├── WakaSovereignPlayer.tsx      # ★ Componente principal del simulador (965 líneas)
+│   ├── WakaSovereignPlayer.tsx      # ★ Componente principal del simulador (~970 líneas)
+│   ├── PlayerWorkbench.tsx          # ★ Panel lateral Workbench IA (instrucciones, uploads, motor IA)
+│   ├── VoiceCallOverlay.tsx         # ★ Overlay WAKA VOICE — iframe real dentro del teléfono
+│   ├── AvatarOverlay.tsx            # ★ Overlay Avatar — iframe configurable dentro del teléfono
 │   ├── FlowCreationWizard.tsx       # Wizard de creación multi-fuente (492 líneas)
 │   ├── FlowContextSelector.tsx      # Selector de contexto de flujo
 │   ├── SavedFlowsPanel.tsx          # Panel lateral de flujos guardados
@@ -74,8 +77,39 @@ src/
 ```
 supabase/functions/
 ├── waka-player-ai/index.ts          # ★ Motor IA conversacional (993 líneas)
-└── generate-player-flow/index.ts    # ★ Generación de flujos multi-fuente (295 líneas)
+└── generate-player-flow/index.ts    # ★ Generación de flujos multi-fuente con merge mode (295 líneas)
 ```
+
+### 2.3. Canales Interactivos (Nuevos)
+
+#### WAKA VOICE (`VoiceCallOverlay.tsx`)
+- Carga el iframe real de WAKA VOICE (`waka.services/agents/voice/...`) a pantalla completa dentro del simulador de teléfono
+- Transición animada con botón "Volver a la conversación"
+- Permisos: `microphone; autoplay`
+- URL configurable, actualmente apuntando al endpoint de test WAKA
+
+#### Avatar (`AvatarOverlay.tsx`)
+- Carga un iframe configurable de avatar a pantalla completa dentro del simulador
+- Permisos: `camera; microphone; autoplay`
+- URL configurable (default: `avatar.waka.africa/agent`)
+
+#### Triggers
+Los canales se activan de dos formas:
+1. **Botones persistentes en la barra de entrada**: Iconos 📞 (Phone) y 👤 (User) visibles junto al clip 📎 y micrófono
+2. **Quick replies del flujo**: Mensajes con etiquetas que contengan "Llamar", "VOICE", "📞", "Avatar", "🎭"
+
+### 2.4. Player Workbench (`PlayerWorkbench.tsx`)
+
+Panel lateral derecho que reemplaza el antiguo toolbox. Funcionalidades:
+
+| Sección | Descripción |
+|---|---|
+| **Instrucciones / Prompt** | Editor de texto para escribir instrucciones del flujo, persiste en `scenario_config.systemPrompt` |
+| **Archivos y Assets** | Upload de JSON TextIt, YAML agente, imágenes, logos, documentos |
+| **Motor IA** | Selector de engine: WAKA AI (default), Azure OpenAI, BYOM |
+| **Aplicar instrucciones** | Envía instrucciones + assets a `generate-player-flow` con merge automático |
+| **Acciones** | Guardar flujo, ver flujos guardados, nueva conversación |
+| **Prompt activo** | Preview del systemPrompt y los intents activos |
 
 ---
 
