@@ -235,16 +235,25 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
-  const handleVoiceToggle = useCallback(
-    async (active: boolean) => {
-      if (!active) {
-        const voiceMsg: PlayerMessage = {
-          id: `voice-${Date.now()}`,
-          text: "",
-          direction: "inbound",
-          timestamp: new Date(),
-          isVoice: true,
-        };
+  const handleCreditAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action crédit : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  const handleMomoAction = useCallback(
+    async (action: string) => {
+      addUserMessage(action);
+      const t0 = Date.now();
+      const response = await sendToAI(`Action MoMo : ${action}`, dataMode);
+      if (response) addBotMessage(response, { aiModel: "gemini-3-flash", aiLatencyMs: Date.now() - t0 });
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
         setMessages((prev) => [...prev, voiceMsg]);
         saveMessage(voiceMsg);
         const t0 = Date.now();
