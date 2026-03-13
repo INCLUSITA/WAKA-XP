@@ -1,6 +1,6 @@
 /**
- * Waka Sovereign Player — Demo page with iPhone frame
- * Showcases sovereign WAKA channel capabilities: rich cards, interactive menus, zero-rated
+ * Waka Sovereign Player — Demo page
+ * Showcases all 3 data modes: libre, subventionné, zero-rated
  */
 
 import { useState, useCallback } from "react";
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Wifi, Signal, BatteryFull } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { WakaSovereignPlayer, type PlayerMessage } from "@/components/player/WakaSovereignPlayer";
+import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
 
 const INITIAL_MESSAGES: PlayerMessage[] = [
   {
@@ -17,7 +17,6 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
     direction: "outbound",
     timestamp: new Date(Date.now() - 150_000),
     isSystemEvent: true,
-    source: "WAKA NEXUS",
   },
   {
     id: "1",
@@ -25,6 +24,7 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
     direction: "outbound",
     timestamp: new Date(Date.now() - 120_000),
     source: "WAKA NEXUS",
+    reaction: "👋",
   },
   {
     id: "card-1",
@@ -44,6 +44,7 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
     text: "Bonjour ! Je veux voir mes options.",
     direction: "inbound",
     timestamp: new Date(Date.now() - 80_000),
+    reaction: "👍",
   },
   {
     id: "3",
@@ -63,10 +64,23 @@ const INITIAL_MESSAGES: PlayerMessage[] = [
   },
 ];
 
+const MODE_LABELS: Record<DataMode, string> = {
+  libre: "LIBRE",
+  "subventionné": "SUBVENTIONNÉ",
+  "zero-rated": "ZERO-RATED",
+};
+
+const MODE_COLORS: Record<DataMode, string> = {
+  libre: "bg-primary/10 text-primary",
+  "subventionné": "bg-[hsl(35,80%,50%)]/10 text-[hsl(35,70%,40%)]",
+  "zero-rated": "bg-[hsl(220,10%,50%)]/10 text-[hsl(220,10%,40%)]",
+};
+
 export default function WakaPlayerDemo() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<PlayerMessage[]>(INITIAL_MESSAGES);
   const [status, setStatus] = useState<"online" | "typing" | "offline">("online");
+  const [dataMode, setDataMode] = useState<DataMode>("libre");
 
   const addBotReply = useCallback((text: string, extras?: Partial<PlayerMessage>) => {
     setStatus("typing");
@@ -93,7 +107,8 @@ export default function WakaPlayerDemo() {
         { id: `user-${Date.now()}`, text, direction: "inbound", timestamp: new Date() },
       ]);
       addBotReply(`Bien reçu : "${text}"`, {
-        quickReplies: ["📊 Voir plus", "🔄 Recommencer", "❓ Aide"],
+        quickReplies: ["📊 Voir plus", "🔄 Menu", "❓ Aide"],
+        reaction: "⚡",
       });
     },
     [addBotReply]
@@ -124,9 +139,10 @@ export default function WakaPlayerDemo() {
         ...prev,
         { id: `menu-${Date.now()}`, text: label, direction: "inbound", timestamp: new Date() },
       ]);
-      addBotReply(`Service "${label}" sélectionné.\n\nPréparation en cours…`, {
+      addBotReply(`Service "${label}" sélectionné.`, {
         progress: Math.min(100, 40 + Math.floor(Math.random() * 40)),
         progressLabel: "Chargement du service",
+        reaction: "✅",
       });
     },
     [addBotReply]
@@ -170,13 +186,15 @@ export default function WakaPlayerDemo() {
         <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
           SOVEREIGN CHANNEL
         </Badge>
-        <Badge className="text-[9px] bg-primary/10 text-primary border-0">ZERO-RATED</Badge>
+        <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
+          {MODE_LABELS[dataMode]}
+        </Badge>
       </div>
 
       {/* Body — iPhone frame */}
       <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
         <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
-          {/* Outer shell — titanium */}
+          {/* Outer shell */}
           <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
           {/* Inner bezel */}
           <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
@@ -184,7 +202,10 @@ export default function WakaPlayerDemo() {
             <div
               className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
               style={{
-                background: "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
+                background:
+                  dataMode === "zero-rated"
+                    ? "hsl(160,50%,30%)"
+                    : "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
               }}
             >
               <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
@@ -203,6 +224,8 @@ export default function WakaPlayerDemo() {
                 botName="WAKA XP 🇧🇫"
                 status={status}
                 statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
+                dataMode={dataMode}
+                onDataModeChange={setDataMode}
                 onSend={handleSend}
                 onQuickReply={handleQuickReply}
                 onVoiceToggle={handleVoiceToggle}
