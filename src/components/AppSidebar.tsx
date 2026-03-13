@@ -1,7 +1,7 @@
 import {
   Home, Map, Sparkles, Hammer, Rocket, Smartphone, Layers,
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
-  Plug, Building2, Settings, MessageSquare, 
+  Plug, Building2, Settings, MessageSquare, BrainCircuit,
   Archive, Globe as GlobIcon, Clock, Webhook,
   Download, ShieldCheck, ServerCog,
 } from "lucide-react";
