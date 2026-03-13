@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, User, Radio, Clock } from "lucide-react";
+import { Bot, User, Radio, Clock, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
