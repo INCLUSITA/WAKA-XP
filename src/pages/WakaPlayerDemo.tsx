@@ -613,6 +613,7 @@ export default function WakaPlayerDemo() {
                 open={showVoiceCall}
                 onClose={handleVoiceCallEnd}
                 agentName="WAKA VOICE"
+                voiceUrl={voiceUrl}
               />
 
               {/* Avatar Overlay — takes over phone screen */}
