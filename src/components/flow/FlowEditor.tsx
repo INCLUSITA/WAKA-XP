@@ -1013,6 +1013,8 @@ function FlowEditorInner() {
         onVersions={() => setShowVersions((v) => !v)}
         onRuns={() => setShowRuns((v) => !v)}
         onPromoteToCandidate={flowIdParam ? handlePromoteToCandidate : undefined}
+        onDeployToRuntime={flowIdParam ? handleDeployToRuntime : undefined}
+        isDeploying={isDeploying}
         saveStatus={saveStatus}
         experienceName={experienceName}
         onOpenExperience={() => {
