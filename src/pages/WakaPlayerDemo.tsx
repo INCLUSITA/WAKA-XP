@@ -1,184 +1,41 @@
 /**
  * Waka Sovereign Player — Demo page
- * Full showcase of ALL sovereign capabilities beyond WhatsApp Business
+ * Hybrid model: AI-powered intent engine + sovereign blocks
+ * Unlike WhatsApp/Telegram rigid triggers, WAKA uses AI to understand intent
  */
 
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
 import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
+import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 
-const INITIAL_MESSAGES: PlayerMessage[] = [
+const WELCOME_MESSAGES: PlayerMessage[] = [
   {
     id: "sys-1",
-    text: "⚡ WAKA NEXUS · Canal soberano activé",
+    text: "⚡ WAKA NEXUS · Canal souverain — Intelligence artificielle activée",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 300_000),
+    timestamp: new Date(Date.now() - 10_000),
     isSystemEvent: true,
   },
   {
-    id: "1",
-    text: "🇧🇫 Bienvenue sur WAKA !\n\nVotre canal intelligent, gratuit et sans limites.\nTout ce que WhatsApp ne peut pas faire — nous le faisons.",
+    id: "welcome-1",
+    text: "🇧🇫 Bienvenue sur WAKA !\n\nJe suis votre assistant intelligent. Pas besoin de mots-clés — dites-moi simplement ce dont vous avez besoin, en texte libre.",
     direction: "outbound",
-    timestamp: new Date(Date.now() - 280_000),
-    source: "WAKA NEXUS",
+    timestamp: new Date(Date.now() - 5_000),
+    source: "WAKA NEXUS · IA",
     reaction: "👋",
-  },
-  // Rich Card — WhatsApp has templates, WAKA has freedom
-  {
-    id: "card-1",
-    text: "",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 260_000),
-    richCard: {
-      title: "Offre de Bienvenue",
-      description: "0% frais · +300 FCFA bonus · Sans limites",
-      icon: "🎁",
-      bgGradient: "linear-gradient(135deg, hsl(160,65%,35%), hsl(200,60%,40%))",
-      actions: ["Activer maintenant", "En savoir plus"],
-    },
-  },
-  // Product Catalog — WhatsApp: max 30 items. WAKA: unlimited carousel
-  {
-    id: "catalog-1",
-    text: "Découvrez nos forfaits :",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 240_000),
-    source: "WAKA Commerce",
-    catalog: {
-      title: "Forfaits Internet Moov",
-      products: [
-        { id: "p1", name: "Forfait Jour", price: "200 FCFA", emoji: "📱", rating: 4, badge: "POPULAIRE", description: "1 Go · 24h" },
-        { id: "p2", name: "Forfait Semaine", price: "1.000 FCFA", emoji: "🚀", rating: 5, description: "5 Go · 7 jours" },
-        { id: "p3", name: "Forfait Mois", price: "3.500 FCFA", emoji: "💎", rating: 5, badge: "-20%", description: "20 Go · 30 jours" },
-        { id: "p4", name: "Nuit Illimitée", price: "100 FCFA", emoji: "🌙", rating: 4, description: "Illimité · 22h-06h" },
-      ],
-    },
-  },
-  {
-    id: "user-1",
-    text: "Je veux le Forfait Semaine !",
-    direction: "inbound",
-    timestamp: new Date(Date.now() - 220_000),
-    reaction: "👍",
-  },
-  // Inline Form — WhatsApp: IMPOSSIBLE. WAKA: full forms in chat
-  {
-    id: "form-1",
-    text: "Parfait ! Complétez vos informations :",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 200_000),
-    source: "WAKA Forms",
-    inlineForm: {
-      title: "Activation Forfait Semaine",
-      icon: "📝",
-      submitLabel: "Activer le forfait",
-      fields: [
-        { id: "phone", label: "Numéro Moov", type: "phone", placeholder: "+226 XX XX XX XX", required: true },
-        { id: "plan", label: "Durée", type: "select", options: ["7 jours", "14 jours", "30 jours"], required: true },
-        { id: "email", label: "E-mail (optionnel)", type: "email", placeholder: "votre@email.com" },
-      ],
-    },
-  },
-  // Payment — WhatsApp: limited pay button. WAKA: full checkout
-  {
-    id: "payment-1",
-    text: "",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 180_000),
-    payment: {
-      title: "Récapitulatif commande",
-      icon: "🧾",
-      items: [
-        { label: "Forfait Semaine 5 Go", amount: "1.000" },
-        { label: "Bonus fidélité", amount: "-100" },
-        { label: "Taxes", amount: "90" },
-      ],
-      total: "990",
-      currency: "FCFA",
-      methods: ["mobile_money", "card"],
-    },
-  },
-  // Media Carousel — WhatsApp: 1 image per message. WAKA: full carousel with lazy loading
-  {
-    id: "carousel-1",
-    text: "Nos dernières promotions :",
-    direction: "outbound" as const,
-    timestamp: new Date(Date.now() - 170_000),
-    source: "WAKA Media",
-    mediaCarousel: {
-      title: "Promotions Moov 🔥",
-      slides: [
-        { id: "s1", type: "image" as const, emoji: "📡", caption: "Forfait Internet illimité — Nouveau !", cta: "Souscrire maintenant" },
-        { id: "s2", type: "video" as const, emoji: "🎓", caption: "Tutoriel : Comment envoyer de l'argent", duration: "2:30", cta: "Regarder" },
-        { id: "s3", type: "image" as const, emoji: "🎉", caption: "Gagnez un smartphone avec Moov Money", cta: "Participer au concours" },
-        { id: "s4", type: "image" as const, emoji: "🌍", caption: "Roaming Afrique — Appels à 50 FCFA/min" },
-        { id: "s5", type: "video" as const, emoji: "💡", caption: "5 astuces pour économiser vos données", duration: "1:45" },
-      ],
-    },
-  },
-  // Location Card — WhatsApp: static pin. WAKA: rich card
-  {
-    id: "location-1",
-    text: "Point de vente le plus proche :",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 160_000),
-    source: "WAKA Maps",
-    location: {
-      name: "Agence Moov Ouaga 2000",
-      address: "Av. de la Résistance du 17 Mai, Ouagadougou",
-      hours: "8h–18h",
-      phone: "+226 25 50 00 00",
-      emoji: "🏪",
-      distance: "1,2 km",
-    },
-  },
-  // Training Module — WhatsApp: NOT POSSIBLE. WAKA: capacity building
-  {
-    id: "training-1",
-    text: "Votre parcours de formation :",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 140_000),
-    source: "WAKA Academy",
-    training: {
-      title: "Formation Agent Moov Money",
-      overallProgress: 45,
-      modules: [
-        { id: "m1", name: "Introduction au Mobile Money", emoji: "📖", status: "completed" },
-        { id: "m2", name: "Opérations de base", emoji: "💵", status: "completed" },
-        { id: "m3", name: "Gestion des réclamations", emoji: "🎯", status: "current", progress: 60 },
-        { id: "m4", name: "Sécurité et conformité", emoji: "🔒", status: "locked" },
-        { id: "m5", name: "Certification finale", emoji: "🏅", status: "locked" },
-      ],
-    },
-  },
-  // Rating — WhatsApp: NOT POSSIBLE inline. WAKA: stars, NPS, emoji
-  {
-    id: "rating-1",
-    text: "Comment évaluez-vous votre expérience ?",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 120_000),
-    rating: { title: "Évaluation du service", type: "stars" },
-  },
-  // Interactive Menu
-  {
-    id: "menu-1",
-    text: "Que souhaitez-vous faire ensuite ?",
-    direction: "outbound",
-    timestamp: new Date(Date.now() - 100_000),
-    source: "AXIOM Brain",
-    menu: [
-      { label: "Envoyer argent", icon: "💸", description: "Transfert instantané" },
-      { label: "Payer facture", icon: "🧾", description: "Eau, électricité, TV" },
-      { label: "Consulter solde", icon: "💰", description: "Solde et historique" },
-      { label: "Support client", icon: "🆘", description: "Aide en direct" },
+    quickReplies: [
+      "💰 Mon solde",
+      "📱 Forfaits internet",
+      "📚 Ma formation",
+      "🏪 Agence la plus proche",
+      "💸 Envoyer de l'argent",
     ],
-    menuTitle: "Services Moov Money",
-    quickReplies: ["📊 Tableau de bord", "🏅 Mon certificat", "❓ Aide"],
   },
 ];
 
@@ -196,180 +53,174 @@ const MODE_COLORS: Record<DataMode, string> = {
 
 export default function WakaPlayerDemo() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<PlayerMessage[]>(INITIAL_MESSAGES);
-  const [status, setStatus] = useState<"online" | "typing" | "offline">("online");
+  const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
+  const { sendToAI, isThinking } = useWakaPlayerAI();
 
-  const addBotReply = useCallback((text: string, extras?: Partial<PlayerMessage>) => {
-    setStatus("typing");
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `bot-${Date.now()}`,
-          text,
-          direction: "outbound",
-          timestamp: new Date(),
-          source: "AXIOM Brain",
-          ...extras,
-        },
-      ]);
-      setStatus("online");
-    }, 800);
+  const status = isThinking ? "typing" : "online";
+
+  const addUserMessage = useCallback((text: string) => {
+    const userMsg: PlayerMessage = {
+      id: `user-${Date.now()}`,
+      text,
+      direction: "inbound",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    return userMsg;
   }, []);
 
+  const addBotMessage = useCallback((partial: Partial<PlayerMessage>) => {
+    const botMsg: PlayerMessage = {
+      id: `bot-${Date.now()}`,
+      text: "",
+      direction: "outbound",
+      timestamp: new Date(),
+      ...partial,
+    };
+    setMessages((prev) => [...prev, botMsg]);
+  }, []);
+
+  // AI-powered send — the core innovation
   const handleSend = useCallback(
-    (text: string) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `user-${Date.now()}`, text, direction: "inbound", timestamp: new Date() },
-      ]);
-      addBotReply(`Bien reçu : "${text}"`, {
-        quickReplies: ["📊 Voir plus", "🔄 Menu", "❓ Aide"],
-        reaction: "⚡",
-      });
-    },
-    [addBotReply]
-  );
-
-  const handleQuickReply = useCallback(
-    (label: string) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `qr-${Date.now()}`, text: label, direction: "inbound", timestamp: new Date() },
-      ]);
-
-      if (label.includes("certificat")) {
-        addBotReply("Voici votre certificat :", {
-          certificate: {
-            title: "Agent Moov Money",
-            recipient: "Amadou Ouédraogo",
-            date: "13 mars 2026",
-            module: "Formation complète",
-            badge: "🏆",
-          },
-        });
+    async (text: string) => {
+      addUserMessage(text);
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
       } else {
-        addBotReply(`Vous avez choisi : ${label}`, {
-          richCard: {
-            title: "Résultat",
-            description: "Traitement en cours…",
-            icon: "⚡",
-            bgGradient: "linear-gradient(135deg, hsl(35,80%,50%), hsl(25,85%,45%))",
-            actions: ["Confirmer", "Annuler"],
-          },
+        addBotMessage({
+          text: "Désolé, je n'ai pas pu traiter votre demande. Réessayez.",
+          quickReplies: ["🔄 Réessayer", "🏠 Menu principal"],
         });
       }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  // Quick replies also go through AI
+  const handleQuickReply = useCallback(
+    async (label: string) => {
+      addUserMessage(label);
+      const response = await sendToAI(label, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
+  // Menu selections go through AI
   const handleMenuSelect = useCallback(
-    (label: string) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `menu-${Date.now()}`, text: label, direction: "inbound", timestamp: new Date() },
-      ]);
-      addBotReply(`Service "${label}" sélectionné.`, {
-        progress: Math.min(100, 40 + Math.floor(Math.random() * 40)),
-        progressLabel: "Chargement du service",
-        reaction: "✅",
-      });
+    async (label: string) => {
+      addUserMessage(label);
+      const response = await sendToAI(`J'ai sélectionné : ${label}`, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  // Card actions go through AI
   const handleCardAction = useCallback(
-    (action: string) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `card-${Date.now()}`, text: action, direction: "inbound", timestamp: new Date() },
-      ]);
-      addBotReply(`Action "${action}" confirmée ✅`);
+    async (action: string) => {
+      addUserMessage(action);
+      const response = await sendToAI(`Action : ${action}`, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleAddToCart = useCallback(
-    (product: CatalogProduct) => {
-      addBotReply(`${product.emoji || "📦"} "${product.name}" ajouté au panier — ${product.price}`, {
-        reaction: "🛒",
-        quickReplies: ["🛒 Voir panier", "🛍 Continuer"],
-      });
+    async (product: CatalogProduct) => {
+      const text = `Ajouter au panier : ${product.name} (${product.price})`;
+      addUserMessage(text);
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleFormSubmit = useCallback(
-    (values: Record<string, string>) => {
-      addBotReply("Formulaire reçu ! Activation en cours… ⏳", {
-        reaction: "✅",
-        payment: {
-          title: "Confirmation d'activation",
-          icon: "💳",
-          items: [
-            { label: "Forfait sélectionné", amount: "1.000" },
-            { label: "Frais d'activation", amount: "0" },
-          ],
-          total: "1.000",
-          currency: "FCFA",
-          methods: ["mobile_money"],
-        },
-      });
+    async (values: Record<string, string>) => {
+      const summary = Object.entries(values).map(([k, v]) => `${k}: ${v}`).join(", ");
+      const text = `Formulaire soumis : ${summary}`;
+      addUserMessage("Formulaire envoyé ✓");
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handlePayment = useCallback(
-    (method: string) => {
-      addBotReply(`Paiement via ${method === "mobile_money" ? "Moov Money" : "carte"} confirmé ! 🎉`, {
-        reaction: "🎉",
-        rating: { title: "Comment s'est passé le paiement ?", type: "emoji" },
-      });
+    async (method: string) => {
+      const text = `Paiement confirmé via ${method === "mobile_money" ? "Moov Money" : "carte bancaire"}`;
+      addUserMessage("Paiement confirmé ✓");
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleRate = useCallback(
-    (value: number | string) => {
-      addBotReply(`Merci pour votre note ${typeof value === "string" ? value : `${value}/5 ⭐`} ! Votre avis compte.`, {
-        reaction: "💚",
-      });
+    async (value: number | string) => {
+      const text = `Note donnée : ${value}`;
+      addUserMessage(`Note : ${value}`);
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleModuleClick = useCallback(
-    (moduleId: string) => {
-      addBotReply(`Module "${moduleId}" ouvert. Bonne formation ! 📚`, {
-        progress: 60,
-        progressLabel: "En cours de formation",
-      });
+    async (moduleId: string) => {
+      const text = `Ouvrir le module de formation : ${moduleId}`;
+      addUserMessage(`Module : ${moduleId}`);
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleSlideAction = useCallback(
-    (slide: MediaSlide) => {
-      addBotReply(`${slide.type === "video" ? "▶ Lecture" : "🖼 Ouverture"} : "${slide.caption || "Média"}"`, {
-        reaction: slide.type === "video" ? "🎬" : "👀",
-        quickReplies: ["↩ Retour", "📤 Partager", "❓ Aide"],
-      });
+    async (slide: MediaSlide) => {
+      const text = `Action sur média : ${slide.caption || slide.id}`;
+      addUserMessage(slide.caption || "Média sélectionné");
+      const response = await sendToAI(text, dataMode);
+      if (response) {
+        addBotMessage(response);
+      }
     },
-    [addBotReply]
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
   const handleVoiceToggle = useCallback(
-    (active: boolean) => {
+    async (active: boolean) => {
       if (!active) {
         setMessages((prev) => [
           ...prev,
-          { id: `voice-${Date.now()}`, text: "", direction: "inbound", timestamp: new Date(), isVoice: true },
+          { id: `voice-${Date.now()}`, text: "", direction: "inbound" as const, timestamp: new Date(), isVoice: true },
         ]);
-        addBotReply("Message vocal reçu. Analyse en cours…", { source: "WAKA VOICE" });
+        const response = await sendToAI("(Message vocal reçu — l'utilisateur a envoyé un message audio)", dataMode);
+        if (response) {
+          addBotMessage(response);
+        }
       }
     },
-    [addBotReply]
+    [addBotMessage, sendToAI, dataMode]
   );
 
   const now = new Date();
@@ -383,12 +234,19 @@ export default function WakaPlayerDemo() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
-        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-          SOVEREIGN CHANNEL
+        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
+          <Bot className="h-3 w-3" />
+          AI-POWERED
         </Badge>
         <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
           {MODE_LABELS[dataMode]}
         </Badge>
+        {isThinking && (
+          <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,50%)]/30 text-[hsl(160,50%,40%)] animate-pulse gap-1">
+            <Zap className="h-2.5 w-2.5" />
+            Thinking…
+          </Badge>
+        )}
       </div>
 
       {/* Body — iPhone frame */}
