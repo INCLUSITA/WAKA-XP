@@ -490,6 +490,23 @@ export default function WakaPlayerDemo() {
 
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button
+                variant={activeFlowContextName ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFlowContextSelector(true)}
+                className="h-7 text-[11px] gap-1"
+              >
+                <GitBranch className="h-3 w-3" />
+                Contexto
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Cargar un flujo TextIt como contexto IA</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button variant="outline" size="sm" onClick={() => setShowFlowsPanel(true)} className="h-7 text-[11px] gap-1">
                 <FolderOpen className="h-3 w-3" />
                 Flujos
