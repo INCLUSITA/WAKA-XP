@@ -433,6 +433,10 @@ export default function WakaPlayerDemo() {
                 onSlideAction={handleSlideAction}
                 onCreditAction={handleCreditAction}
                 onMomoAction={handleMomoAction}
+                onSelectPlan={handleSelectPlan}
+                onPaymentConfirmAction={handlePaymentConfirmAction}
+                onCreditContractAction={handleCreditContractAction}
+                onDeviceLockConsent={handleDeviceLockConsent}
               />
             </div>
 
