@@ -1,7 +1,7 @@
 /**
  * Hook: useWakaPlayerAI
  * Calls the sovereign AI intent engine and maps tool-call responses
- * to PlayerMessage sovereign blocks.
+ * to PlayerMessage sovereign blocks. Supports multimodal (text + image).
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface ConversationMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
 export function useWakaPlayerAI() {
@@ -21,10 +21,23 @@ export function useWakaPlayerAI() {
 
   const sendToAI = useCallback(async (
     userText: string,
-    dataMode: DataMode
+    dataMode: DataMode,
+    imageDataUrl?: string
   ): Promise<Partial<PlayerMessage> | null> => {
-    // Add user message to history
-    historyRef.current.push({ role: "user", content: userText });
+    // Build multimodal content if image present
+    if (imageDataUrl) {
+      const parts: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+        { type: "image_url", image_url: { url: imageDataUrl } },
+      ];
+      if (userText) {
+        parts.unshift({ type: "text", text: userText });
+      } else {
+        parts.unshift({ type: "text", text: "L'utilisateur a envoyé cette image. Analyse-la et réponds contextuellement." });
+      }
+      historyRef.current.push({ role: "user", content: parts });
+    } else {
+      historyRef.current.push({ role: "user", content: userText });
+    }
 
     setIsThinking(true);
     try {
@@ -58,96 +71,54 @@ export function useWakaPlayerAI() {
 
       const blocks = data.blocks || {};
 
-      // Menu
       if (blocks.show_menu) {
         msg.menu = blocks.show_menu.options;
         msg.menuTitle = blocks.show_menu.title;
       }
-
-      // Catalog
       if (blocks.show_catalog) {
-        msg.catalog = {
-          title: blocks.show_catalog.title,
-          products: blocks.show_catalog.products,
-        };
+        msg.catalog = { title: blocks.show_catalog.title, products: blocks.show_catalog.products };
       }
-
-      // Form
       if (blocks.show_form) {
         msg.inlineForm = {
-          title: blocks.show_form.title,
-          icon: blocks.show_form.icon,
-          submitLabel: blocks.show_form.submit_label,
-          fields: blocks.show_form.fields,
+          title: blocks.show_form.title, icon: blocks.show_form.icon,
+          submitLabel: blocks.show_form.submit_label, fields: blocks.show_form.fields,
         };
       }
-
-      // Payment
       if (blocks.show_payment) {
         msg.payment = {
-          title: blocks.show_payment.title,
-          icon: blocks.show_payment.icon,
-          items: blocks.show_payment.items,
-          total: blocks.show_payment.total,
+          title: blocks.show_payment.title, icon: blocks.show_payment.icon,
+          items: blocks.show_payment.items, total: blocks.show_payment.total,
           currency: blocks.show_payment.currency || "FCFA",
           methods: blocks.show_payment.methods || ["mobile_money"],
         };
       }
-
-      // Location
-      if (blocks.show_location) {
-        msg.location = blocks.show_location;
-      }
-
-      // Training
+      if (blocks.show_location) msg.location = blocks.show_location;
       if (blocks.show_training) {
         msg.training = {
-          title: blocks.show_training.title,
-          modules: blocks.show_training.modules,
+          title: blocks.show_training.title, modules: blocks.show_training.modules,
           overallProgress: blocks.show_training.overall_progress,
         };
       }
-
-      // Rating
-      if (blocks.show_rating) {
-        msg.rating = {
-          title: blocks.show_rating.title,
-          type: blocks.show_rating.type,
-        };
-      }
-
-      // Rich Card
+      if (blocks.show_rating) msg.rating = { title: blocks.show_rating.title, type: blocks.show_rating.type };
       if (blocks.show_rich_card) {
         msg.richCard = {
-          title: blocks.show_rich_card.title,
-          description: blocks.show_rich_card.description,
-          icon: blocks.show_rich_card.icon,
-          actions: blocks.show_rich_card.actions,
+          title: blocks.show_rich_card.title, description: blocks.show_rich_card.description,
+          icon: blocks.show_rich_card.icon, actions: blocks.show_rich_card.actions,
         };
       }
-
-      // Quick Replies
-      if (blocks.suggest_quick_replies) {
-        msg.quickReplies = blocks.suggest_quick_replies.replies;
-      }
+      if (blocks.suggest_quick_replies) msg.quickReplies = blocks.suggest_quick_replies.replies;
 
       return msg;
     } catch (e) {
       console.error("AI call failed:", e);
-      toast({
-        title: "Erreur réseau",
-        description: "Impossible de contacter le moteur IA.",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur réseau", description: "Impossible de contacter le moteur IA.", variant: "destructive" });
       return null;
     } finally {
       setIsThinking(false);
     }
   }, []);
 
-  const resetHistory = useCallback(() => {
-    historyRef.current = [];
-  }, []);
+  const resetHistory = useCallback(() => { historyRef.current = []; }, []);
 
   return { sendToAI, isThinking, resetHistory };
 }
