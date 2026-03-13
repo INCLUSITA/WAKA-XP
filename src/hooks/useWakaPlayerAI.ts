@@ -107,6 +107,43 @@ export function useWakaPlayerAI() {
         };
       }
       if (blocks.suggest_quick_replies) msg.quickReplies = blocks.suggest_quick_replies.replies;
+      if (blocks.show_credit_simulation) {
+        msg.creditSimulation = {
+          title: blocks.show_credit_simulation.title,
+          product_name: blocks.show_credit_simulation.product_name,
+          amount: blocks.show_credit_simulation.amount,
+          term: blocks.show_credit_simulation.term,
+          frequency: blocks.show_credit_simulation.frequency,
+          monthly_payment: blocks.show_credit_simulation.monthly_payment,
+          total_cost: blocks.show_credit_simulation.total_cost,
+          interest_rate: blocks.show_credit_simulation.interest_rate,
+          icon: blocks.show_credit_simulation.icon,
+          actions: blocks.show_credit_simulation.actions,
+        };
+      }
+      if (blocks.show_client_status) {
+        msg.clientStatus = {
+          client_name: blocks.show_client_status.client_name,
+          voice_id: blocks.show_client_status.voice_id,
+          phone: blocks.show_client_status.phone,
+          active_credits: blocks.show_client_status.active_credits,
+          total_balance: blocks.show_client_status.total_balance,
+          next_payment_date: blocks.show_client_status.next_payment_date,
+          next_payment_amount: blocks.show_client_status.next_payment_amount,
+          icon: blocks.show_client_status.icon,
+        };
+      }
+      if (blocks.show_momo_card) {
+        msg.momoAccount = {
+          title: blocks.show_momo_card.title,
+          account_number: blocks.show_momo_card.account_number,
+          account_type: blocks.show_momo_card.account_type,
+          status: blocks.show_momo_card.status,
+          message: blocks.show_momo_card.message,
+          icon: blocks.show_momo_card.icon,
+          actions: blocks.show_momo_card.actions,
+        };
+      }
 
       return msg;
     } catch (e) {
