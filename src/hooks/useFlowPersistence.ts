@@ -37,6 +37,7 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
         edges: (data.edges as unknown as Edge[]) || [],
         name: data.name,
         status: data.status,
+        triggerRules: ((data as any).trigger_rules as TriggerRule[]) || [],
       };
     } catch (err) {
       console.error("Error loading flow:", err);
