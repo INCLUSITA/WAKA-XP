@@ -106,6 +106,8 @@ export function FlowToolbar({
   onVersions,
   onRuns,
   onPromoteToCandidate,
+  onDeployToRuntime,
+  isDeploying,
   saveStatus,
   experienceName,
   onOpenExperience,
