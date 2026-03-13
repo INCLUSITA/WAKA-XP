@@ -646,6 +646,7 @@ Referencia: `docs/waka-xp-strategic-foundation.md`, secciones §17 y §20.
 | Fase | Descripción | Estado | Progreso |
 |---|---|---|---|
 | **Fase 1** | Builder + compatibilidad heredada | ✅ Completa | 100% |
+| **Fase 1b** | **Waka XP Player** (Simulador IA Soberano) | ✅ Completa | ~90% |
 | **Fase 2** | Experience Studio | 🟡 En curso | ~70% |
 | **Fase 3** | Blueprint Layer | 🟡 Parcial | ~40% |
 | **Fase 4** | Structure & Context Layer | 🟡 Parcial | ~50% |
