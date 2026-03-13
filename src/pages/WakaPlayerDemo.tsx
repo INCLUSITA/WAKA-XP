@@ -237,6 +237,15 @@ export default function WakaPlayerDemo() {
 
   const handleQuickReply = useCallback(
     async (label: string) => {
+      // Intercept voice/avatar quick replies
+      if (label.includes("Llamar") || label.includes("VOICE") || label.includes("📞")) {
+        setShowVoiceCall(true);
+        return;
+      }
+      if (label.includes("Avatar") || label.includes("🎭")) {
+        setShowAvatar(true);
+        return;
+      }
       addUserMessage(label);
       const t0 = Date.now();
       const response = await sendToAI(label, dataMode);
@@ -244,6 +253,24 @@ export default function WakaPlayerDemo() {
     },
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
+
+  const handleVoiceCallEnd = useCallback((summary?: string) => {
+    setShowVoiceCall(false);
+    if (summary) {
+      addBotMessage({
+        text: `${summary}\n\n¿En qué más puedo ayudarle?`,
+        quickReplies: ["🏠 Menu principal", "📞 Llamar de nuevo", "💳 Mon solde"],
+      });
+    }
+  }, [addBotMessage]);
+
+  const handleAvatarClose = useCallback(() => {
+    setShowAvatar(false);
+    addBotMessage({
+      text: "🎭 Sesión de avatar finalizada. ¿Cómo puedo continuar ayudándole?",
+      quickReplies: ["🏠 Menu principal", "🎭 Volver al avatar", "📞 Llamar agente"],
+    });
+  }, [addBotMessage]);
 
   const handleMenuSelect = useCallback(
     async (label: string) => {
