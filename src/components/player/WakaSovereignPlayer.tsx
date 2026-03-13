@@ -71,6 +71,7 @@ export interface PlayerMessage {
   rating?: { title: string; type?: "stars" | "emoji" | "nps" };
   certificate?: CertificateData;
   training?: { title: string; modules: TrainingModule[]; overallProgress: number };
+  mediaCarousel?: { title?: string; slides: MediaSlide[] };
 }
 
 interface WakaSovereignPlayerProps {
