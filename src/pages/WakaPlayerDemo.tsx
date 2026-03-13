@@ -424,8 +424,8 @@ export default function WakaPlayerDemo() {
               style={{
                 background:
                   dataMode === "zero-rated"
-                    ? "hsl(160,50%,30%)"
-                    : "linear-gradient(135deg, hsl(160,70%,28%) 0%, hsl(175,65%,30%) 50%, hsl(190,60%,32%) 100%)",
+                    ? "hsl(270,35%,35%)"
+                    : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
               }}
             >
               <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
