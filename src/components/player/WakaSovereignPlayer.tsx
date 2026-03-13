@@ -113,6 +113,8 @@ interface WakaSovereignPlayerProps {
   onPaymentConfirmAction?: (action: string) => void;
   onCreditContractAction?: (action: string) => void;
   onDeviceLockConsent?: (accepted: boolean) => void;
+  onVoiceCall?: () => void;
+  onAvatarCall?: () => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
