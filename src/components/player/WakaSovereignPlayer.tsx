@@ -726,15 +726,40 @@ export function WakaSovereignPlayer({
           </div>
         </div>
 
+        {/* ── Image preview ── */}
+        {pendingImage && (
+          <div className="px-3 py-2 bg-[hsl(220,15%,96%)] border-t border-[hsl(220,15%,92%)] flex items-center gap-2 flex-shrink-0">
+            <div className="relative h-16 w-16 rounded-lg overflow-hidden border border-[hsl(220,15%,88%)]">
+              <img src={pendingImage} alt="Preview" className="h-full w-full object-cover" />
+              <button
+                onClick={() => setPendingImage(null)}
+                className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-black/60 flex items-center justify-center"
+              >
+                <X className="h-2.5 w-2.5 text-white" />
+              </button>
+            </div>
+            <span className="text-[11px] text-[hsl(220,10%,50%)]">📸 Photo prête</span>
+          </div>
+        )}
+
         {/* ── Input bar ── */}
         <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-[hsl(220,15%,92%)] flex-shrink-0">
+          {/* Camera button */}
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 text-[hsl(220,10%,50%)] hover:text-[hsl(160,60%,35%)] hover:bg-[hsl(160,30%,95%)] transition-colors active:scale-95"
+          >
+            <Camera className="h-4.5 w-4.5" />
+          </button>
+
           <div className="flex-1">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={voiceActive ? "Écoute…" : "Message…"}
+              placeholder={pendingImage ? "Légende (optionnel)…" : voiceActive ? "Écoute…" : "Message…"}
               disabled={voiceActive}
               className={cn(
                 "w-full h-9 rounded-full bg-[hsl(220,15%,96%)] border border-[hsl(220,15%,90%)] px-4 text-[13px] text-[hsl(220,15%,15%)] placeholder:text-[hsl(220,10%,65%)] focus:outline-none focus:ring-1 focus:ring-[hsl(160,60%,40%)]/30 transition-all",
@@ -743,7 +768,7 @@ export function WakaSovereignPlayer({
             />
           </div>
 
-          {inputText.trim() ? (
+          {inputText.trim() || pendingImage ? (
             <button
               onClick={handleSend}
               className="h-9 w-9 rounded-full bg-[hsl(160,60%,35%)] flex items-center justify-center flex-shrink-0 shadow-sm hover:bg-[hsl(160,60%,38%)] transition-colors active:scale-95"
