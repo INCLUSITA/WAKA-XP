@@ -54,6 +54,7 @@ export function ExpressionInput({
   className,
   multiline = false,
   resultNames = [],
+  contextEntityNames = [],
 }: ExpressionInputProps) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
