@@ -704,6 +704,27 @@ export function WakaSovereignPlayer({
                           />
                         </div>
                       )}
+                      {msg.creditSimulation && (
+                        <div className="mt-1.5">
+                          <CreditSimulationCard
+                            data={msg.creditSimulation}
+                            onAction={onCreditAction}
+                          />
+                        </div>
+                      )}
+                      {msg.clientStatus && (
+                        <div className="mt-1.5">
+                          <ClientStatusCard data={msg.clientStatus} />
+                        </div>
+                      )}
+                      {msg.momoAccount && (
+                        <div className="mt-1.5">
+                          <MoMoAccountCard
+                            data={msg.momoAccount}
+                            onAction={onMomoAction}
+                          />
+                        </div>
+                      )}
                     </BubbleWrapper>
                   );
                 })}
