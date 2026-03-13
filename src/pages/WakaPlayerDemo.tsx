@@ -62,12 +62,14 @@ export default function WakaPlayerDemo() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
-  const { sendToAI, isThinking } = useWakaPlayerAI();
+  const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
   const { saveFlow, loadFlowFull } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showFlowsPanel, setShowFlowsPanel] = useState(false);
+  const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
+  const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Load conversation history on mount
