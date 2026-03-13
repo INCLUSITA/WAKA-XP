@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, User, Radio, Clock } from "lucide-react";
+import { Bot, User, Radio, Clock, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,72 +31,121 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
+function extractDecisionLog(step: FlowRunStep): Record<string, unknown> | null {
+  const out = step.output as Record<string, unknown>;
+  if (out?.decision_log && typeof out.decision_log === "object") return out.decision_log as Record<string, unknown>;
+  return null;
+}
+
+function DecisionLogBubble({ log, time, isNew }: { log: Record<string, unknown>; time: string; isNew?: boolean }) {
+  return (
+    <motion.div
+      initial={isNew ? { opacity: 0, y: 10 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex justify-center my-2"
+    >
+      <div className="w-[90%] rounded-xl border border-accent/30 bg-accent/5 p-3 space-y-1.5">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-accent-foreground" />
+          <span className="text-[10px] font-semibold text-accent-foreground">AI Inference</span>
+          <span className="text-[9px] text-muted-foreground ml-auto">{time}</span>
+        </div>
+        {log.intent && (
+          <p className="text-[11px] text-foreground"><span className="font-medium text-muted-foreground">Intent:</span> {String(log.intent)}</p>
+        )}
+        {log.confidence != null && (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">Confidence</span>
+            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round(Number(log.confidence) * 100)}%` }} />
+            </div>
+            <span className="text-[10px] font-mono text-foreground">{Math.round(Number(log.confidence) * 100)}%</span>
+          </div>
+        )}
+        {log.reasoning && (
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed">{String(log.reasoning)}</p>
+        )}
+        {log.chosen_exit && (
+          <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">→ {String(log.chosen_exit)}</Badge>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 function ChatBubble({ step, isNew }: { step: FlowRunStep; isNew?: boolean }) {
   const dir = getDirection(step);
   const msg = extractMessage(step);
+  const decisionLog = extractDecisionLog(step);
 
   if (dir === "system") {
     return (
-      <motion.div
-        initial={isNew ? { opacity: 0, y: 10 } : false}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-center my-2"
-      >
-        <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-[10px] text-muted-foreground">
-          <span className="font-mono font-medium">{step.node_type}</span>
-          {step.node_label && <span>• {step.node_label}</span>}
-          <span className="opacity-60">{formatTime(step.created_at)}</span>
-        </div>
-      </motion.div>
+      <>
+        <motion.div
+          initial={isNew ? { opacity: 0, y: 10 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-center my-2"
+        >
+          <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-[10px] text-muted-foreground">
+            <span className="font-mono font-medium">{step.node_type}</span>
+            {step.node_label && <span>• {step.node_label}</span>}
+            <span className="opacity-60">{formatTime(step.created_at)}</span>
+          </div>
+        </motion.div>
+        {decisionLog && <DecisionLogBubble log={decisionLog} time={formatTime(step.created_at)} isNew={isNew} />}
+      </>
     );
   }
 
   const isOut = dir === "outbound";
 
   return (
-    <motion.div
-      initial={isNew ? { opacity: 0, y: 10 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn("flex gap-2 my-1.5", isOut ? "justify-end" : "justify-start")}
-    >
-      {!isOut && (
-        <div className="flex-shrink-0 mt-auto">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted border border-border">
-            <User className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
-        </div>
-      )}
-      <div
-        className={cn(
-          "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
-          isOut
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-card border border-border text-foreground rounded-bl-md"
-        )}
+    <>
+      <motion.div
+        initial={isNew ? { opacity: 0, y: 10 } : false}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn("flex gap-2 my-1.5", isOut ? "justify-end" : "justify-start")}
       >
-        <p className="whitespace-pre-wrap break-words leading-relaxed">{msg}</p>
-        <div className={cn("flex items-center gap-1.5 mt-1", isOut ? "justify-end" : "justify-start")}>
-          <span className={cn("text-[9px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground")}>
-            {formatTime(step.created_at)}
-          </span>
-          {step.elapsed_ms != null && (
-            <span className={cn("text-[9px] flex items-center gap-0.5", isOut ? "text-primary-foreground/50" : "text-muted-foreground/60")}>
-              <Clock className="h-2 w-2" />{step.elapsed_ms}ms
+        {!isOut && (
+          <div className="flex-shrink-0 mt-auto">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted border border-border">
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+            isOut
+              ? "bg-primary text-primary-foreground rounded-br-md"
+              : "bg-card border border-border text-foreground rounded-bl-md"
+          )}
+        >
+          <p className="whitespace-pre-wrap break-words leading-relaxed">{msg}</p>
+          <div className={cn("flex items-center gap-1.5 mt-1", isOut ? "justify-end" : "justify-start")}>
+            <span className={cn("text-[9px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground")}>
+              {formatTime(step.created_at)}
             </span>
-          )}
-          {isNew && (
-            <Badge className="text-[8px] bg-white/20 border-0 py-0 px-1 animate-pulse">LIVE</Badge>
-          )}
-        </div>
-      </div>
-      {isOut && (
-        <div className="flex-shrink-0 mt-auto">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/20">
-            <Bot className="h-3.5 w-3.5 text-primary" />
+            {step.elapsed_ms != null && (
+              <span className={cn("text-[9px] flex items-center gap-0.5", isOut ? "text-primary-foreground/50" : "text-muted-foreground/60")}>
+                <Clock className="h-2 w-2" />{step.elapsed_ms}ms
+              </span>
+            )}
+            {isNew && (
+              <Badge className="text-[8px] bg-white/20 border-0 py-0 px-1 animate-pulse">LIVE</Badge>
+            )}
           </div>
         </div>
-      )}
-    </motion.div>
+        {isOut && (
+          <div className="flex-shrink-0 mt-auto">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/20">
+              <Bot className="h-3.5 w-3.5 text-primary" />
+            </div>
+          </div>
+        )}
+      </motion.div>
+      {decisionLog && <DecisionLogBubble log={decisionLog} time={formatTime(step.created_at)} isNew={isNew} />}
+    </>
   );
 }
 

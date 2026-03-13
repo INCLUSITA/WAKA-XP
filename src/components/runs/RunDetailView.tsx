@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight, Radio, MessageSquare } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, ServerCog, ChevronRight, Radio, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,6 +43,35 @@ const nodeTypeColors: Record<string, string> = {
   removeGroup: "bg-orange-500/10 text-orange-600 border-orange-500/20",
 };
 
+function DecisionLogCard({ log }: { log: Record<string, unknown> }) {
+  return (
+    <div className="ml-10 mb-3 rounded-xl border border-accent/30 bg-accent/5 p-3 space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="h-3 w-3 text-accent-foreground" />
+        <span className="text-[10px] font-semibold text-accent-foreground">AI Inference</span>
+      </div>
+      {log.intent && (
+        <p className="text-[11px] text-foreground"><span className="font-medium text-muted-foreground">Intent:</span> {String(log.intent)}</p>
+      )}
+      {log.confidence != null && (
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground">Confidence</span>
+          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round(Number(log.confidence) * 100)}%` }} />
+          </div>
+          <span className="text-[10px] font-mono text-foreground">{Math.round(Number(log.confidence) * 100)}%</span>
+        </div>
+      )}
+      {log.reasoning && (
+        <p className="text-[10px] text-muted-foreground italic leading-relaxed">{String(log.reasoning)}</p>
+      )}
+      {log.chosen_exit && (
+        <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">→ {String(log.chosen_exit)}</Badge>
+      )}
+    </div>
+  );
+}
+
 function StepCard({ step, index, isNew }: { step: FlowRunStep; index: number; isNew?: boolean }) {
   const colorClass = nodeTypeColors[step.node_type] ?? "bg-muted text-muted-foreground border-border";
   const hasOutput = Object.keys(step.output).length > 0;
@@ -50,39 +79,52 @@ function StepCard({ step, index, isNew }: { step: FlowRunStep; index: number; is
   const isSend = step.node_type === "send_msg" || step.node_type === "sendMsg";
   const windowIssue = isSend && isWindowPolicyError(outputStr);
   const templateIssue = isSend && !windowIssue && isTemplatePolicyError(outputStr);
+  const decisionLog = (step.output as Record<string, unknown>)?.decision_log as Record<string, unknown> | undefined;
+  const displayOutput = hasOutput ? (() => {
+    const { decision_log, ...rest } = step.output as Record<string, unknown>;
+    return Object.keys(rest).length > 0 ? rest : null;
+  })() : null;
 
   return (
-    <div className={cn("flex gap-3 transition-all", isNew && "animate-in fade-in slide-in-from-left-2 duration-500")}>
-      {/* Timeline connector */}
-      <div className="flex flex-col items-center">
-        <div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold", colorClass, isNew && "ring-2 ring-primary/30")}>
-          {index + 1}
+    <>
+      <div className={cn("flex gap-3 transition-all", isNew && "animate-in fade-in slide-in-from-left-2 duration-500")}>
+        {/* Timeline connector */}
+        <div className="flex flex-col items-center">
+          <div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold", colorClass, isNew && "ring-2 ring-primary/30")}>
+            {index + 1}
+          </div>
+          <div className="flex-1 w-px bg-border" />
         </div>
-        <div className="flex-1 w-px bg-border" />
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 pb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-foreground">{step.node_label || step.node_uuid.slice(0, 8)}</span>
-          <Badge variant="outline" className={cn("text-[10px] font-mono", colorClass)}>
-            {step.node_type}
-          </Badge>
-          {isNew && <Badge className="text-[9px] bg-primary/20 text-primary border-0 animate-pulse">LIVE</Badge>}
-          {windowIssue && <WindowPolicyBadge />}
-          {templateIssue && <TemplateBadge variant="missing" />}
-          {step.elapsed_ms != null && (
-            <span className="text-[10px] text-muted-foreground ml-auto">{step.elapsed_ms}ms</span>
+        {/* Content */}
+        <div className="flex-1 pb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-foreground">{step.node_label || step.node_uuid.slice(0, 8)}</span>
+            <Badge variant="outline" className={cn("text-[10px] font-mono", colorClass)}>
+              {step.node_type}
+            </Badge>
+            {decisionLog && (
+              <Badge variant="outline" className="text-[9px] border-accent/40 text-accent-foreground gap-0.5">
+                <Sparkles className="h-2.5 w-2.5" /> AI
+              </Badge>
+            )}
+            {isNew && <Badge className="text-[9px] bg-primary/20 text-primary border-0 animate-pulse">LIVE</Badge>}
+            {windowIssue && <WindowPolicyBadge />}
+            {templateIssue && <TemplateBadge variant="missing" />}
+            {step.elapsed_ms != null && (
+              <span className="text-[10px] text-muted-foreground ml-auto">{step.elapsed_ms}ms</span>
+            )}
+          </div>
+
+          {displayOutput && (
+            <pre className="mt-1.5 rounded-md border border-border bg-muted/30 p-2 text-[11px] font-mono text-muted-foreground overflow-x-auto max-h-32 whitespace-pre-wrap">
+              {JSON.stringify(displayOutput, null, 2)}
+            </pre>
           )}
         </div>
-
-        {hasOutput && (
-          <pre className="mt-1.5 rounded-md border border-border bg-muted/30 p-2 text-[11px] font-mono text-muted-foreground overflow-x-auto max-h-32 whitespace-pre-wrap">
-            {JSON.stringify(step.output, null, 2)}
-          </pre>
-        )}
       </div>
-    </div>
+      {decisionLog && <DecisionLogCard log={decisionLog} />}
+    </>
   );
 }
 
