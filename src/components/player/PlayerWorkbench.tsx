@@ -57,7 +57,6 @@ export function PlayerWorkbench({
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
