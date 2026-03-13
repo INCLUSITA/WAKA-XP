@@ -76,6 +76,9 @@ export interface PlayerMessage {
   certificate?: CertificateData;
   training?: { title: string; modules: TrainingModule[]; overallProgress: number };
   mediaCarousel?: { title?: string; slides: MediaSlide[] };
+  creditSimulation?: CreditSimulationData;
+  clientStatus?: ClientStatusData;
+  momoAccount?: MoMoAccountData;
 }
 
 interface WakaSovereignPlayerProps {
