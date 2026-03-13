@@ -99,6 +99,23 @@ export default function WakaPlayerDemo() {
     [addUserMessage, addBotMessage, sendToAI, dataMode]
   );
 
+  // Image send — multimodal vision
+  const handleSendImage = useCallback(
+    async (imageDataUrl: string, caption?: string) => {
+      addUserMessage(caption || "📸 Photo envoyée", imageDataUrl);
+      const response = await sendToAI(caption || "", dataMode, imageDataUrl);
+      if (response) {
+        addBotMessage(response);
+      } else {
+        addBotMessage({
+          text: "Désolé, je n'ai pas pu analyser cette image. Réessayez.",
+          quickReplies: ["🔄 Réessayer", "🏠 Menu principal"],
+        });
+      }
+    },
+    [addUserMessage, addBotMessage, sendToAI, dataMode]
+  );
+
   // Quick replies also go through AI
   const handleQuickReply = useCallback(
     async (label: string) => {
