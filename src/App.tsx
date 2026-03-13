@@ -36,6 +36,7 @@ import DemoSharesPage from "./pages/DemoSharesPage";
 import RunsPage from "./pages/RunsPage";
 import ContextBoardPage from "./pages/ContextBoardPage";
 import SimulatorShell from "./pages/SimulatorShell";
+import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 
 import NotFound from "./pages/NotFound";
 
