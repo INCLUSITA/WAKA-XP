@@ -48,6 +48,7 @@ const MODE_LABELS: Record<string, string> = {
 
 export default function PlayerFlowsPage() {
   const navigate = useNavigate();
+  const { tenantId } = useWorkspace();
   const {
     flows, isLoading, saveFlow, cloneFlow,
     deleteFlow, updateFlowStatus, updateFlowName,
