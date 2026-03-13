@@ -98,11 +98,11 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
   );
 
   const debouncedSave = useCallback(
-    (nodes: Node[], edges: Edge[], name: string) => {
+    (nodes: Node[], edges: Edge[], name: string, triggerRules?: TriggerRule[]) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       setSaveStatus("saving");
       debounceRef.current = setTimeout(() => {
-        saveFlow(nodes, edges, name);
+        saveFlow(nodes, edges, name, triggerRules);
       }, 2000);
     },
     [saveFlow]
