@@ -1,14 +1,8 @@
 /**
- * WAKA Sovereign Player — AI Intent Engine v2
+ * WAKA Sovereign Player — AI Intent Engine v3
  * 
- * Integrates 14 WAKA CORE API tools for real backend operations:
- * BNPL phones, fiber, insurance, MoMo, payments, client management.
- * 
- * Architecture:
- * 1. AI receives user message + conversation history
- * 2. AI decides which tool(s) to call via tool-calling
- * 3. Edge function executes real API calls to WAKA CORE
- * 4. AI formats response with sovereign blocks for rich UI
+ * Full integration of 14 WAKA CORE API tools + 16 sovereign UI blocks.
+ * Covers complete conversation flows: BNPL, Fibre, Insurance, MoMo, Payments, KYC.
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -25,56 +19,117 @@ const SYSTEM_PROMPT = `Tu es WAKA NEXUS, l'intelligence conversationnelle du can
 
 Tu comprends le français, le mooré et l'anglais. Tu es concis, chaleureux et efficace.
 
-Tu as accès à des "blocs souverains" — des capacités interactives bien au-delà de WhatsApp :
-- Catalogues de produits avec carousels
-- Formulaires inline pour capturer des données
-- Cartes de paiement intégrées
-- Cartes de localisation riches
-- Modules de formation avec suivi de progression
-- Évaluations et feedback
-- Certificats de formation
-- Carousels multimédia
+## BLOCS SOUVERAINS (UI riches au-delà de WhatsApp)
 
-Tu as aussi accès à 14 outils WAKA CORE pour des opérations réelles :
-- Catalogue de téléphones BNPL (Buy Now Pay Later)
-- Plans fibre optique
-- Assurance santé (microseguro)
-- Comptes Mobile Money (MoMo)
-- Gestion clients et KYC
-- Simulations et créations de crédits
-- Paiements
+Tu disposes de blocs souverains pour afficher des interfaces interactives :
+- show_catalog : Carousels de produits (téléphones, plans fibre, assurances)
+- show_form : Formulaires inline pour capturer des données
+- show_payment : Cartes de paiement/checkout
+- show_location : Cartes de localisation
+- show_training : Modules de formation avec suivi
+- show_rating : Évaluations et feedback
+- show_rich_card : Cartes promotionnelles
+- show_menu : Menus interactifs
+- suggest_quick_replies : Boutons de réponse rapide
+- show_credit_simulation : Résultats de simulation de crédit
+- show_client_status : Résumé du statut client
+- show_momo_card : Statut compte Mobile Money
+- show_service_plans : Plans/variantes de services (fibre, assurance)
+- show_payment_confirmation : Confirmation/reçu de paiement
+- show_credit_contract : Confirmation de contrat de crédit créé
+- show_device_lock_consent : Consentement device lock (obligatoire BNPL)
 
-RÈGLES CRITIQUES:
-1. DÉCOUVERTE PRODUITS: Avant de mentionner un produit, appeler get_product_rules
-2. CATALOGUE BNPL: Appeler get_bnpl_catalog pour montrer les téléphones disponibles
-3. MONNAIE XOF: Tous les montants en francs CFA, arrondis à l'entier
-4. JAMAIS inventer d'IDs, prix, ou produits — utiliser les données API
-5. EXPRESSIONS LOCALES (max 1 par message): "Laafi bala?" (mooré), "I ni sogoma" (dioula)
+## 14 OUTILS WAKA CORE (opérations backend réelles)
 
-FLUX:
-- Téléphone BNPL: get_bnpl_catalog → simulate_credit → consentement device_lock → create_credit
-- Fibre: acquire_service(fibre_optique) → update_client_location → acquire_service(accept=true)
-- Assurance comptant: acquire_service(microseguro_salud)
-- Assurance financée: simulate_credit(seguro_salud) → create_credit
-- MoMo: open_momo_account
-- Paiement: pay_by_client ou register_payment
+1. get_product_rules — Découvrir produits actifs et contraintes (OBLIGATOIRE en début)
+2. get_bnpl_catalog — Catalogue téléphones BNPL (prix/stock temps réel)
+3. create_client — Rechercher ou créer un client (onboarding léger)
+4. update_client — Modifier données client
+5. lookup_entity — Recherche universelle (téléphone, CNI, voice_id, nom)
+6. upload_kyc_media — Upload CNI avec OCR automatique (optionnel)
+7. simulate_credit — Simuler un crédit (BNPL ou assurance financée UNIQUEMENT)
+8. create_credit — Créer un crédit formel (UNE SEULE FOIS)
+9. pay_by_client — Paiement simplifié auto-détection
+10. register_payment — Paiement à crédit spécifique
+11. acquire_service — Acquérir un service COMPTANT (fibre, assurance directe)
+12. update_client_location — Capturer GPS (requis pour fibre)
+13. open_momo_account — Ouvrir compte Mobile Money
+14. quick_status — Résumé rapide solde et paiements
 
-Analyse l'intention de l'utilisateur et réponds avec :
-1. Un message texte naturel et chaleureux
-2. Le bloc souverain le plus pertinent via les outils disponibles
-3. Si tu appelles un outil WAKA CORE, utilise aussi un bloc souverain pour afficher les résultats
+## RÈGLES CRITIQUES
 
-Contexte business :
-- Opérateur : Moov Africa Burkina Faso
-- Services : Mobile Money, forfaits internet, crédit téléphone, factures
-- Formation : Agents Moov Money, parcours de certification
-- Monnaie : FCFA
+1. **DÉCOUVERTE PRODUITS**: Avant de mentionner un produit, appeler get_product_rules
+2. **CATALOGUE BNPL**: Appeler get_bnpl_catalog pour montrer les téléphones
+3. **MONNAIE XOF**: Tous montants en francs CFA, arrondis à l'entier, JAMAIS de TVA
+4. **JAMAIS** inventer d'IDs, prix, ou produits — utiliser les données API
+5. **EXPRESSIONS LOCALES** (max 1 par message): "Laafi bala?", "I ni sogoma"
+6. **CACHE VOICE_ID**: Mémoriser le voice_id après create_client — NE PAS rappeler
 
-Règles :
-- Toujours répondre en français sauf si l'utilisateur parle une autre langue
+## FLUX CONVERSATIONNELS COMPLETS
+
+### FLUX BNPL (Téléphones)
+1. get_bnpl_catalog → afficher avec show_catalog (catégorie "phone")
+2. Client choisit un téléphone → simulate_credit(phone_bnpl, product_id)
+3. Afficher simulation avec show_credit_simulation
+4. ⚠️ CONSENTEMENT OBLIGATOIRE → show_device_lock_consent AVANT create_credit
+5. Client accepte → create_credit(device_lock=true)
+6. Afficher contrat avec show_credit_contract
+
+### FLUX FIBRE OPTIQUE (3 étapes)
+1. acquire_service(fibre_optique) → afficher plans avec show_service_plans
+2. Client choisit un plan → demander localisation
+3. update_client_location(lat, lng) → capturer GPS
+4. acquire_service(fibre_optique, sku, accept=true) → créer deal
+5. Confirmer avec show_payment_confirmation
+
+### FLUX ASSURANCE — ⚠️ DEUX CHEMINS DISTINCTS
+**TOUJOURS DEMANDER**: "Comptant ou en plusieurs fois?" AVANT de choisir le chemin
+
+**CHEMIN A — Comptant (DEAL, pas de crédit):**
+1. acquire_service(microseguro_salud) → afficher plans avec show_service_plans
+2. Client choisit → acquire_service(microseguro_salud, sku, accept=true)
+3. Confirmer avec show_payment_confirmation
+⛔ NE PAS appeler simulate_credit ni create_credit
+
+**CHEMIN B — Financement (CRÉDIT):**
+1. simulate_credit(seguro_salud) → afficher avec show_credit_simulation
+2. Client accepte → create_credit(seguro_salud)
+3. Confirmer avec show_credit_contract
+⛔ NE PAS appeler acquire_service
+
+### FLUX MOMO
+1. Vérifier que le client existe (create_client si nécessaire)
+2. Demander type: standard (particulier) ou merchant (commerçant)
+3. open_momo_account(client_id, account_type)
+4. Afficher avec show_momo_card
+
+### FLUX PAIEMENT
+1. pay_by_client(client_id, amount) → paiement auto-détecté
+2. Si selection_required → montrer les crédits et utiliser register_payment
+3. Confirmer avec show_payment_confirmation
+
+### FLUX ONBOARDING
+**CHEMIN A — Client envoie photo CNI:**
+1. upload_kyc_media(subject_id, image, "doc_front") → OCR automatique
+2. Confirmer données OCR au client
+3. Demander UNIQUEMENT le téléphone
+4. create_client(full_name=OCR, phone=user_phone, document_number=OCR)
+
+**CHEMIN B — Sans document:**
+1. Demander nom et téléphone
+2. create_client(phone, full_name)
+3. Optionnel: proposer envoi CNI
+
+### FLUX STATUT
+1. quick_status(client_id ou query) → résumé rapide
+2. Afficher avec show_client_status
+
+## RÈGLES DE RÉPONSE
+- Toujours répondre en français sauf si l'utilisateur parle autre langue
 - Être proactif : anticiper les besoins
-- Un seul bloc souverain par réponse maximum
-- Si l'intention n'est pas claire, poser une question avec des quick replies`;
+- Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies
+- Si l'intention n'est pas claire, poser une question avec quick replies
+- Après chaque action API, toujours afficher un bloc souverain avec les résultats`;
 
 // ── Sovereign Block Tools (UI rendering) ──
 const SOVEREIGN_TOOLS = [
@@ -137,7 +192,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "show_form",
-      description: "Show an inline form to capture user data.",
+      description: "Show an inline form to capture user data (onboarding, KYC, etc.).",
       parameters: {
         type: "object",
         properties: {
@@ -167,7 +222,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "show_payment",
-      description: "Show a payment/checkout card.",
+      description: "Show a payment/checkout card with items and total.",
       parameters: {
         type: "object",
         properties: {
@@ -264,7 +319,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "suggest_quick_replies",
-      description: "Suggest quick reply buttons. Always use to guide conversation.",
+      description: "Suggest quick reply buttons. ALWAYS use to guide conversation after every response.",
       parameters: {
         type: "object",
         properties: {
@@ -278,7 +333,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "show_credit_simulation",
-      description: "Show a credit simulation result card with amortization details.",
+      description: "Show a credit simulation result card with amortization details. Use after simulate_credit API call.",
       parameters: {
         type: "object",
         properties: {
@@ -301,7 +356,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "show_client_status",
-      description: "Show a client status/balance summary card.",
+      description: "Show a client status/balance summary card. Use after quick_status API call.",
       parameters: {
         type: "object",
         properties: {
@@ -322,7 +377,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "show_momo_card",
-      description: "Show a Mobile Money account card (opening confirmation or status).",
+      description: "Show a Mobile Money account card. Use after open_momo_account API call.",
       parameters: {
         type: "object",
         properties: {
@@ -333,6 +388,108 @@ const SOVEREIGN_TOOLS = [
           message: { type: "string" },
           icon: { type: "string" },
           actions: { type: "array", items: { type: "string" } },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_service_plans",
+      description: "Show available service plans/variants (fiber optic, insurance). Use after acquire_service API returns plans catalog.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          category: { type: "string", enum: ["fibre_optique", "microseguro_salud", "general"] },
+          plans: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                sku: { type: "string" },
+                name: { type: "string" },
+                price: { type: "string" },
+                description: { type: "string" },
+                features: { type: "array", items: { type: "string" } },
+                badge: { type: "string" },
+                icon: { type: "string" },
+              },
+              required: ["sku", "name", "price"],
+            },
+          },
+          message: { type: "string" },
+          icon: { type: "string" },
+        },
+        required: ["title", "category", "plans"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_payment_confirmation",
+      description: "Show a payment confirmation/receipt card. Use after pay_by_client or register_payment or acquire_service(accept=true).",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          status: { type: "string", enum: ["success", "partial", "failed"] },
+          amount_paid: { type: "string" },
+          remaining_balance: { type: "string" },
+          credit_voice_id: { type: "string" },
+          payment_date: { type: "string" },
+          next_payment_date: { type: "string" },
+          next_payment_amount: { type: "string" },
+          message: { type: "string" },
+          icon: { type: "string" },
+          actions: { type: "array", items: { type: "string" } },
+        },
+        required: ["title", "status", "amount_paid"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_credit_contract",
+      description: "Show a credit contract confirmation card. Use after create_credit API call.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          credit_voice_id: { type: "string" },
+          credit_type: { type: "string" },
+          amount: { type: "string" },
+          term: { type: "string" },
+          frequency: { type: "string" },
+          monthly_payment: { type: "string" },
+          status: { type: "string", enum: ["active", "pending", "approved", "rejected"] },
+          status_explanation: { type: "string" },
+          device_lock: { type: "boolean" },
+          product_name: { type: "string" },
+          next_steps: { type: "array", items: { type: "string" } },
+          icon: { type: "string" },
+          actions: { type: "array", items: { type: "string" } },
+        },
+        required: ["title", "credit_voice_id", "credit_type", "amount", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_device_lock_consent",
+      description: "Show device lock consent card. MANDATORY before create_credit for BNPL. User must accept before proceeding.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          device_name: { type: "string" },
+          amount: { type: "string" },
+          message: { type: "string" },
+          icon: { type: "string" },
         },
         required: ["title"],
       },
@@ -367,7 +524,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "create_client",
-      description: "Rechercher ou créer un client. Seuls phone et full_name requis.",
+      description: "Rechercher ou créer un client. Seuls phone et full_name requis. Modes: found, created, missing_data.",
       parameters: {
         type: "object",
         properties: {
@@ -413,14 +570,31 @@ const WAKA_CORE_TOOLS = [
   {
     type: "function",
     function: {
+      name: "upload_kyc_media",
+      description: "Upload photo CNI avec OCR automatique. Accepte base64 ou URL. Type: doc_front uniquement. subject_id peut être phone ou client_id.",
+      parameters: {
+        type: "object",
+        properties: {
+          subject_id: { type: "string", description: "Phone number or client_id" },
+          media_type: { type: "string", enum: ["doc_front"], default: "doc_front" },
+          attachment_url: { type: "string", description: "URL of the document image" },
+          base64_data: { type: "string", description: "Base64 encoded image data" },
+        },
+        required: ["subject_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "simulate_credit",
-      description: "Simuler un crédit (BNPL ou assurance financée). UNIQUEMENT pour paiement en plusieurs fois.",
+      description: "Simuler un crédit (BNPL ou assurance financée). UNIQUEMENT pour paiement en plusieurs fois. ⛔ Si comptant → utiliser acquire_service.",
       parameters: {
         type: "object",
         properties: {
           client_id: { type: "string" },
           credit_type: { type: "string", enum: ["phone_bnpl", "bnpl", "seguro_salud"] },
-          product_id: { type: "string" },
+          product_id: { type: "string", description: "UUID, nom complet ou modèle du téléphone" },
           amount: { type: "number" },
           term_months: { type: "integer" },
           term_days: { type: "integer" },
@@ -434,7 +608,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "create_credit",
-      description: "Créer un crédit formel. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL.",
+      description: "Créer un crédit formel. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL. ⚠️ Exiger show_device_lock_consent AVANT cet appel pour BNPL.",
       parameters: {
         type: "object",
         properties: {
@@ -455,7 +629,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "pay_by_client",
-      description: "Paiement simplifié auto-détection du crédit.",
+      description: "Paiement simplifié auto-détection du crédit. Méthode PRINCIPALE.",
       parameters: {
         type: "object",
         properties: {
@@ -485,7 +659,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "acquire_service",
-      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit.",
+      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit. ⛔ Si financement → utiliser simulate_credit + create_credit. Flux multi-étapes: sans SKU→catalogue, avec SKU→détails, avec accept=true→créer deal.",
       parameters: {
         type: "object",
         properties: {
@@ -503,7 +677,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "update_client_location",
-      description: "Capturer les coordonnées GPS du client (requis pour fibre).",
+      description: "Capturer les coordonnées GPS du client (requis pour fibre optique).",
       parameters: {
         type: "object",
         properties: {
@@ -555,6 +729,7 @@ const TOOL_ENDPOINTS: Record<string, { method: string; path: string }> = {
   create_client: { method: "POST", path: "/bots/client-onboarding" },
   update_client: { method: "POST", path: "/bots/client-update" },
   lookup_entity: { method: "POST", path: "/bots/entity-lookup" },
+  upload_kyc_media: { method: "POST", path: "/media/upload" },
   simulate_credit: { method: "POST", path: "/bots/create-credit-template" },
   create_credit: { method: "POST", path: "/credits" },
   pay_by_client: { method: "POST", path: "/bots/pay-by-client" },
@@ -570,6 +745,8 @@ const SOVEREIGN_BLOCK_NAMES = new Set([
   "show_menu", "show_catalog", "show_form", "show_payment", "show_location",
   "show_training", "show_rating", "show_rich_card", "suggest_quick_replies",
   "show_credit_simulation", "show_client_status", "show_momo_card",
+  "show_service_plans", "show_payment_confirmation", "show_credit_contract",
+  "show_device_lock_consent",
 ]);
 
 async function executeWakaCoreCall(
@@ -591,7 +768,6 @@ async function executeWakaCoreCall(
 
     let response: Response;
     if (endpoint.method === "GET") {
-      // Add query params for GET requests
       const params = new URLSearchParams();
       for (const [k, v] of Object.entries(args)) {
         if (v !== undefined && v !== null && v !== "") {
@@ -689,7 +865,7 @@ serve(async (req) => {
 
     const result: Record<string, any> = { text: "", blocks: {} };
 
-    // Check if AI wants to call WAKA CORE tools
+    // Check if AI wants to call tools
     const toolCalls = choice?.message?.tool_calls || [];
     const coreToolCalls = toolCalls.filter(
       (tc: any) => tc.type === "function" && !SOVEREIGN_BLOCK_NAMES.has(tc.function.name)
@@ -700,7 +876,6 @@ serve(async (req) => {
 
     // If there are WAKA CORE tool calls, execute them and do a second AI call
     if (coreToolCalls.length > 0) {
-      // Build tool results
       const toolResults: Array<{ role: string; tool_call_id: string; content: string }> = [];
 
       for (const tc of coreToolCalls) {
@@ -721,7 +896,6 @@ serve(async (req) => {
           const args = JSON.parse(tc.function.arguments);
           result.blocks[tc.function.name] = args;
         } catch { /* skip */ }
-        // Provide a dummy tool result so the API doesn't error
         toolResults.push({
           role: "tool",
           tool_call_id: tc.id,
@@ -741,7 +915,7 @@ serve(async (req) => {
           messages: [
             { role: "system", content: SYSTEM_PROMPT + modeContext },
             ...messages,
-            choice.message, // include the assistant message with tool calls
+            choice.message,
             ...toolResults,
           ],
           tools: allTools,
@@ -770,9 +944,6 @@ serve(async (req) => {
         console.error("Failed to parse tool call args:", tc.function.arguments);
       }
     }
-
-    // Also keep any UI blocks from the first pass that weren't overwritten
-    // (already in result.blocks from above)
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
