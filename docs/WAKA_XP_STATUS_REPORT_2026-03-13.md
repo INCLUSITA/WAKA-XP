@@ -23,6 +23,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | **Demo Builder / Sandbox AI** | Generación de demos JSX con IA conversacional | `/wakaflow` |
 | **Production Layer** | Ciclo de vida de candidatos a producción | `/production` |
 | **Simulation Engine** | Simulador WhatsApp con modo live | Integrado en Builder |
+| **Waka XP Player** | Simulador conversacional IA soberano con bloques nativos | `/player`, `/player/live` |
 | **Runtime / Runs** | Ejecución de backend con trazabilidad de pasos | `/runs` |
 | **Governance** | Multi-tenant, roles, RLS, versionado transversal | Transversal |
 
@@ -51,6 +52,29 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Nodo Start pinnable con persistencia | ✅ |
 | Vista inicial inteligente (centrado en entry node) | ✅ |
 | **Gap:** Resolución de contexto cross-flow | ⚠️ Parcial |
+
+### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~90%)
+
+| Capacidad | Estado |
+|---|---|
+| Simulador conversacional IA con modelo soberano (Gemini via Lovable AI) | ✅ |
+| Bloques soberanos nativos: ProductCatalog, PaymentCard, CreditSimulation, RatingWidget, LocationCard, etc. (16+ tipos) | ✅ |
+| Tres modalidades de datos: Libre, Subventionné, Zero-Rated | ✅ |
+| Persistencia de conversaciones en DB (player_conversations + player_messages) | ✅ |
+| Flujos guardados con ciclo de vida: Stable → Sandbox → Production (player_saved_flows) | ✅ |
+| Galería de flujos guardados con filtros por estado, búsqueda y acciones CRUD | ✅ |
+| Wizard de creación multi-fuente: Texto libre + IA, JSON TextIt/RapidPro, YAML de agente, Imágenes/logos | ✅ |
+| Selector de motor IA: WAKA AI (default), Azure OpenAI (coming soon), BYOM (demo) | ✅ |
+| Edge function `generate-player-flow` para generación IA de conversation_snapshot + scenario_config | ✅ |
+| Edge function `waka-player-ai` para respuestas conversacionales en tiempo real | ✅ |
+| Panel lateral de flujos guardados con highlight del flujo activo | ✅ |
+| Carga reactiva de flujos por URL query param (?flow=ID) con aislamiento estricto | ✅ |
+| Clonación de flujos (Stable → Sandbox) | ✅ |
+| Renombrado, cambio de estado y eliminación de flujos | ✅ |
+| Indicador visual del flujo activo en header del Player | ✅ |
+| **Gap:** Previsualización del flujo generado antes de guardar | ⚠️ Parcial |
+| **Gap:** Integración real con Azure OpenAI | ❌ Pendiente de claves |
+| **Gap:** BYOM funcional (requiere configuración de usuario) | ❌ Pendiente |
 
 ### Fase 2 — Experience Studio → 🟡 EN CURSO (~70%)
 
@@ -130,7 +154,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ## 4. Infraestructura y Gobernanza
 
-### Base de datos (18 tablas activas en Supabase)
+### Base de datos (21 tablas activas en Supabase)
 
 | Tabla | Uso |
 |---|---|
@@ -149,6 +173,9 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `channel_connections` | Conexiones de canales con health check |
 | `webhook_logs` | Logs de webhooks |
 | `uploaded_demos` | Demos generadas/subidas |
+| `player_conversations` | Conversaciones del Player IA |
+| `player_messages` | Mensajes individuales del Player IA |
+| `player_saved_flows` | Flujos conversacionales guardados del Player |
 | `demo_shares` / `demo_share_views` | Compartición pública de demos |
 | `whatsapp_messages` | Mensajes WhatsApp reales |
 | `whatsapp_templates` | Plantillas HSM |
@@ -166,6 +193,9 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `telegram-setup` | ✅ Operativa |
 | `telegram-webhook` | ✅ Operativa |
 | `connection-health-check` | ✅ Operativa |
+| `waka-player-ai` | ✅ Operativa — respuestas conversacionales IA del Player |
+| `generate-player-flow` | ✅ Operativa — generación de flujos desde texto/JSON/YAML/imágenes |
+| `run-flow` | ✅ Operativa — ejecución de flujos en backend |
 
 ### Canales configurados
 
@@ -189,9 +219,10 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ---
 
-## 5. Navegación Completa (26 rutas protegidas + 3 públicas)
+## 5. Navegación Completa (28+ rutas protegidas + 3 públicas)
 
 **Principal:** Home, Journeys, Experience Studio, Demo Builder, Builder, Simulator, Production, Runs  
+**Player:** Player Gallery (`/player`), Player Live (`/player/live`)  
 **Assets:** Library, Demos, Demo Viewer, Templates, Imports  
 **Infrastructure:** Integrations, WhatsApp Test, Tenants, Settings  
 **Advanced:** Flow Dashboard, Archived, Globals, Starts, Webhooks, Export, Validate  
@@ -203,10 +234,10 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 | Componente | Estado actual | Qué existe hoy | Qué falta |
 |---|---|---|---|
-| **Simulator Shell** | 🟡 Parcial | WhatsApp Simulator funcional en Builder | Shell nativo reutilizable multi-canal |
-| **Scenario Editor** | ❌ No iniciado | Demo Builder es precursor | Editor estructurado de escenarios con datos/shell/lógica separados |
-| **AI Journey Generator** | 🟡 Parcial | Demo Builder genera JSX con IA | Generación de flows completos desde briefing |
-| **Scenario-to-Flow Bridge** | 🟡 Parcial | WakaFlow Mapper existe | Compilación real de escenarios a nodos ejecutables |
+| **Simulator Shell** | ✅ Operativo | Waka XP Player como shell soberano con bloques nativos + WhatsApp Simulator en Builder | Variantes multi-canal del mismo shell |
+| **Scenario Editor** | 🟡 Parcial | FlowCreationWizard con multi-fuente (texto/JSON/YAML/imagen) + AI Engine Selector | Editor visual WYSIWYG de escenarios |
+| **AI Journey Generator** | ✅ Operativo | Player genera conversation_snapshot + scenario_config desde briefing via IA | Refinamiento iterativo post-generación |
+| **Scenario-to-Flow Bridge** | 🟡 Parcial | WakaFlow Mapper + Player saved flows con promote to production | Compilación real de escenarios a nodos ejecutables |
 | **Blueprint Generator** | ❌ No iniciado | — | Generación de intenciones de integración, contratos, readiness |
 
 ---
@@ -278,6 +309,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 - Auto-save, versionado, import/export JSON v13
 - Experience Studio con CRUD y vinculación de activos
 - Demo Builder con generación IA conversacional
+- **Waka XP Player** — Simulador conversacional IA soberano con 16+ bloques nativos, galería de flujos guardados, wizard de creación multi-fuente (texto/JSON/YAML/imagen), selector de motor IA (WAKA AI/Azure/BYOM), persistencia completa, ciclo de vida Stable→Sandbox→Production
 - Production Layer con ciclo de vida de candidatos
 - Multi-tenancy con RLS, roles, workspaces
 - Sistema de conexiones de canales con health check
@@ -319,4 +351,4 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ---
 
-*Informe generado el 13 de marzo de 2026 — WAKA XP v0.2*
+*Informe actualizado el 13 de marzo de 2026 — WAKA XP v0.3 (incluye Waka XP Player)*

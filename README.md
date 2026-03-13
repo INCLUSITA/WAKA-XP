@@ -17,8 +17,9 @@
    - [XP Layer (Estructura, Contexto, Entidades)](#52-xp-layer)
    - [Experience Studio](#53-experience-studio)
    - [Demo Builder / Sandbox AI](#54-demo-builder--sandbox-ai)
-   - [Production Layer](#55-production-layer)
-   - [Simulation Engine](#56-simulation-engine)
+   - [Waka XP Player (Simulador IA Soberano)](#55-waka-xp-player)
+   - [Production Layer](#56-production-layer)
+   - [Simulation Engine](#57-simulation-engine)
 6. [Sistema de Persistencia](#sistema-de-persistencia)
 7. [Multi-Tenancy y Gobernanza](#multi-tenancy-y-gobernanza)
 8. [Versionado Transversal](#versionado-transversal)
@@ -101,6 +102,23 @@ src/
 │   │   ├── OpenTicketNode.tsx       # Nodo: Abrir ticket
 │   │   ├── CallZapierNode.tsx       # Nodo: Llamar Zapier
 │   │   └── SendAirtimeNode.tsx      # Nodo: Enviar airtime
+│   ├── player/                      # Componentes del Waka XP Player
+│   │   ├── WakaSovereignPlayer.tsx  # ★ Componente principal del simulador IA
+│   │   ├── FlowCreationWizard.tsx   # Wizard multi-fuente de creación de flujos
+│   │   ├── FlowContextSelector.tsx  # Selector de contexto de flujo
+│   │   ├── SavedFlowsPanel.tsx      # Panel lateral de flujos guardados
+│   │   ├── SaveFlowDialog.tsx       # Diálogo de guardado
+│   │   ├── SalamandraSvg.tsx        # Logo animado
+│   │   ├── dataMode.ts             # Tipos de modalidad de datos
+│   │   └── sovereign-blocks/       # 16+ bloques soberanos nativos
+│   │       ├── ProductCatalog.tsx   # Catálogo de productos
+│   │       ├── PaymentCard.tsx      # Tarjeta de pago
+│   │       ├── CreditSimulationCard.tsx # Simulación de crédito
+│   │       ├── RatingWidget.tsx     # Widget de valoración
+│   │       ├── LocationCard.tsx     # Tarjeta de ubicación
+│   │       ├── MediaCarousel.tsx    # Carrusel multimedia
+│   │       ├── InlineForm.tsx       # Formulario inline
+│   │       └── ...                  # +9 bloques especializados
 │   ├── demos/                       # Componentes del Demo Builder
 │   │   ├── AIEngineSelector.tsx     # Selector de motor IA
 │   │   ├── AIProposalsPanel.tsx     # Panel de propuestas IA
@@ -144,6 +162,8 @@ src/
 │   ├── IntegrationsPage.tsx         # Integraciones / conectores
 │   ├── WhatsAppTestPage.tsx         # Testing WhatsApp real
 │   ├── TenantsPage.tsx              # Gestión de tenants
+│   ├── PlayerFlowsPage.tsx          # ★ Galería de flujos del Player
+│   ├── WakaPlayerDemo.tsx           # ★ Player Live (simulador IA)
 │   ├── GlobalsPage.tsx              # Variables globales
 │   ├── WebhookLogs.tsx              # Logs de webhooks
 │   ├── SettingsPage.tsx             # Configuración
@@ -154,6 +174,9 @@ src/
 │   ├── useFlowPersistence.ts        # Auto-save con debounce a DB
 │   ├── useFlowModules.ts            # Gestión de módulos/agrupación
 │   ├── useFlowSimulation.ts         # Motor de simulación WhatsApp
+│   ├── useSavedPlayerFlows.ts       # CRUD de flujos guardados del Player
+│   ├── usePlayerConversation.ts     # Gestión de conversaciones del Player
+│   ├── useWakaPlayerAI.ts           # Motor IA del Player
 │   ├── useAssetVersions.ts          # Versionado transversal
 │   ├── useUploadedDemos.ts          # Demos subidas por usuario
 │   ├── use-mobile.tsx               # Detección de móvil
@@ -185,6 +208,9 @@ supabase/
 ├── functions/
 │   ├── waka-ai-apply/index.ts       # Generación/rewrite de JSX con IA
 │   ├── waka-ai-proposal/index.ts    # Propuestas de cambio IA
+│   ├── waka-player-ai/index.ts      # ★ Motor conversacional IA del Player
+│   ├── generate-player-flow/index.ts # ★ Generación de flujos desde texto/JSON/YAML/imagen
+│   ├── run-flow/index.ts            # Ejecución de flujos en backend
 │   ├── whatsapp-send/index.ts       # Envío de mensajes WhatsApp reales
 │   └── whatsapp-webhook/index.ts    # Recepción de webhooks WhatsApp
 └── config.toml                      # Configuración Supabase (auto-generado)
@@ -209,6 +235,8 @@ docs/
 | | `/editor` | Index (FlowEditor) | Classic Flow Editor |
 | | `/simulator` | PhoneSimulator | Simulador completo |
 | | `/production` | ProductionPage | Production Candidates |
+| **Player** | `/player` | PlayerFlowsPage | Galería de flujos del Player |
+| | `/player/live` | WakaPlayerDemo | Simulador conversacional IA live |
 | **Assets** | `/library` | LibraryPage | Librería de activos |
 | | `/demos` | Demos | Lista de demos |
 | | `/demo/:id` | DemoViewer | Visor de demo |
@@ -339,7 +367,82 @@ Entorno de creación e iteración de demos basado en IA, estilo "Claude-like san
 - `waka-ai-apply` — Generación/rewrite de JSX con Gemini Flash
 - `waka-ai-proposal` — Propuestas de cambio IA
 
-### 5.5. Production Layer
+### 5.5. Waka XP Player (Simulador Conversacional IA Soberano)
+
+**Rutas:** `/player` (galería) · `/player/live` (simulador)
+
+Capa troncal del sistema que materializa la visión del **Simulator Shell** y del **AI Journey Generator** descritos en el documento estratégico (§8.5, §17.3). El Player es un simulador conversacional IA nativo que permite diseñar, probar y validar experiencias conversacionales completas sin necesidad de construir un flow clásico.
+
+#### Principio arquitectónico
+
+El Player representa el **primer artefacto verdaderamente journey-first** de Waka XP: en lugar de partir de nodos y conexiones (block-first), parte de una conversación IA que genera la experiencia completa, incluyendo mensajes, bloques soberanos interactivos y configuración de escenario.
+
+#### Bloques Soberanos (16+ tipos nativos)
+
+Componentes UI interactivos que la IA inyecta en la conversación para representar experiencias ricas:
+
+| Bloque | Descripción |
+|---|---|
+| `ProductCatalog` | Catálogo de productos con selección |
+| `PaymentCard` / `PaymentConfirmationCard` | Tarjetas de pago y confirmación |
+| `CreditSimulationCard` / `CreditContractCard` | Simulación y contrato de crédito |
+| `ServicePlansCard` | Planes de servicio con comparación |
+| `MoMoAccountCard` | Estado de cuenta Mobile Money |
+| `ClientStatusCard` | Estado del cliente |
+| `CertificateCard` | Certificados y documentos |
+| `LocationCard` | Ubicación con mapa |
+| `MediaCarousel` | Carrusel de imágenes/media |
+| `RatingWidget` | Valoración con estrellas |
+| `InlineForm` | Formularios inline |
+| `TrainingProgress` | Progreso de formación |
+| `DeviceLockConsentCard` | Consentimiento de bloqueo de dispositivo |
+
+#### Wizard de Creación Multi-Fuente
+
+El `FlowCreationWizard` permite crear flujos desde múltiples fuentes:
+
+- ✅ **Texto libre + IA** — Descripción en lenguaje natural que la IA convierte en conversación + scenario_config
+- ✅ **JSON TextIt/RapidPro** — Importación de flujos existentes con mapeo automático
+- ✅ **YAML de agente** — Definición de agente con endpoints, intenciones y personalidad
+- ✅ **Imágenes/logos** — Assets visuales que la IA usa para personalizar la experiencia
+
+#### Motor IA (AI Engine Selector)
+
+| Engine | Estado | Descripción |
+|---|---|---|
+| **WAKA AI** | ✅ Activo | Built-in via Lovable AI (Gemini) — sin configuración |
+| **Azure OpenAI** | 🔜 Coming Soon | GPT-4o via Waka's managed Azure deployment |
+| **BYOM** | 🔜 Demo | Bring Your Own Model — funcional cuando el usuario configure claves |
+
+#### Ciclo de vida de flujos
+
+- **Sandbox** — Flujo en desarrollo/experimentación
+- **Stable** — Flujo validado y protegido
+- **Production** — Flujo listo para despliegue
+
+#### Output de la generación IA
+
+Cada flujo generado produce dos artefactos persistidos en `player_saved_flows`:
+
+- `conversation_snapshot` — Array de mensajes (texto + bloques soberanos) que representan la conversación demo
+- `scenario_config` — Configuración del escenario (system prompt, endpoints, intents, persona) para que el Player continúe coherentemente en modo live
+
+#### Edge Functions del Player
+
+| Función | Descripción |
+|---|---|
+| `waka-player-ai` | Respuestas conversacionales IA en tiempo real con bloques soberanos |
+| `generate-player-flow` | Generación completa de flujos desde texto/JSON/YAML/imagen |
+
+#### Tablas de persistencia
+
+| Tabla | Descripción |
+|---|---|
+| `player_conversations` | Sesiones de conversación con metadata (canal, data_mode, tenant) |
+| `player_messages` | Mensajes individuales con bloques, modelo IA y latencia |
+| `player_saved_flows` | Flujos guardados con conversation_snapshot, scenario_config, ciclo de vida |
+
+### 5.6. Production Layer
 
 **Ruta:** `/production`
 
@@ -350,7 +453,7 @@ Gestión de Production Candidates con ciclo de vida completo.
 - ✅ Vinculación automática de flow si hay uno solo, selección si hay múltiples
 - ✅ Trazabilidad completa via versionado transversal
 
-### 5.6. Simulation Engine
+### 5.7. Simulation Engine
 
 **Simulador WhatsApp integrado** en el Classic Builder:
 
@@ -390,6 +493,9 @@ Gestión de Production Candidates con ciclo de vida completo.
 | `globals` | Variables globales clave-valor por tenant |
 | `webhook_logs` | Logs de webhooks con payload y response |
 | `uploaded_demos` | Demos subidas/generadas por usuarios |
+| `player_conversations` | Sesiones de conversación del Player IA |
+| `player_messages` | Mensajes del Player con bloques y metadata IA |
+| `player_saved_flows` | Flujos conversacionales guardados del Player |
 | `whatsapp_messages` | Mensajes WhatsApp reales (inbound/outbound) |
 
 ---
@@ -453,8 +559,15 @@ Sistema unificado de versionado aplicable a los 4 tipos de activo:
 |---|---|
 | `waka-ai-apply` | Genera/reescribe JSX de demos usando Lovable AI (Gemini Flash) |
 | `waka-ai-proposal` | Genera propuestas de cambio IA para artefactos |
+| `waka-player-ai` | Motor conversacional IA del Player con bloques soberanos |
+| `generate-player-flow` | Generación de flujos Player desde texto/JSON/YAML/imagen |
+| `run-flow` | Ejecución de flujos en backend |
 | `whatsapp-send` | Envía mensajes WhatsApp reales via API |
 | `whatsapp-webhook` | Recibe y almacena mensajes entrantes de WhatsApp |
+| `telegram-send` | Envío de mensajes Telegram |
+| `telegram-setup` | Configuración de bot Telegram |
+| `telegram-webhook` | Recepción de webhooks Telegram |
+| `connection-health-check` | Health check de conexiones de canales |
 
 ---
 
@@ -533,6 +646,7 @@ Referencia: `docs/waka-xp-strategic-foundation.md`, secciones §17 y §20.
 | Fase | Descripción | Estado | Progreso |
 |---|---|---|---|
 | **Fase 1** | Builder + compatibilidad heredada | ✅ Completa | 100% |
+| **Fase 1b** | **Waka XP Player** (Simulador IA Soberano) | ✅ Completa | ~90% |
 | **Fase 2** | Experience Studio | 🟡 En curso | ~70% |
 | **Fase 3** | Blueprint Layer | 🟡 Parcial | ~40% |
 | **Fase 4** | Structure & Context Layer | 🟡 Parcial | ~50% |
@@ -544,10 +658,10 @@ Referencia: `docs/waka-xp-strategic-foundation.md`, secciones §17 y §20.
 
 | Componente (§17.3) | Estado |
 |---|---|
-| Simulator Shell | 🟡 Parcial — WhatsApp Simulator funcional, falta shell nativo reutilizable |
-| Scenario Editor | 🔜 No iniciado — Demo Builder es el precursor |
-| AI Journey Generator | 🟡 Parcial — Demo Builder genera con IA, falta generación de flows |
-| Scenario-to-Flow Bridge | 🔜 Diseñado — WakaFlow Mapper es el primer paso |
+| Simulator Shell | ✅ Operativo — **Waka XP Player** como shell soberano con 16+ bloques nativos |
+| Scenario Editor | 🟡 Parcial — FlowCreationWizard multi-fuente (texto/JSON/YAML/imagen) |
+| AI Journey Generator | ✅ Operativo — Player genera conversation_snapshot + scenario_config desde briefing |
+| Scenario-to-Flow Bridge | 🟡 Parcial — WakaFlow Mapper + Player saved flows con ciclo de vida |
 | Blueprint Generator | 🔜 No iniciado |
 
 ### Conceptos estratégicos pendientes
@@ -618,4 +732,4 @@ La página principal (`/`) incluye una sección **Connected WAKA Stack** con vis
 
 ---
 
-*Documentación actualizada el 10 de marzo de 2026 — WAKA XP v0.2*
+*Documentación actualizada el 13 de marzo de 2026 — WAKA XP v0.3 (incluye Waka XP Player)*
