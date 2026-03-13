@@ -375,6 +375,7 @@ export function WakaSovereignPlayer({
   onPayment,
   onRate,
   onModuleClick,
+  onSlideAction,
   status = "online",
   statusBar,
   dataMode: externalMode,
