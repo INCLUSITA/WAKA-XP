@@ -219,9 +219,10 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ---
 
-## 5. Navegación Completa (26 rutas protegidas + 3 públicas)
+## 5. Navegación Completa (28+ rutas protegidas + 3 públicas)
 
 **Principal:** Home, Journeys, Experience Studio, Demo Builder, Builder, Simulator, Production, Runs  
+**Player:** Player Gallery (`/player`), Player Live (`/player/live`)  
 **Assets:** Library, Demos, Demo Viewer, Templates, Imports  
 **Infrastructure:** Integrations, WhatsApp Test, Tenants, Settings  
 **Advanced:** Flow Dashboard, Archived, Globals, Starts, Webhooks, Export, Validate  
