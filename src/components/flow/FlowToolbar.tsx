@@ -38,6 +38,7 @@ interface FlowToolbarProps {
   onLoadSample?: () => void;
   onValidate?: () => void;
   onSimulate?: () => void;
+  onOpenSimulatorShell?: () => void;
   onTranslate?: () => void;
   onVersions?: () => void;
   onRuns?: () => void;
@@ -102,6 +103,7 @@ export function FlowToolbar({
   onLoadSample,
   onValidate,
   onSimulate,
+  onOpenSimulatorShell,
   onTranslate,
   onVersions,
   onRuns,
@@ -327,6 +329,11 @@ export function FlowToolbar({
         <Button variant="outline" size="sm" onClick={() => navigate("/studio")} className="border-accent/30 text-accent hover:bg-accent/5 text-[11px] h-7">
           <Sparkles className="mr-1 h-3 w-3" /> Studio
         </Button>
+        {onOpenSimulatorShell && (
+          <Button variant="outline" size="sm" onClick={onOpenSimulatorShell} className="border-accent/40 text-accent-foreground hover:bg-accent/10 h-7 text-[11px] gap-1">
+            <BrainCircuit className="h-3 w-3" /> Shell
+          </Button>
+        )}
         {onSimulate && (
           <Button variant="outline" size="sm" onClick={onSimulate} className="border-node-send/40 text-node-send hover:bg-node-send/10 h-7 text-[11px]">
             <Play className="mr-1 h-3 w-3" />

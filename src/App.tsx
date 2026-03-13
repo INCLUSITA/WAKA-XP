@@ -35,6 +35,7 @@ import SharedDemo from "./pages/SharedDemo";
 import DemoSharesPage from "./pages/DemoSharesPage";
 import RunsPage from "./pages/RunsPage";
 import ContextBoardPage from "./pages/ContextBoardPage";
+import SimulatorShell from "./pages/SimulatorShell";
 
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +63,7 @@ const App = () => {
               <Route path="/studio" element={<ExperienceStudioPage />} />
               <Route path="/wakaflow" element={<WakaFlowPreview />} />
               <Route path="/simulator" element={<PhoneSimulator />} />
+              <Route path="/simulator-shell" element={<SimulatorShell />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
               <Route path="/runs" element={<RunsPage />} />

@@ -1012,6 +1012,7 @@ function FlowEditorInner() {
         onLoadSample={handleLoadSample}
         onValidate={handleValidate}
         onSimulate={() => setShowSimulator(true)}
+        onOpenSimulatorShell={flowIdParam ? () => navigate(`/simulator-shell?flow_id=${flowIdParam}`) : undefined}
         onTranslate={() => setShowTranslator(true)}
         onVersions={() => setShowVersions((v) => !v)}
         onRuns={() => setShowRuns((v) => !v)}
