@@ -497,6 +497,18 @@ export default function WakaPlayerDemo() {
     navigate(`/player/live?flow=${flowId}`);
   }, [navigate, flowIdParam]);
 
+  const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
+    if (result.conversation.length > 0) {
+      setMessages(result.conversation);
+    }
+    if (result.config) {
+      setActiveScenarioConfig(result.config);
+      if (result.config.systemPrompt) {
+        setFlowContext(result.config.systemPrompt);
+      }
+    }
+  }, [setFlowContext]);
+
   const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
     if (flowContext && flowName) {
       setFlowContext(flowContext);
