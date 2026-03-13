@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, ChevronRight, CheckCheck, ChevronDown, ChevronUp, Zap, Wifi, WifiOff, Camera, X, Image as ImageIcon, MapPin, Paperclip } from "lucide-react";
+import { Send, Mic, MicOff, ChevronRight, CheckCheck, ChevronDown, ChevronUp, Zap, Wifi, WifiOff, Camera, X, Image as ImageIcon, MapPin, Paperclip, Phone, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
