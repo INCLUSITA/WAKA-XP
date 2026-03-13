@@ -29,7 +29,7 @@ const ENGINES: AIEngine[] = [
     id: "waka-ai",
     name: "WAKA AI",
     subtitle: "Active",
-    description: "Built-in AI · Powered by Lovable Cloud",
+    description: "Motor IA nativo · Infraestructura WAKA",
     icon: Cpu,
     available: true,
   },
