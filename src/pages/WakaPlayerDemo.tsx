@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WakaSovereignPlayer, type PlayerMessage, type DataMode } from "@/components/player/WakaSovereignPlayer";
 import type { CatalogProduct, MediaSlide } from "@/components/player/sovereign-blocks";
-import type { ServicePlansData } from "@/components/player/sovereign-blocks";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { usePlayerConversation } from "@/hooks/usePlayerConversation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
