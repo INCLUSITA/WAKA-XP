@@ -58,13 +58,15 @@ export function useFlowPersistence({ flowId, onFlowIdChange, tenantId }: UseFlow
       setSaveStatus("saving");
       try {
         if (currentFlowId.current) {
+          const updatePayload: Record<string, unknown> = {
+            nodes: nodes as unknown as Json,
+            edges: edges as unknown as Json,
+            name,
+          };
+          if (triggerRules) updatePayload.trigger_rules = triggerRules as unknown as Json;
           const { error } = await supabase
             .from("flows")
-            .update({
-              nodes: nodes as unknown as Json,
-              edges: edges as unknown as Json,
-              name,
-            })
+            .update(updatePayload)
             .eq("id", currentFlowId.current);
 
           if (error) throw error;
