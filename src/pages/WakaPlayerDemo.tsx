@@ -457,14 +457,11 @@ export default function WakaPlayerDemo() {
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback(async (flowId: string) => {
-    const full = await loadFlowFull(flowId);
-    if (!full) { toast.error("No se pudo cargar el flujo"); return; }
-    setMessages(full.conversationSnapshot);
-    setDataMode(full.dataMode);
+  const handleLoadFlow = useCallback((flowId: string) => {
     setShowFlowsPanel(false);
-    toast.success(`Flujo "${full.name}" cargado`);
-  }, [loadFlowFull]);
+    if (flowId === flowIdParam) return;
+    navigate(`/player/live?flow=${flowId}`);
+  }, [navigate, flowIdParam]);
 
   const handleFlowContextSelect = useCallback((flowContext: string, flowName: string) => {
     if (flowContext && flowName) {
