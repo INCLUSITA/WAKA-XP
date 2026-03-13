@@ -10,22 +10,25 @@
  * But all conditional on data mode.
  */
 
-import { useState, useRef, useEffect, createContext, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Mic, MicOff, ChevronRight, CheckCheck, ChevronDown, ChevronUp, Zap, Wifi, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SalamandraSvg } from "./SalamandraSvg";
 import { Progress } from "@/components/ui/progress";
+import { DataModeContext, useDataMode } from "./dataMode";
+import type { DataMode } from "./dataMode";
+import {
+  ProductCatalog, type CatalogProduct,
+  InlineForm, type FormField,
+  LocationCard, type LocationData,
+  PaymentCard, type PaymentCardData,
+  RatingWidget,
+  CertificateCard, type CertificateData,
+  TrainingProgress, type TrainingModule,
+} from "./sovereign-blocks";
 
-/* ── Data Mode ── */
-
-export type DataMode = "libre" | "subventionné" | "zero-rated";
-
-const DataModeContext = createContext<DataMode>("libre");
-
-function useDataMode() {
-  return useContext(DataModeContext);
-}
+export type { DataMode } from "./dataMode";
 
 /* ── Types ── */
 
