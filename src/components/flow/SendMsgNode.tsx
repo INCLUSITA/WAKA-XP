@@ -1,6 +1,7 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { MessageSquare, Paperclip, Image, FileText, Music, Video, File, Sparkles, FileCheck } from "lucide-react";
 import { EntryNodeMarker } from "./EntryNodeMarker";
+import { PulseDot } from "./NodePulseOverlay";
 
 function AttachmentIcon({ mime }: { mime?: string }) {
   const cls = "h-3 w-3 text-muted-foreground";
