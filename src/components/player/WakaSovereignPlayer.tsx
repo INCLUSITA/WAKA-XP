@@ -391,6 +391,8 @@ export function WakaSovereignPlayer({
   botName = "WAKA",
   onSend,
   onSendImage,
+  onSendLocation,
+  onSendDocument,
   onQuickReply,
   onVoiceToggle,
   onMenuSelect,
