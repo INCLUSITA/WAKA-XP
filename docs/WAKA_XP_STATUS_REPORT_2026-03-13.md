@@ -53,7 +53,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Vista inicial inteligente (centrado en entry node) | ✅ |
 | **Gap:** Resolución de contexto cross-flow | ⚠️ Parcial |
 
-### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~90%)
+### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~95%)
 
 | Capacidad | Estado |
 |---|---|
@@ -65,14 +65,19 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Galería de flujos guardados con filtros por estado, búsqueda y acciones CRUD | ✅ |
 | Wizard de creación multi-fuente: Texto libre + IA, JSON TextIt/RapidPro, YAML de agente, Imágenes/logos | ✅ |
 | Selector de motor IA: WAKA AI (default), Azure OpenAI (coming soon), BYOM (demo) | ✅ |
-| Edge function `generate-player-flow` para generación IA de conversation_snapshot + scenario_config | ✅ |
+| Edge function `generate-player-flow` para generación IA con merge mode iterativo | ✅ |
 | Edge function `waka-player-ai` para respuestas conversacionales en tiempo real | ✅ |
 | Panel lateral de flujos guardados con highlight del flujo activo | ✅ |
 | Carga reactiva de flujos por URL query param (?flow=ID) con aislamiento estricto | ✅ |
 | Clonación de flujos (Stable → Sandbox) | ✅ |
 | Renombrado, cambio de estado y eliminación de flujos | ✅ |
 | Indicador visual del flujo activo en header del Player | ✅ |
-| **Gap:** Previsualización del flujo generado antes de guardar | ⚠️ Parcial |
+| **PlayerWorkbench**: Panel de iteración IA con instrucciones, uploads y motor seleccionable | ✅ |
+| **WAKA VOICE**: Iframe real de waka.services integrado dentro del simulador de teléfono | ✅ |
+| **Avatar**: Iframe configurable de avatar integrado dentro del simulador de teléfono | ✅ |
+| **Botones de canal**: 📞 Voice y 👤 Avatar en la barra de entrada del chat | ✅ |
+| **Merge automático con IA**: Instrucciones + assets se combinan con el flujo existente | ✅ |
+| **Persistencia de instrucciones**: systemPrompt guardado en scenario_config | ✅ |
 | **Gap:** Integración real con Azure OpenAI | ❌ Pendiente de claves |
 | **Gap:** BYOM funcional (requiere configuración de usuario) | ❌ Pendiente |
 
