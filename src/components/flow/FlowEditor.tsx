@@ -1243,6 +1243,13 @@ function FlowEditorInner() {
             onClose={() => setShowRuns(false)}
           />
         )}
+
+        {/* Execution Timeline Sheet (Pulse-to-Chat) */}
+        <ExecutionTimeline
+          runId={timelineRunId}
+          open={!!timelineRunId}
+          onOpenChange={(open) => { if (!open) setTimelineRunId(null); }}
+        />
       </div>
 
       {/* Drop-to-create node menu */}
