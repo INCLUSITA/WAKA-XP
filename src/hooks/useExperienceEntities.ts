@@ -9,7 +9,7 @@ export interface ExperienceEntity {
   name: string;
   entity_type: string;
   description: string | null;
-  data_schema: Record<string, unknown>;
+  data_schema: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
