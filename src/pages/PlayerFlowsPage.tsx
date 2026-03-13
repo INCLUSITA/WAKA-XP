@@ -329,37 +329,15 @@ export default function PlayerFlowsPage() {
         </Tabs>
       </div>
 
-      {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <Plus className="h-4 w-4 text-primary" />
-              Nuevo flujo del Player
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="Nombre del flujo..."
-              className="text-sm"
-            />
-            <Textarea
-              value={createDesc}
-              onChange={(e) => setCreateDesc(e.target.value)}
-              placeholder="Descripción (opcional)..."
-              className="text-sm min-h-[60px]"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleCreate} disabled={!createName.trim() || isCreating}>
-              {isCreating ? "Creando..." : "Crear y abrir"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Flow Creation Wizard */}
+      {tenantId && (
+        <FlowCreationWizard
+          open={showCreate}
+          onClose={() => setShowCreate(false)}
+          onCreated={(flowId) => navigate(`/player/live?flow=${flowId}`)}
+          tenantId={tenantId}
+        />
+      )}
 
       {/* Clone Dialog */}
       <Dialog open={!!cloneTarget} onOpenChange={(o) => !o && setCloneTarget(null)}>
