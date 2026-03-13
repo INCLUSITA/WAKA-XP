@@ -238,7 +238,7 @@ function DataModeSelector({
   ];
 
   return (
-    <div className="flex items-center gap-0.5 bg-black/5 rounded-full p-0.5">
+    <div className="flex items-center gap-0.5 bg-white/10 rounded-full p-0.5">
       {modes.map((m) => (
         <button
           key={m.key}
@@ -246,8 +246,8 @@ function DataModeSelector({
           className={cn(
             "flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-all",
             mode === m.key
-              ? "bg-white shadow-sm text-[hsl(160,60%,28%)]"
-              : "text-[hsl(220,10%,50%)] hover:text-[hsl(220,10%,30%)]"
+              ? "bg-white shadow-sm text-[hsl(270,40%,40%)]"
+              : "text-white/60 hover:text-white/80"
           )}
           title={m.desc}
         >
