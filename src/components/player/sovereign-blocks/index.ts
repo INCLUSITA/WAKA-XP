@@ -5,3 +5,4 @@ export { PaymentCard, type PaymentCardData, type PaymentItem } from "./PaymentCa
 export { RatingWidget } from "./RatingWidget";
 export { CertificateCard, type CertificateData } from "./CertificateCard";
 export { TrainingProgress, type TrainingModule } from "./TrainingProgress";
+export { MediaCarousel, type MediaSlide } from "./MediaCarousel";
