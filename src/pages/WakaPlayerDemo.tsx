@@ -59,12 +59,13 @@ export default function WakaPlayerDemo() {
 
   const status = isThinking ? "typing" : "online";
 
-  const addUserMessage = useCallback((text: string) => {
+  const addUserMessage = useCallback((text: string, imageUrl?: string) => {
     const userMsg: PlayerMessage = {
       id: `user-${Date.now()}`,
       text,
       direction: "inbound",
       timestamp: new Date(),
+      imageUrl,
     };
     setMessages((prev) => [...prev, userMsg]);
     return userMsg;
