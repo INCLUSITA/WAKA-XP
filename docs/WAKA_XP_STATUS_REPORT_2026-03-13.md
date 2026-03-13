@@ -173,6 +173,9 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `channel_connections` | Conexiones de canales con health check |
 | `webhook_logs` | Logs de webhooks |
 | `uploaded_demos` | Demos generadas/subidas |
+| `player_conversations` | Conversaciones del Player IA |
+| `player_messages` | Mensajes individuales del Player IA |
+| `player_saved_flows` | Flujos conversacionales guardados del Player |
 | `demo_shares` / `demo_share_views` | Compartición pública de demos |
 | `whatsapp_messages` | Mensajes WhatsApp reales |
 | `whatsapp_templates` | Plantillas HSM |
