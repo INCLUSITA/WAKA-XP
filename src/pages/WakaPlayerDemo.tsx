@@ -711,6 +711,12 @@ export default function WakaPlayerDemo() {
               Thinking…
             </Badge>
           )}
+          {activeFlowId && versionCount > 0 && (
+            <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
+              <History className="h-2.5 w-2.5" />
+              v{versionCount} guardado
+            </Badge>
+          )}
         </div>
 
         {/* Body — iPhone frame */}
