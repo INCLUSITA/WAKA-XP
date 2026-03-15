@@ -50,7 +50,7 @@ function detectCapabilities(): DeviceCapabilities {
     screenHeight: height,
     pixelRatio: window.devicePixelRatio || 1,
     reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
-    voiceEnabled: typeof window.SpeechRecognition !== "undefined" || typeof (window as any).webkitSpeechRecognition !== "undefined",
+    voiceEnabled: typeof (window as any).SpeechRecognition !== "undefined" || typeof (window as any).webkitSpeechRecognition !== "undefined",
     avatarEnabled: true, // Can be refined based on GPU detection
   };
 }
