@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -25,10 +25,12 @@ import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
 import { ExperienceRuntimeProvider } from "@/contexts/ExperienceRuntimeContext";
 import { PlayerContextProvider } from "@/contexts/PlayerContextProvider";
+import { PlayerMemoryProvider, usePlayerMemory } from "@/contexts/PlayerMemoryProvider";
 import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
 import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
 import { ExperienceModeSwitcher, type ExperienceMode } from "@/components/player/ExperienceModeSwitcher";
 import { UniversalContextMenu, type ContextTarget } from "@/components/player/UniversalContextMenu";
+import { WelcomeBackStrip } from "@/components/player/WelcomeBackStrip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
@@ -71,12 +73,7 @@ const MODE_COLORS: Record<DataMode, string> = {
   "zero-rated": "bg-[hsl(220,10%,50%)]/10 text-[hsl(220,10%,40%)]",
 };
 
-const FALLBACK_REPLIES = [
-  "📱 Voir les téléphones",
-  "💳 Mon solde",
-  "🏥 Assurance santé",
-  "🏠 Menu principal",
-];
+// FALLBACK_REPLIES removed — AI provides 100% contextual buttons or none
 
 /** Extract numbered/bulleted options from text */
 function extractOptionsFromText(text: string): string[] {
@@ -101,7 +98,9 @@ export default function WakaPlayerDemo() {
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
       <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
-        <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+        <PlayerMemoryProvider tenantId={tenantId || undefined}>
+          <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+        </PlayerMemoryProvider>
       </PlayerContextProvider>
     </ExperienceRuntimeProvider>
   );
@@ -334,38 +333,54 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
         mode={experienceMode}
         avatarEnabled={false}
         header={
-          <div className="flex items-center gap-3 border-b border-border/60 px-6 py-2.5 bg-card/50 backdrop-blur-sm">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/player")} className="h-8 w-8 p-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold text-foreground tracking-tight">WAKA XP</h1>
-              <Badge variant="outline" className="text-[9px] border-primary/20 text-primary gap-1 h-5">
-                <Bot className="h-2.5 w-2.5" /> RUNTIME
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3 border-b border-border/60 px-6 py-2.5 bg-card/50 backdrop-blur-sm">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/player")} className="h-8 w-8 p-0">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-bold text-foreground tracking-tight">WAKA XP</h1>
+                <Badge variant="outline" className="text-[9px] border-primary/20 text-primary gap-1 h-5">
+                  <Bot className="h-2.5 w-2.5" /> RUNTIME
+                </Badge>
+              </div>
+              <div className="h-4 w-px bg-border/50" />
+              <Badge className={cn("text-[8px] border-0 font-bold h-5", MODE_COLORS[dataMode])}>
+                {MODE_LABELS[dataMode]}
               </Badge>
+              {activeFlowTitle && (
+                <Badge variant="outline" className="text-[9px] border-accent/20 text-accent h-5">
+                  {activeFlowTitle.length > 24 ? `${activeFlowTitle.slice(0, 24)}…` : activeFlowTitle}
+                </Badge>
+              )}
+              {isThinking && (
+                <Badge variant="outline" className="text-[9px] border-accent/30 text-accent animate-pulse gap-1 h-5">
+                  <Zap className="h-2.5 w-2.5" /> IA…
+                </Badge>
+              )}
+              {activeFlowId && authoring.versionCount > 0 && (
+                <Badge variant="outline" className="text-[9px] border-primary/20 text-primary/70 gap-1 h-5">
+                  v{authoring.versionCount}
+                </Badge>
+              )}
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleNewConversation}
+                  className="h-7 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Recommencer
+                </Button>
+                <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
+              </div>
             </div>
-            <div className="h-4 w-px bg-border/50" />
-            <Badge className={cn("text-[8px] border-0 font-bold h-5", MODE_COLORS[dataMode])}>
-              {MODE_LABELS[dataMode]}
-            </Badge>
-            {activeFlowTitle && (
-              <Badge variant="outline" className="text-[9px] border-accent/20 text-accent h-5">
-                {activeFlowTitle.length > 24 ? `${activeFlowTitle.slice(0, 24)}…` : activeFlowTitle}
-              </Badge>
-            )}
-            {isThinking && (
-              <Badge variant="outline" className="text-[9px] border-accent/30 text-accent animate-pulse gap-1 h-5">
-                <Zap className="h-2.5 w-2.5" /> IA…
-              </Badge>
-            )}
-            {activeFlowId && authoring.versionCount > 0 && (
-              <Badge variant="outline" className="text-[9px] border-primary/20 text-primary/70 gap-1 h-5">
-                v{authoring.versionCount}
-              </Badge>
-            )}
-            <div className="ml-auto">
-              <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
-            </div>
+            <WelcomeBackStrip
+              onResume={(journeyId) => {
+                toast.info(`Reprise du parcours: ${journeyId}`);
+              }}
+            />
           </div>
         }
         phone={

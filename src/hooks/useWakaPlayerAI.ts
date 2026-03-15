@@ -12,6 +12,7 @@ import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import type { DataMode } from "@/components/player/dataMode";
 import { toast } from "@/hooks/use-toast";
 import { usePlayerContext } from "@/contexts/PlayerContextProvider";
+import { usePlayerMemory } from "@/contexts/PlayerMemoryProvider";
 
 interface ConversationMessage {
   role: "user" | "assistant";
@@ -25,6 +26,7 @@ export function useWakaPlayerAI() {
 
   // Read context from PlayerContextProvider (graceful fallback)
   const playerContext = usePlayerContext();
+  const { memory } = usePlayerMemory();
 
   const setFlowContext = useCallback((ctx: string | null) => {
     flowContextRef.current = ctx;
@@ -55,11 +57,25 @@ export function useWakaPlayerAI() {
       // Build enriched context from PlayerContextProvider
       const enrichedContext = buildEnrichedContext(playerContext, flowContextRef.current);
 
+      // Build memory context for ghost injection
+      const memoryContext = memory.isLoaded ? {
+        activeJourney: memory.activeJourney ? {
+          journeyName: memory.activeJourney.journeyName,
+          currentStepLabel: memory.activeJourney.currentStepLabel,
+          currentStepId: memory.activeJourney.currentStepId,
+          completedSteps: memory.activeJourney.completedSteps,
+        } : null,
+        preferredLanguage: memory.userProfile?.language,
+        lastViewedItems: memory.userProfile?.lastViewedItems,
+        totalSessions: memory.userProfile?.totalSessions || 1,
+      } : undefined;
+
       const { data, error } = await supabase.functions.invoke("waka-player-ai", {
         body: {
           messages: historyRef.current,
           dataMode,
           flowContext: enrichedContext || undefined,
+          memoryContext,
         },
       });
 

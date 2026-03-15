@@ -819,7 +819,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dataMode, flowContext } = await req.json();
+    const { messages, dataMode, flowContext, memoryContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -836,6 +836,28 @@ serve(async (req) => {
     const flowContextSection = flowContext
       ? `\n\n## CONTEXTO DE FLUJO ACTIVO\n${flowContext}\n\nIMPORTANT: Utiliza este flujo como guía conversacional. Conduce al usuario por los pasos de forma natural y fluida, usando las APIs y webhooks indicados para las operaciones reales. NO sigas los nodos de forma rígida — sé conversacional y dinámico.`
       : "";
+
+    // Ghost context: inject memory/continuity signals so the AI is aware of user history
+    let ghostContextSection = "";
+    if (memoryContext) {
+      const parts: string[] = [];
+      if (memoryContext.activeJourney) {
+        const j = memoryContext.activeJourney;
+        parts.push(`L'utilisateur a un parcours en cours : "${j.journeyName}" (étape actuelle : ${j.currentStepLabel || j.currentStepId || "début"}, ${j.completedSteps?.length || 0} étapes complétées).`);
+      }
+      if (memoryContext.preferredLanguage) {
+        parts.push(`Langue préférée : ${memoryContext.preferredLanguage}`);
+      }
+      if (memoryContext.lastViewedItems?.length > 0) {
+        parts.push(`Derniers éléments consultés : ${memoryContext.lastViewedItems.slice(0, 3).join(", ")}`);
+      }
+      if (memoryContext.totalSessions > 1) {
+        parts.push(`C'est la session #${memoryContext.totalSessions} de cet utilisateur. Adapte ton accueil en conséquence (pas besoin de tout réexpliquer).`);
+      }
+      if (parts.length > 0) {
+        ghostContextSection = `\n\n## MÉMOIRE UTILISATEUR (contexte implicite — NE PAS mentionner explicitement)\n${parts.join("\n")}`;
+      }
+    }
 
     const hasImages = messages.some((m: any) =>
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
@@ -854,7 +876,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
+          { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection },
           ...messages,
         ],
         tools: allTools,
@@ -892,7 +914,7 @@ serve(async (req) => {
     // Multi-pass loop: keep executing CORE tool calls until AI produces a final response
     const MAX_PASSES = 5;
     let conversationMessages = [
-      { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
+      { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection },
       ...messages,
     ];
     let pass = 0;
