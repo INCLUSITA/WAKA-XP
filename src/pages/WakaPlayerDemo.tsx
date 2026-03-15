@@ -23,6 +23,7 @@ import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
 import { ExperienceRuntimeProvider } from "@/contexts/ExperienceRuntimeContext";
+import { PlayerContextProvider } from "@/contexts/PlayerContextProvider";
 import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
 import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
 import { ExperienceModeSwitcher, type ExperienceMode } from "@/components/player/ExperienceModeSwitcher";
