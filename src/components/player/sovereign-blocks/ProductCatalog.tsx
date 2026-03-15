@@ -2,13 +2,16 @@
  * Sovereign Block: Product Catalog / Carousel
  * WhatsApp Business has catalog BUT limited to 30 products per message.
  * WAKA: unlimited products, horizontal scroll, rich media, inline purchase.
+ *
+ * Variant-aware: adapts layout, density, and richness based on BlockVariantWrapper.
  */
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ShoppingCart, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingCart, Star, Grid3X3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDataMode } from "../dataMode";
+import { useBlockVariant } from "../BlockVariantWrapper";
 
 export interface CatalogProduct {
   id: string;
@@ -30,28 +33,146 @@ interface ProductCatalogProps {
 
 export function ProductCatalog({ products, title, onAddToCart, onProductClick }: ProductCatalogProps) {
   const mode = useDataMode();
+  const { variant } = useBlockVariant();
   const [scrollIdx, setScrollIdx] = useState(0);
 
-  if (mode === "zero-rated") {
+  // Zero-rated: ultra-light list
+  if (mode === "zero-rated" || variant === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(270,20%,88%)] bg-white px-3 py-2 max-w-[90%]">
-        {title && <p className="text-[11px] font-bold text-[hsl(270,40%,35%)] mb-1">{title}</p>}
+      <div className="max-w-[90%]">
+        {title && <p className="waka-block-title mb-1">{title}</p>}
         {products.map((p) => (
           <button
             key={p.id}
             onClick={() => (onProductClick ?? onAddToCart)?.(p)}
-            className="flex items-center justify-between w-full py-1.5 text-left border-t border-[hsl(270,15%,93%)] first:border-0"
+            className="flex items-center justify-between w-full py-1.5 text-left border-t border-border first:border-0"
           >
-            <span className="text-[11px] text-[hsl(220,15%,20%)]">
+            <span className="text-[11px] text-foreground">
               {p.emoji || "•"} {p.name}
             </span>
-            <span className="text-[10px] font-bold text-[hsl(270,45%,40%)]">{p.price}</span>
+            <span className="text-[10px] font-bold text-primary">{p.price}</span>
           </button>
         ))}
       </div>
     );
   }
 
+  // Compact: stacked list, no carousel
+  if (variant === "compact") {
+    return (
+      <div className="max-w-[90%]">
+        {title && <p className="waka-block-title mb-1.5 px-1">{title}</p>}
+        <div className="space-y-1">
+          {products.map((product) => (
+            <button
+              key={product.id}
+              onClick={() => (onProductClick ?? onAddToCart)?.(product)}
+              className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-[hsl(270,15%,97%)] active:bg-[hsl(270,15%,94%)] transition-colors text-left"
+            >
+              <span className="text-2xl shrink-0">{product.emoji || "📦"}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[hsl(220,15%,15%)] truncate">{product.name}</p>
+                {product.rating != null && (
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={cn(
+                          "h-2 w-2",
+                          s <= product.rating! ? "text-[hsl(45,90%,50%)] fill-[hsl(45,90%,50%)]" : "text-[hsl(220,10%,80%)]"
+                        )}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[12px] font-bold text-[hsl(270,45%,40%)]">{product.price}</span>
+                {product.badge && (
+                  <span className="block text-[8px] font-bold text-[hsl(350,70%,50%)]">{product.badge}</span>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded: grid layout with full details
+  if (variant === "expanded") {
+    return (
+      <div>
+        {title && (
+          <div className="flex items-center gap-2 mb-4">
+            <Grid3X3 className="h-4 w-4 text-primary/50" />
+            <p className="waka-block-title">{title}</p>
+            <span className="text-[10px] text-muted-foreground ml-auto">{products.length} produits</span>
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+          {products.map((product) => (
+            <motion.div
+              key={product.id}
+              onClick={() => (onProductClick ?? onAddToCart)?.(product)}
+              className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 hover:shadow-lg transition-all group"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Product image area */}
+              <div
+                className="h-28 flex items-center justify-center relative"
+                style={{
+                  background: "linear-gradient(135deg, hsl(270,20%,96%), hsl(280,18%,94%))",
+                }}
+              >
+                <span className="text-5xl group-hover:scale-110 transition-transform">{product.emoji || "📦"}</span>
+                {product.badge && (
+                  <span className="absolute top-2 right-2 bg-[hsl(350,70%,50%)] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
+              <div className="px-3 py-3">
+                <p className="text-[13px] font-semibold text-foreground leading-tight">{product.name}</p>
+                {product.description && (
+                  <p className="waka-block-subtitle mt-1 line-clamp-2">{product.description}</p>
+                )}
+                {product.rating != null && (
+                  <div className="flex items-center gap-0.5 mt-1.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={cn(
+                          "h-3 w-3",
+                          s <= product.rating! ? "text-[hsl(45,90%,50%)] fill-[hsl(45,90%,50%)]" : "text-[hsl(220,10%,80%)]"
+                        )}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
+                  <span className="text-[15px] font-bold text-primary">{product.price}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddToCart?.(product);
+                    }}
+                    className="h-9 w-9 rounded-full flex items-center justify-center shadow-md"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Standard: carousel (original behavior)
   const canScrollLeft = scrollIdx > 0;
   const canScrollRight = scrollIdx < products.length - 1;
 
@@ -61,7 +182,6 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
         <p className="text-[12px] font-bold text-[hsl(270,40%,35%)] mb-1.5 px-1">{title}</p>
       )}
       <div className="relative">
-        {/* Navigation arrows */}
         {canScrollLeft && (
           <button
             onClick={() => setScrollIdx(Math.max(0, scrollIdx - 1))}
@@ -79,7 +199,6 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
           </button>
         )}
 
-        {/* Carousel track */}
         <div className="overflow-hidden rounded-xl">
           <motion.div
             className="flex gap-2"
@@ -93,7 +212,6 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                 className="flex-shrink-0 w-[70%] rounded-xl border border-[hsl(270,20%,90%)] bg-white overflow-hidden shadow-sm cursor-pointer hover:border-[hsl(270,40%,70%)] hover:shadow-md transition-all"
                 whileTap={mode === "libre" ? { scale: 0.96 } : {}}
               >
-                {/* Product image area */}
                 <div
                   className="h-24 flex items-center justify-center relative"
                   style={{
@@ -144,7 +262,6 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
           </motion.div>
         </div>
 
-        {/* Dot indicators */}
         <div className="flex justify-center gap-1 mt-2">
           {products.map((_, i) => (
             <div
