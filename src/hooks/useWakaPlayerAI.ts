@@ -32,6 +32,19 @@ export function useWakaPlayerAI() {
     flowContextRef.current = ctx;
   }, []);
 
+  const setHistoryFromMessages = useCallback((messages: PlayerMessage[]) => {
+    const normalized = messages
+      .filter((m) => !m.isSystemEvent)
+      .map((m) => ({
+        role: m.direction === "inbound" ? "user" as const : "assistant" as const,
+        content: (m.text || "").trim(),
+      }))
+      .filter((m) => m.content.length > 0)
+      .slice(-40);
+
+    historyRef.current = normalized;
+  }, []);
+
   const sendToAI = useCallback(async (
     userText: string,
     dataMode: DataMode,
@@ -237,9 +250,18 @@ export function useWakaPlayerAI() {
     }
   }, [playerContext]);
 
-  const resetHistory = useCallback(() => { historyRef.current = []; }, []);
+  const resetHistory = useCallback(() => {
+    historyRef.current = [];
+  }, []);
 
-  return { sendToAI, isThinking, resetHistory, setFlowContext, flowContext: flowContextRef.current };
+  return {
+    sendToAI,
+    isThinking,
+    resetHistory,
+    setHistoryFromMessages,
+    setFlowContext,
+    flowContext: flowContextRef.current,
+  };
 }
 
 /**
