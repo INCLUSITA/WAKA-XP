@@ -269,10 +269,13 @@
 
 /*
  * COMPACT: Mobile-first. Big touch targets, tight spacing, flat buttons.
+ * Feels like a native app card.
  */
 .waka-block-compact {
-  @apply text-sm leading-relaxed p-2;
+  @apply text-sm leading-relaxed;
+  padding: 8px;
   border-radius: 8px;
+  background: hsl(var(--card));
 }
 .waka-block-compact > div {
   @apply space-y-1;
@@ -294,7 +297,7 @@
 }
 .waka-block-compact img {
   border-radius: 8px;
-  max-height: 128px;
+  max-height: 100px;
   object-fit: cover;
   width: 100%;
 }
@@ -303,13 +306,35 @@
 }
 .waka-block-compact .waka-block-subtitle {
   @apply text-xs text-muted-foreground;
+  display: none;
+}
+/* Compact: hide decorative elements for density */
+.waka-block-compact [data-decorative],
+.waka-block-compact .waka-block-detail-grid {
+  display: none;
+}
+.waka-block-compact .waka-block-summary {
+  display: flex;
+}
+/* Compact header: single line */
+.waka-block-compact .waka-block-header {
+  padding: 6px 10px;
+}
+.waka-block-compact .waka-block-header p {
+  font-size: 12px;
+}
+/* Compact: stack actions vertically */
+.waka-block-compact .waka-block-actions {
+  @apply flex flex-col gap-1;
 }
 
 /*
  * STANDARD: Balanced desktop. Outlined buttons, moderate spacing, soft shadows.
+ * Default rendering for inline phone blocks.
  */
 .waka-block-standard {
-  @apply text-sm p-3;
+  @apply text-sm;
+  padding: 12px;
   border-radius: 12px;
   box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
 }
@@ -340,60 +365,86 @@
 
 /*
  * EXPANDED: Rich desktop panel. Gradient buttons, generous spacing, glow shadows.
+ * High-fidelity surface for side panel and overlay rendering.
  */
 .waka-block-expanded {
-  @apply text-base p-4;
+  @apply text-base;
+  padding: 20px;
   border-radius: 16px;
+  background: hsl(var(--card));
   box-shadow:
-    0 4px 16px hsl(var(--foreground) / 0.06),
-    0 0 40px -12px hsl(var(--primary) / 0.08);
+    0 4px 24px hsl(var(--foreground) / 0.06),
+    0 0 0 1px hsl(var(--border) / 0.5),
+    0 0 60px -20px hsl(var(--primary) / 0.08);
 }
 .waka-block-expanded > div {
-  @apply space-y-4;
+  @apply space-y-5;
 }
 .waka-block-expanded img {
   border-radius: 12px;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   width: 100%;
+  box-shadow: 0 2px 12px hsl(var(--foreground) / 0.06);
 }
 .waka-block-expanded .waka-block-title {
-  @apply text-lg font-bold;
+  @apply text-lg font-bold tracking-tight;
 }
 .waka-block-expanded .waka-block-subtitle {
-  @apply text-sm text-muted-foreground;
+  @apply text-sm text-muted-foreground leading-relaxed;
+}
+/* Expanded header: more breathing room, gradient accent */
+.waka-block-expanded .waka-block-header {
+  padding: 14px 16px;
+  border-radius: 12px 12px 0 0;
+}
+/* Expanded: detail grids are visible and spacious */
+.waka-block-expanded .waka-block-detail-grid {
+  @apply grid grid-cols-2 gap-3;
+}
+.waka-block-expanded .waka-block-detail-grid > div {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.5);
 }
 .waka-block-expanded button,
 .waka-block-expanded [role="button"] {
   min-height: 44px;
   border-radius: 12px;
-  @apply text-sm font-semibold px-5;
+  @apply text-sm font-semibold px-6;
   background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
   color: hsl(var(--primary-foreground));
   border: none;
-  box-shadow: 0 2px 8px hsl(var(--primary) / 0.18);
+  box-shadow: 0 2px 12px hsl(var(--primary) / 0.18);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .waka-block-expanded button:hover,
 .waka-block-expanded [role="button"]:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px hsl(var(--primary) / 0.22);
+  box-shadow: 0 6px 24px hsl(var(--primary) / 0.22);
 }
 .waka-block-expanded button:active,
 .waka-block-expanded [role="button"]:active {
   transform: translateY(0);
 }
+/* Expanded: actions row with spacing */
+.waka-block-expanded .waka-block-actions {
+  @apply flex gap-2 pt-2;
+}
 
 /*
  * ZERO-RATED: Ultra-light. No images, no shadows, no animations, text-only.
  * Monospace feel. Underlined text links instead of buttons.
+ * Feels like a terminal receipt.
  */
 .waka-block-zero {
-  @apply text-xs leading-snug p-1.5;
+  @apply text-xs leading-snug;
+  padding: 6px 8px;
   border-radius: 4px !important;
   box-shadow: none !important;
   border: 1px solid hsl(var(--border)) !important;
   background: hsl(var(--background)) !important;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
 }
 .waka-block-zero > div {
   @apply space-y-0.5;
@@ -413,14 +464,38 @@
   animation: none !important;
 }
 .waka-block-zero .waka-block-title {
-  @apply text-xs font-bold;
+  @apply text-xs font-bold uppercase tracking-wider;
 }
 .waka-block-zero .waka-block-subtitle {
   display: none;
 }
+/* Zero: hide gradient headers, replace with simple text */
+.waka-block-zero .waka-block-header {
+  background: none !important;
+  padding: 4px 0;
+  border-bottom: 1px dashed hsl(var(--border));
+}
+.waka-block-zero .waka-block-header p,
+.waka-block-zero .waka-block-header span {
+  color: hsl(var(--foreground)) !important;
+  font-size: 11px;
+}
+.waka-block-zero .waka-block-header svg {
+  display: none;
+}
+.waka-block-zero .waka-block-detail-grid {
+  @apply flex flex-col gap-0;
+}
+.waka-block-zero .waka-block-detail-grid > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  background: none;
+  border-bottom: 1px dotted hsl(var(--border) / 0.5);
+}
 .waka-block-zero button,
 .waka-block-zero [role="button"] {
-  min-height: 32px;
+  min-height: 28px;
   border-radius: 2px !important;
   @apply text-xs font-medium;
   background: none !important;
@@ -434,6 +509,9 @@
 .waka-block-zero button:hover,
 .waka-block-zero [role="button"]:hover {
   color: hsl(var(--foreground));
+}
+.waka-block-zero button::before {
+  content: "→ ";
 }
 
 /* ── Variant transition wrapper ── */
@@ -512,4 +590,127 @@
 }
 .waka-panel-enter {
   animation: waka-slide-in-right 0.3s ease-out;
+}
+
+/* ══════════════════════════════════════════════════ */
+/* ── Surface System — Governed Zones               */
+/* ══════════════════════════════════════════════════ */
+
+/* Thread river — vertical narrative connector in expanded mode */
+.waka-thread-river {
+  position: relative;
+}
+.waka-thread-river::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -1px;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--primary) / 0.15) 0%,
+    hsl(var(--accent) / 0.08) 50%,
+    hsl(var(--primary) / 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+/* Slot content surface — the governed panel */
+.waka-slot-content {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 10% 0%, hsl(var(--primary) / 0.02) 0%, transparent 50%),
+    hsl(var(--card));
+}
+.waka-slot-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, hsl(var(--primary) / 0.15), transparent 80%);
+  pointer-events: none;
+}
+
+/* Slot header — governed surface indicator */
+.waka-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  background:
+    linear-gradient(135deg, hsl(var(--muted) / 0.3), transparent),
+    hsl(var(--card));
+}
+.waka-slot-header .waka-slot-icon {
+  height: 28px;
+  width: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--accent) / 0.06));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid hsl(var(--primary) / 0.1);
+}
+
+/* Unbound canvas — full-freedom surface */
+.waka-unbound-canvas {
+  background:
+    radial-gradient(ellipse at 80% 20%, hsl(var(--accent) / 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, hsl(var(--primary) / 0.02) 0%, transparent 50%),
+    hsl(var(--background));
+  position: relative;
+}
+.waka-unbound-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      hsl(var(--border) / 0.06) 39px,
+      hsl(var(--border) / 0.06) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      hsl(var(--border) / 0.06) 39px,
+      hsl(var(--border) / 0.06) 40px
+    );
+  pointer-events: none;
+}
+
+/* Overlay — mode-aware backdrop */
+.waka-overlay-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.waka-overlay-backdrop[data-mode="expanded"] {
+  /* In expanded, overlay only covers the content area, not the thread */
+  background: hsl(var(--foreground) / 0.25);
+}
+.waka-overlay-backdrop[data-mode="unbound"] {
+  background: hsl(var(--foreground) / 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.waka-overlay-backdrop[data-mode="framed"] {
+  background: hsl(var(--foreground) / 0.5);
+}
+
+/* Overlay card */
+.waka-overlay-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 40px hsl(var(--foreground) / 0.12),
+    0 0 0 1px hsl(var(--primary) / 0.05),
+    0 0 80px -20px hsl(var(--primary) / 0.06);
 }

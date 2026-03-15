@@ -2,13 +2,16 @@
  * Sovereign Block: Payment / Checkout
  * WhatsApp: Only pay button (limited regions).
  * WAKA: Full inline checkout with itemized receipt, payment methods, confirmation.
+ *
+ * Variant-aware: compact shows summary, expanded shows full detail.
  */
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, CreditCard, Smartphone, Shield } from "lucide-react";
+import { Check, CreditCard, Smartphone, Shield, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDataMode } from "../dataMode";
+import { useBlockVariant } from "../BlockVariantWrapper";
 
 export interface PaymentItem {
   label: string;
@@ -31,6 +34,7 @@ interface PaymentCardProps {
 
 export function PaymentCard({ payment, onPay }: PaymentCardProps) {
   const mode = useDataMode();
+  const { variant } = useBlockVariant();
   const [selectedMethod, setSelectedMethod] = useState(payment.methods?.[0] || "mobile_money");
   const [paid, setPaid] = useState(false);
 
@@ -60,23 +64,40 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
     );
   }
 
-  if (mode === "zero-rated") {
+  // Zero-rated
+  if (mode === "zero-rated" || variant === "zero-rated") {
     return (
-      <div className="rounded-lg border border-[hsl(160,30%,85%)] bg-white px-3 py-2 max-w-[90%]">
-        <p className="text-[11px] font-bold text-[hsl(220,15%,20%)]">{payment.icon || "💳"} {payment.title}</p>
+      <div className="max-w-[90%]">
+        <p className="waka-block-title">{payment.icon || "💳"} {payment.title}</p>
         {payment.items.map((item, i) => (
-          <div key={i} className="flex justify-between text-[10px] text-[hsl(220,10%,50%)] mt-0.5">
+          <div key={i} className="flex justify-between text-[10px] text-foreground mt-0.5">
             <span>{item.label}</span>
             <span>{item.amount}</span>
           </div>
         ))}
-        <div className="flex justify-between text-[11px] font-bold text-[hsl(160,60%,30%)] mt-1 pt-1 border-t border-[hsl(160,20%,90%)]">
+        <div className="flex justify-between text-[11px] font-bold text-primary mt-1 pt-1 border-t border-border">
           <span>Total</span>
           <span>{payment.total}</span>
         </div>
-        <button onClick={handlePay} className="w-full text-[11px] font-bold text-white bg-[hsl(160,55%,38%)] rounded py-1.5 mt-1.5">
-          Payer
-        </button>
+        <button onClick={handlePay}>Payer</button>
+      </div>
+    );
+  }
+
+  // Compact: condensed summary
+  if (variant === "compact") {
+    return (
+      <div className="rounded-xl border border-[hsl(160,30%,85%)] bg-white overflow-hidden max-w-[90%]">
+        <div className="waka-block-header px-3 py-2 flex items-center gap-2" style={{ background: "linear-gradient(135deg, hsl(160,60%,35%), hsl(175,55%,38%))" }}>
+          <span className="text-base">{payment.icon || "💳"}</span>
+          <p className="text-[11px] font-bold text-white flex-1">{payment.title}</p>
+          <span className="text-[12px] font-bold text-white">{payment.total}</span>
+        </div>
+        <div className="px-3 py-2">
+          <button onClick={handlePay}>
+            Payer {payment.total} {payment.currency || "FCFA"}
+          </button>
+        </div>
       </div>
     );
   }
@@ -91,6 +112,78 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
     card: "Carte bancaire",
   };
 
+  // Expanded: full detail with receipt feel
+  if (variant === "expanded") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-[hsl(160,30%,85%)] bg-white overflow-hidden"
+      >
+        <div
+          className="waka-block-header px-5 py-4 flex items-center gap-3"
+          style={{ background: "linear-gradient(135deg, hsl(160,60%,35%), hsl(175,55%,38%))" }}
+        >
+          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center">
+            <Receipt className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="waka-block-title text-white">{payment.title}</p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <Shield className="h-2.5 w-2.5 text-white/60" />
+              <span className="text-[9px] text-white/60">Paiement sécurisé WAKA</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Itemized receipt */}
+        <div className="px-5 py-4 space-y-2">
+          {payment.items.map((item, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <span className="text-[13px] text-[hsl(220,10%,45%)]">{item.label}</span>
+              <span className="text-[13px] font-medium text-[hsl(220,15%,25%)]">{item.amount}</span>
+            </div>
+          ))}
+          <div className="flex justify-between pt-3 mt-3 border-t-2 border-[hsl(160,20%,88%)]">
+            <span className="text-[14px] font-bold text-[hsl(220,15%,15%)]">Total</span>
+            <span className="text-[16px] font-bold text-[hsl(160,60%,30%)]">{payment.total} {payment.currency || "FCFA"}</span>
+          </div>
+        </div>
+
+        {/* Payment methods */}
+        {payment.methods && payment.methods.length > 1 && (
+          <div className="px-5 py-3 border-t border-[hsl(160,20%,92%)] bg-[hsl(160,20%,98%)]">
+            <p className="text-[11px] text-[hsl(220,10%,55%)] mb-2 font-medium">Mode de paiement</p>
+            <div className="flex gap-2">
+              {payment.methods.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setSelectedMethod(m)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium border-2 transition-all",
+                    selectedMethod === m
+                      ? "border-[hsl(160,55%,40%)] bg-[hsl(160,40%,96%)] text-[hsl(160,50%,28%)] shadow-sm"
+                      : "border-[hsl(220,15%,90%)] text-[hsl(220,10%,50%)]"
+                  )}
+                >
+                  {methodIcons[m] || <CreditCard className="h-3.5 w-3.5" />}
+                  {methodLabels[m] || m}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="px-5 py-4 border-t border-[hsl(160,20%,92%)]">
+          <button onClick={handlePay}>
+            Payer {payment.total} {payment.currency || "FCFA"}
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Standard
   return (
     <motion.div
       initial={mode === "libre" ? { opacity: 0, y: 12 } : { opacity: 0 }}
@@ -98,7 +191,7 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
       className="rounded-xl border border-[hsl(160,30%,85%)] bg-white overflow-hidden shadow-sm max-w-[90%]"
     >
       <div
-        className="px-3 py-2.5 flex items-center gap-2"
+        className="waka-block-header px-3 py-2.5 flex items-center gap-2"
         style={{ background: "linear-gradient(135deg, hsl(160,60%,35%), hsl(175,55%,38%))" }}
       >
         <span className="text-lg">{payment.icon || "💳"}</span>
@@ -111,7 +204,6 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
         </div>
       </div>
 
-      {/* Line items */}
       <div className="px-3 py-2 space-y-1">
         {payment.items.map((item, i) => (
           <div key={i} className="flex justify-between">
@@ -125,7 +217,6 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
         </div>
       </div>
 
-      {/* Payment methods */}
       {payment.methods && payment.methods.length > 1 && (
         <div className="px-3 py-2 border-t border-[hsl(160,20%,92%)]">
           <p className="text-[10px] text-[hsl(220,10%,55%)] mb-1.5">Mode de paiement</p>
