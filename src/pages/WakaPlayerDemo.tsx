@@ -146,15 +146,18 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
+    // Set guard FIRST to prevent re-entry from useEffect
+    loadedFlowIdRef.current = flowId;
+    setActiveFlowId(flowId);
+    // Mark history as loaded so the welcome-message effect won't fire
+    historyLoaded.current = true;
+
     // Immediately reset state to prevent stale data bleed
-    setMessages([...WELCOME_MESSAGES]);
-    setActiveScenarioConfig({});
-    setActiveFlowTitle(null);
     resetHistory();
     setHistoryFromMessages([]);
     setFlowContext(null);
-    loadedFlowIdRef.current = flowId;
-    setActiveFlowId(flowId);
+    setActiveFlowTitle(null);
+    setActiveScenarioConfig({});
 
     const full = await loadFlowFull(flowId);
     // Guard: if user switched again while loading
@@ -174,6 +177,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       setMessages(rehydrated);
       setHistoryFromMessages(rehydrated);
     } else {
+      setMessages([...WELCOME_MESSAGES]);
       setHistoryFromMessages([]);
     }
 
