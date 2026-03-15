@@ -89,6 +89,8 @@ export default function WakaPlayerDemo() {
   const voiceUrl = "https://www.waka.services/agents/voice/test/1a840cd6-80ab-49d5-ae53-2622b6b94bbb?primary_color=%234a148c&accent_color=%23ffc107&transcription=false&auto_mic=true";
   const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [contextTarget, setContextTarget] = useState<ContextTarget>({ type: "canvas" });
+  const [experienceMode, setExperienceMode] = useState<ExperienceMode>("expanded");
   const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Undo/Redo stack
