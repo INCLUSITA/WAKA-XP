@@ -1,7 +1,7 @@
 /**
  * Spatial Presentation Adapter
  * Translates Player outputs into Spatial render decisions.
- * This is the bridge between the Player core and the Spatial renderer.
+ * Extracts real sovereign block payloads for surface rendering.
  */
 
 import type {
@@ -10,18 +10,19 @@ import type {
   SpatialPresentationMode,
   PhonePose,
   SpatialSurfaceType,
+  SpatialSurfacePayload,
 } from "../types/spatial";
 import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 
 /* ── Intent Resolution ── */
 
-/** Resolve intent from a PlayerMessage */
 export function resolveIntent(msg: PlayerMessage): RuntimeIntent {
-  // 1. By sovereign block presence
   if (msg.catalog) return "catalog";
-  if (msg.payment || msg.paymentConfirmation) return "payment_momo";
+  if (msg.paymentConfirmation) return "confirmation";
+  if (msg.payment) return "payment_momo";
   if (msg.momoAccount) return "payment_momo";
   if (msg.creditSimulation || msg.creditContract) return "credit";
+  if (msg.deviceLockConsent) return "form";
   if (msg.inlineForm) return "form";
   if (msg.certificate) return "receipt";
   if (msg.mediaCarousel) return "media";
@@ -30,7 +31,6 @@ export function resolveIntent(msg: PlayerMessage): RuntimeIntent {
   if (msg.training) return "info_panel";
   if (msg.location) return "info_panel";
 
-  // 2. By text heuristic (fallback)
   const t = msg.text.toLowerCase();
   if (/catalog|catalogue|téléphone|produit|bnpl/.test(t)) return "catalog";
   if (/kyc|cni|identit|document|scanner/.test(t)) return "kyc_identity";
@@ -40,6 +40,109 @@ export function resolveIntent(msg: PlayerMessage): RuntimeIntent {
   if (/crédit|simulation|financement/.test(t)) return "credit";
 
   return "unknown";
+}
+
+/* ── Payload Extraction ── */
+
+export function extractSurfacePayload(msg: PlayerMessage, intent: RuntimeIntent): SpatialSurfacePayload {
+  const payload: SpatialSurfacePayload = {};
+
+  switch (intent) {
+    case "catalog":
+      if (msg.catalog) {
+        payload.title = msg.catalog.title || "Catalogue";
+        payload.blockType = "catalog";
+        payload.blockData = msg.catalog;
+      }
+      break;
+
+    case "payment_momo":
+      if (msg.momoAccount) {
+        payload.title = msg.momoAccount.title || "Compte MoMo";
+        payload.blockType = "momo";
+        payload.blockData = msg.momoAccount;
+      } else if (msg.payment) {
+        payload.title = msg.payment.title || "Paiement";
+        payload.blockType = "payment";
+        payload.blockData = msg.payment;
+      }
+      break;
+
+    case "credit":
+      if (msg.creditContract) {
+        payload.title = msg.creditContract.title || "Contrat de crédit";
+        payload.blockType = "creditContract";
+        payload.blockData = msg.creditContract;
+      } else if (msg.creditSimulation) {
+        payload.title = msg.creditSimulation.title || "Simulation de crédit";
+        payload.blockType = "creditSimulation";
+        payload.blockData = msg.creditSimulation;
+      }
+      break;
+
+    case "service_plans":
+      if (msg.servicePlans) {
+        payload.title = msg.servicePlans.title || "Plans disponibles";
+        payload.blockType = "servicePlans";
+        payload.blockData = msg.servicePlans;
+      }
+      break;
+
+    case "info_panel":
+      if (msg.clientStatus) {
+        payload.title = "Statut client";
+        payload.blockType = "clientStatus";
+        payload.blockData = msg.clientStatus;
+      } else if (msg.training) {
+        payload.title = msg.training.title || "Formation";
+        payload.blockType = "training";
+        payload.blockData = msg.training;
+      } else if (msg.location) {
+        payload.title = msg.location.name || "Localisation";
+        payload.blockType = "location";
+        payload.blockData = msg.location;
+      }
+      break;
+
+    case "confirmation":
+      if (msg.paymentConfirmation) {
+        payload.title = msg.paymentConfirmation.title || "Confirmé";
+        payload.subtitle = msg.paymentConfirmation.message;
+        payload.blockType = "paymentConfirmation";
+        payload.blockData = msg.paymentConfirmation;
+      }
+      break;
+
+    case "form":
+      if (msg.deviceLockConsent) {
+        payload.title = msg.deviceLockConsent.title || "Consentement";
+        payload.blockType = "deviceLockConsent";
+        payload.blockData = msg.deviceLockConsent;
+      } else if (msg.inlineForm) {
+        payload.title = msg.inlineForm.title || "Formulaire";
+        payload.blockType = "form";
+        payload.blockData = msg.inlineForm;
+      }
+      break;
+
+    case "receipt":
+      if (msg.certificate) {
+        payload.title = "Certificat";
+        payload.blockType = "certificate";
+        payload.blockData = msg.certificate;
+      }
+      break;
+
+    case "media":
+      if (msg.mediaCarousel) {
+        payload.title = msg.mediaCarousel.title || "Média";
+        payload.blockType = "mediaCarousel";
+        payload.blockData = msg.mediaCarousel;
+      }
+      break;
+  }
+
+  return payload;
 }
 
 /* ── Intent → Spatial Mapping ── */
@@ -67,12 +170,14 @@ const INTENT_MAP: Record<RuntimeIntent, {
 export function resolveSpatialDecision(msg: PlayerMessage): SpatialRenderDecision {
   const intent = resolveIntent(msg);
   const mapping = INTENT_MAP[intent];
+  const payload = extractSurfacePayload(msg, intent);
 
   return {
     intent,
     presentationMode: mapping.mode,
     phonePose: mapping.pose,
     surfaceType: mapping.surface,
+    payload,
     hudText: intent !== "unknown" ? getHudText(intent) : undefined,
     triggerHaptics: intent !== "unknown" && intent !== "info_panel",
     keepChatMessage: true,

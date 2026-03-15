@@ -1,22 +1,37 @@
 /**
  * CatalogGridSurface — Erupted catalog display
- * Premium grid of product cards with spatial depth.
+ * Renders real catalog products from Player sovereign blocks.
  */
 
 import { motion } from "framer-motion";
 import { ShoppingBag, Star, ChevronRight } from "lucide-react";
+import type { SpatialSurfacePayload } from "../types/spatial";
 
-const DEMO_PRODUCTS = [
-  { name: "Samsung Galaxy A15", price: "89 900 FCFA", image: "📱", tag: "BNPL", rating: 4.5 },
-  { name: "Tecno Spark 20", price: "74 900 FCFA", image: "📱", tag: "Promo", rating: 4.2 },
-  { name: "iPhone 14", price: "349 900 FCFA", image: "📱", tag: "Premium", rating: 4.8 },
-  { name: "Xiaomi Redmi 13C", price: "64 900 FCFA", image: "📱", tag: "Populaire", rating: 4.0 },
-  { name: "Infinix Note 40", price: "129 900 FCFA", image: "📱", tag: "Nouveau", rating: 4.3 },
-  { name: "Nokia G42", price: "94 900 FCFA", image: "📱", tag: "5G", rating: 4.1 },
-];
+interface CatalogProduct {
+  id?: string;
+  name: string;
+  price: string;
+  emoji?: string;
+  description?: string;
+  badge?: string;
+  rating?: number;
+  image_url?: string;
+  category?: string;
+}
 
-export function CatalogGridSurface({ payload }: { payload?: any }) {
-  const products = payload?.items || DEMO_PRODUCTS;
+export function CatalogGridSurface({ payload }: { payload?: SpatialSurfacePayload }) {
+  const catalogData = payload?.blockData as { title?: string; products?: CatalogProduct[] } | undefined;
+  const products = catalogData?.products || [];
+  const title = payload?.title || catalogData?.title || "Catalogue";
+
+  if (products.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <ShoppingBag className="w-10 h-10 text-[hsl(210,10%,30%)] mb-3" />
+        <p className="text-sm text-[hsl(210,10%,50%)]">Aucun produit à afficher</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -25,17 +40,15 @@ export function CatalogGridSurface({ payload }: { payload?: any }) {
           <ShoppingBag className="w-5 h-5 text-[hsl(160,84%,45%)]" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-[hsl(210,20%,92%)]">
-            {payload?.title || "Catalogue BNPL"}
-          </h3>
+          <h3 className="text-lg font-semibold text-[hsl(210,20%,92%)]">{title}</h3>
           <p className="text-xs text-[hsl(210,10%,50%)]">{products.length} produits disponibles</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {products.map((p: any, i: number) => (
+        {products.map((p, i) => (
           <motion.div
-            key={i}
+            key={p.id || i}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06, duration: 0.3 }}
@@ -44,23 +57,23 @@ export function CatalogGridSurface({ payload }: { payload?: any }) {
                       hover:border-[hsl(160,60%,40%)]/40 transition-all duration-300
                       hover:shadow-[0_8px_32px_-8px_rgba(100,220,170,0.15)]"
           >
-            {/* Tag */}
-            {p.tag && (
+            {p.badge && (
               <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider
                              px-2 py-0.5 rounded-full bg-[hsl(160,84%,39%)]/20 text-[hsl(160,84%,50%)]">
-                {p.tag}
+                {p.badge}
               </span>
             )}
 
-            {/* Product visual */}
             <div className="flex items-center justify-center h-20 text-4xl
                           bg-gradient-to-b from-[hsl(228,14%,14%)] to-[hsl(228,14%,11%)]">
-              {p.image || "📱"}
+              {p.emoji || "📱"}
             </div>
 
-            {/* Info */}
             <div className="p-3">
               <h4 className="text-xs font-medium text-[hsl(210,20%,85%)] truncate">{p.name}</h4>
+              {p.description && (
+                <p className="text-[10px] text-[hsl(210,10%,45%)] truncate mt-0.5">{p.description}</p>
+              )}
               <div className="flex items-center justify-between mt-1.5">
                 <span className="text-sm font-bold text-[hsl(160,84%,50%)]">{p.price}</span>
                 {p.rating && (
@@ -72,7 +85,6 @@ export function CatalogGridSurface({ payload }: { payload?: any }) {
               </div>
             </div>
 
-            {/* Hover action */}
             <div className="absolute inset-0 bg-[hsl(160,84%,39%)]/0 group-hover:bg-[hsl(160,84%,39%)]/5
                           transition-colors flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100">
               <span className="text-[10px] font-medium text-[hsl(160,84%,50%)] flex items-center gap-1">
