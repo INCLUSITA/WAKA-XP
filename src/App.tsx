@@ -38,6 +38,7 @@ import ContextBoardPage from "./pages/ContextBoardPage";
 import SimulatorShell from "./pages/SimulatorShell";
 import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 import PlayerFlowsPage from "./pages/PlayerFlowsPage";
+import SpatialPage from "./pages/SpatialPage";
 
 import NotFound from "./pages/NotFound";
 
