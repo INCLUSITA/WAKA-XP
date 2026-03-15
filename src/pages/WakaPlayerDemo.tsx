@@ -23,6 +23,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
 import { AvatarOverlay } from "@/components/player/AvatarOverlay";
+import { PlayerContextMenu, type InsertableBlockType } from "@/components/player/PlayerContextMenu";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
