@@ -469,8 +469,10 @@ export function PlayerWorkbench({
               </div>
               {scenarioConfig.intents?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {scenarioConfig.intents.map((intent: string, i: number) => (
-                    <Badge key={i} variant="secondary" className="text-[8px]">{intent}</Badge>
+                  {scenarioConfig.intents.map((intent: any, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-[8px]">
+                      {typeof intent === 'string' ? intent : intent?.intent || JSON.stringify(intent)}
+                    </Badge>
                   ))}
                 </div>
               )}
