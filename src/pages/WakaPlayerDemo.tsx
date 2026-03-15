@@ -110,11 +110,15 @@ export default function WakaPlayerDemo() {
         return;
       }
 
-      setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+      // Always start fresh — don't restore previous conversation
+      setMessages([...WELCOME_MESSAGES]);
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
       setActiveScenarioConfig(full.scenarioConfig || {});
-      toast.success(`Flujo "${full.name}" cargado`);
+      // Reset AI conversation history so it doesn't retain context from previous sessions
+      resetHistory();
+      startNewConversation();
+      toast.success(`Flujo "${full.name}" iniciado desde cero`);
     });
   }, [flowIdParam, loadFlowFull]);
 
