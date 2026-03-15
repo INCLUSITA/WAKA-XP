@@ -333,27 +333,50 @@ export function PlayerWorkbench({
 
           {/* ── API Key / Secret Warning ── */}
           {detectedSecrets.length > 0 && (
-            <div className="rounded-lg border border-[hsl(var(--glow-warn))]/30 bg-[hsl(var(--glow-warn))]/5 p-3 space-y-2">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-[hsl(var(--glow-warn))] shrink-0 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[11px] font-semibold text-foreground">
                     Claves API detectadas
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Este archivo contiene referencias a credenciales que necesitan ser configuradas para que los endpoints funcionen en producción.
+                    Introduce las claves aquí para que los endpoints funcionen, o continúa en modo demo.
                   </p>
                 </div>
               </div>
-              {detectedSecrets.map((s, i) => (
-                <div key={i} className="flex items-center gap-1.5 pl-6">
-                  <Key className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">{s.file}:</span>
-                  <span className="text-[10px] font-mono text-foreground">{s.refs.join(", ")}</span>
+
+              {/* Inline secret inputs */}
+              {detectedSecrets.flatMap(s => s.refs).filter((v, i, a) => a.indexOf(v) === i).map((refName) => (
+                <div key={refName} className="pl-6 space-y-1">
+                  <label className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                    <Key className="h-3 w-3" />
+                    {refName}
+                  </label>
+                  <div className="flex gap-1.5">
+                    <Input
+                      type="password"
+                      placeholder={`Pega tu ${refName} aquí...`}
+                      value={secretValues[refName] || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSecretValues(prev => ({ ...prev, [refName]: val }));
+                      }}
+                      className="h-7 text-[11px] font-mono flex-1"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    {secretValues[refName]?.trim() && (
+                      <div className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
-              {!secretsAcknowledged ? (
-                <div className="flex gap-2 pl-6 pt-1">
+
+              {!allSecretsProvided && !secretsAcknowledged && (
+                <div className="pl-6 pt-1">
                   <Button
                     variant="outline"
                     size="sm"
@@ -362,21 +385,16 @@ export function PlayerWorkbench({
                   >
                     Continuar sin claves (demo)
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-[10px] gap-1"
-                    onClick={() => {
-                      toast.info("Para configurar secretos, ve a Settings → Lovable Cloud → Secrets");
-                    }}
-                  >
-                    <Key className="h-3 w-3" />
-                    Configurar secretos
-                  </Button>
                 </div>
-              ) : (
+              )}
+              {allSecretsProvided && (
+                <p className="text-[9px] text-primary pl-6 italic font-medium">
+                  ✓ Claves configuradas — listas para usar.
+                </p>
+              )}
+              {secretsAcknowledged && !allSecretsProvided && (
                 <p className="text-[9px] text-muted-foreground pl-6 italic">
-                  ✓ Continuando en modo demo — los endpoints con autenticación no funcionarán hasta configurar las claves.
+                  ✓ Modo demo — los endpoints con autenticación no funcionarán.
                 </p>
               )}
             </div>
