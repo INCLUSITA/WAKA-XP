@@ -62,6 +62,20 @@ serve(async (req) => {
       });
     }
 
+    const requiredSecrets = detectRequiredSecretsFromSource(sourceData);
+    const missingSecrets = findMissingSecrets(requiredSecrets, sourceData?.secretValues || {});
+
+    if (missingSecrets.length > 0) {
+      return new Response(JSON.stringify({
+        error: `Faltan credenciales requeridas para este flujo: ${missingSecrets.join(", ")}`,
+        missingSecrets,
+        requiresApiKey: true,
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
