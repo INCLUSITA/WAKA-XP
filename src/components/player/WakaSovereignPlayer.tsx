@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import wakaLogo from "@/assets/waka-salamandra.jpg";
 import { DataModeContext, useDataMode } from "./dataMode";
 import type { DataMode } from "./dataMode";
+import { BlockVariantWrapper } from "./BlockVariantWrapper";
 import {
   ProductCatalog, type CatalogProduct,
   InlineForm, type FormField,
@@ -757,18 +758,18 @@ export function WakaSovereignPlayer({
                         </div>
                       )}
 
-                      {/* ── Sovereign Blocks ── */}
+                      {/* ── Sovereign Blocks (wrapped with BlockVariantWrapper) ── */}
                       {msg.catalog && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="catalog" className="mt-1.5">
                           <ProductCatalog
                             title={msg.catalog.title}
                             products={msg.catalog.products}
                             onAddToCart={onAddToCart}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.inlineForm && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="inlineForm" className="mt-1.5">
                           <InlineForm
                             title={msg.inlineForm.title}
                             fields={msg.inlineForm.fields}
@@ -776,103 +777,103 @@ export function WakaSovereignPlayer({
                             icon={msg.inlineForm.icon}
                             onSubmit={onFormSubmit}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.location && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="location" className="mt-1.5">
                           <LocationCard location={msg.location} />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.payment && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="payment" className="mt-1.5">
                           <PaymentCard payment={msg.payment} onPay={onPayment} />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.rating && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="rating" className="mt-1.5">
                           <RatingWidget
                             title={msg.rating.title}
                             type={msg.rating.type}
                             onRate={onRate}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.certificate && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="certificate" className="mt-1.5">
                           <CertificateCard certificate={msg.certificate} />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.training && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="training" className="mt-1.5">
                           <TrainingProgress
                             title={msg.training.title}
                             modules={msg.training.modules}
                             overallProgress={msg.training.overallProgress}
                             onModuleClick={onModuleClick}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.mediaCarousel && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="mediaCarousel" className="mt-1.5">
                           <MediaCarousel
                             title={msg.mediaCarousel.title}
                             slides={msg.mediaCarousel.slides}
                             onSlideAction={onSlideAction}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.creditSimulation && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="creditSimulation" className="mt-1.5">
                           <CreditSimulationCard
                             data={msg.creditSimulation}
                             onAction={onCreditAction}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.clientStatus && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="clientStatus" className="mt-1.5">
                           <ClientStatusCard data={msg.clientStatus} />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.momoAccount && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="momoAccount" className="mt-1.5">
                           <MoMoAccountCard
                             data={msg.momoAccount}
                             onAction={onMomoAction}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.servicePlans && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="servicePlans" className="mt-1.5">
                           <ServicePlansCard
                             data={msg.servicePlans}
                             onSelectPlan={onSelectPlan}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.paymentConfirmation && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="paymentConfirmation" className="mt-1.5">
                           <PaymentConfirmationCard
                             data={msg.paymentConfirmation}
                             onAction={onPaymentConfirmAction}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.creditContract && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="creditContract" className="mt-1.5">
                           <CreditContractCard
                             data={msg.creditContract}
                             onAction={onCreditContractAction}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                       {msg.deviceLockConsent && (
-                        <div className="mt-1.5">
+                        <BlockVariantWrapper blockType="deviceLockConsent" className="mt-1.5">
                           <DeviceLockConsentCard
                             data={msg.deviceLockConsent}
                             onConsent={onDeviceLockConsent}
                           />
-                        </div>
+                        </BlockVariantWrapper>
                       )}
                     </BubbleWrapper>
                   );
