@@ -100,9 +100,9 @@ export function PlayerWorkbench({
   }, [scenarioConfig]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /** Detect API key references in uploaded assets */
+  /** Detect API key references in uploaded assets + stored config */
   const detectedSecrets = useMemo(() => {
-    const allSecrets: { file: string; refs: string[] }[] = [];
+    const allSecrets: { file: string; refs: string[] }[] = [...storedConfigSecrets];
     for (const asset of assets) {
       if (asset.content) {
         const refs = detectSecretReferences(asset.content);
@@ -110,7 +110,7 @@ export function PlayerWorkbench({
       }
     }
     return allSecrets;
-  }, [assets]);
+  }, [assets, storedConfigSecrets]);
 
   const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged;
 
