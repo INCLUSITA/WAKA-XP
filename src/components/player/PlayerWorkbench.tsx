@@ -305,10 +305,61 @@ export function PlayerWorkbench({
             )}
           </div>
 
+          {/* ── API Key / Secret Warning ── */}
+          {detectedSecrets.length > 0 && (
+            <div className="rounded-lg border border-[hsl(var(--glow-warn))]/30 bg-[hsl(var(--glow-warn))]/5 p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-[hsl(var(--glow-warn))] shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground">
+                    Claves API detectadas
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Este archivo contiene referencias a credenciales que necesitan ser configuradas para que los endpoints funcionen en producción.
+                  </p>
+                </div>
+              </div>
+              {detectedSecrets.map((s, i) => (
+                <div key={i} className="flex items-center gap-1.5 pl-6">
+                  <Key className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{s.file}:</span>
+                  <span className="text-[10px] font-mono text-foreground">{s.refs.join(", ")}</span>
+                </div>
+              ))}
+              {!secretsAcknowledged ? (
+                <div className="flex gap-2 pl-6 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px]"
+                    onClick={() => setSecretsAcknowledged(true)}
+                  >
+                    Continuar sin claves (demo)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px] gap-1"
+                    onClick={() => {
+                      toast.info("Para configurar secretos, ve a Settings → Lovable Cloud → Secrets");
+                    }}
+                  >
+                    <Key className="h-3 w-3" />
+                    Configurar secretos
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[9px] text-muted-foreground pl-6 italic">
+                  ✓ Continuando en modo demo — los endpoints con autenticación no funcionarán hasta configurar las claves.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* ── Submit ── */}
           <Button
             onClick={handleSubmit}
-            disabled={isProcessing || (!instructions.trim() && assets.length === 0)}
+            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasUnacknowledgedSecrets}
             className="w-full gap-2"
           >
             {isProcessing ? (
