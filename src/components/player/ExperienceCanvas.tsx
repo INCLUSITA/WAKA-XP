@@ -2,24 +2,18 @@
  * ExperienceCanvas
  * ────────────────
  * The multi-zone layout for the Adaptive Experience Runtime.
- * 
- * Zones:
- *   - phone (center): The narrative base — always present
- *   - side-panel (right of phone): Expanded blocks on desktop
- *   - overlay: Floating content anchored to the phone
- *   - modal: Centered dialog
- *   - fullscreen: Takes over everything
- * 
- * On mobile, everything collapses into the phone or bottom-sheet.
- * On desktop, blocks can "escape" the phone into richer presentations.
+ * Supports three visual modes:
+ *   - framed:   Phone is the only container, everything inside
+ *   - expanded: Phone visible + blocks escape to side panel/overlay/modal
+ *   - unbound:  Phone shrinks to narrative reference, canvas dominates
  */
 
 import { type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Maximize2, Minimize2 } from "lucide-react";
+import { X, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
-import type { BlockZone } from "@/types/experienceRuntime";
+import type { ExperienceMode } from "./ExperienceModeSwitcher";
 
 interface ExperienceCanvasProps {
   /** The phone simulator component */
@@ -38,6 +32,8 @@ interface ExperienceCanvasProps {
   fullscreenContent?: ReactNode;
   /** Page header */
   header?: ReactNode;
+  /** Current experience mode */
+  mode?: ExperienceMode;
   className?: string;
 }
 
@@ -50,34 +46,73 @@ export function ExperienceCanvas({
   modalContent,
   fullscreenContent,
   header,
+  mode = "expanded",
   className,
 }: ExperienceCanvasProps) {
   const { isDesktop, isMobile, expandedBlock, collapseBlock } = useExperienceRuntime();
 
-  const showSidePanel = isDesktop && (sidePanelContent || expandedBlock?.zone === "side-panel");
+  const effectiveMode = isMobile ? "framed" : mode;
+
+  const showSidePanel =
+    effectiveMode !== "framed" &&
+    isDesktop &&
+    (sidePanelContent || expandedBlock?.zone === "side-panel");
   const showOverlay = overlayContent || expandedBlock?.zone === "overlay";
   const showModal = modalContent || expandedBlock?.zone === "modal";
   const showFullscreen = fullscreenContent || expandedBlock?.zone === "fullscreen";
 
   return (
     <div className={cn("flex h-full flex-col bg-background overflow-hidden", className)}>
-      {/* Header */}
       {header}
 
-      {/* Main canvas */}
       <div className="flex flex-1 min-h-0 relative">
-        {/* ─── Phone Zone (always present) ─── */}
-        <div className={cn(
-          "flex flex-col",
-          // On mobile: full width. On desktop: flexible but centered
-          isMobile ? "flex-1" : "flex-1"
-        )}>
+        {/* ─── Phone Zone ─── */}
+        <div
+          className={cn(
+            "flex flex-col transition-all duration-300 ease-out",
+            effectiveMode === "framed" && "flex-1",
+            effectiveMode === "expanded" && "flex-1",
+            effectiveMode === "unbound" && "w-[260px] shrink-0 border-r border-border"
+          )}
+        >
           {phone}
         </div>
 
-        {/* ─── Side Panel Zone (desktop only) ─── */}
+        {/* ─── Unbound Canvas Zone ── (only in unbound mode) ─── */}
+        {effectiveMode === "unbound" && (
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 overflow-auto p-6">
+              {sidePanelContent ? (
+                <div className="max-w-[720px] mx-auto space-y-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[11px] font-semibold text-foreground uppercase tracking-wider">
+                      {expandedBlock?.blockType ? getBlockLabel(expandedBlock.blockType) : "Experience Canvas"}
+                    </span>
+                  </div>
+                  {sidePanelContent}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-3 max-w-[300px]">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                      <span className="text-2xl">🎨</span>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">Modo Unbound</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Los bloques soberanos se renderizan aquí en alta fidelidad.
+                      Interactúa con el player para generar contenido expandido.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Side Panel Zone (expanded mode, desktop only) ─── */}
         <AnimatePresence>
-          {showSidePanel && (
+          {showSidePanel && effectiveMode === "expanded" && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 420, opacity: 1 }}
@@ -86,7 +121,6 @@ export function ExperienceCanvas({
               className="border-l border-border bg-card overflow-hidden shrink-0"
             >
               <div className="h-full flex flex-col">
-                {/* Side panel header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -101,7 +135,6 @@ export function ExperienceCanvas({
                     <Minimize2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
-                {/* Side panel content */}
                 <div className="flex-1 overflow-y-auto p-4">
                   {sidePanelContent}
                 </div>
@@ -111,10 +144,10 @@ export function ExperienceCanvas({
         </AnimatePresence>
 
         {/* ─── Builder Toolbar ─── */}
-        {toolbar}
+        {effectiveMode !== "unbound" && toolbar}
 
         {/* ─── Workbench (rightmost) ─── */}
-        {workbench}
+        {effectiveMode !== "unbound" && workbench}
       </div>
 
       {/* ─── Overlay Zone ─── */}
@@ -125,9 +158,7 @@ export function ExperienceCanvas({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) collapseBlock();
-            }}
+            onClick={(e) => { if (e.target === e.currentTarget) collapseBlock(); }}
           >
             <motion.div
               initial={{ y: 20 }}
@@ -138,10 +169,7 @@ export function ExperienceCanvas({
                 <span className="text-sm font-semibold text-foreground">
                   {expandedBlock?.blockType ? getBlockLabel(expandedBlock.blockType) : "Detalle"}
                 </span>
-                <button
-                  onClick={collapseBlock}
-                  className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-accent transition-colors"
-                >
+                <button onClick={collapseBlock} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-accent transition-colors">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
@@ -161,9 +189,7 @@ export function ExperienceCanvas({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) collapseBlock();
-            }}
+            onClick={(e) => { if (e.target === e.currentTarget) collapseBlock(); }}
           >
             <motion.div
               initial={{ scale: 0.9, y: 30 }}
@@ -175,10 +201,7 @@ export function ExperienceCanvas({
                 <span className="text-sm font-semibold text-foreground">
                   {expandedBlock?.blockType ? getBlockLabel(expandedBlock.blockType) : "Acción requerida"}
                 </span>
-                <button
-                  onClick={collapseBlock}
-                  className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-accent transition-colors"
-                >
+                <button onClick={collapseBlock} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-accent transition-colors">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
@@ -203,10 +226,7 @@ export function ExperienceCanvas({
               <span className="text-sm font-semibold text-foreground">
                 {expandedBlock?.blockType ? getBlockLabel(expandedBlock.blockType) : "Experiencia inmersiva"}
               </span>
-              <button
-                onClick={collapseBlock}
-                className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-accent transition-colors"
-              >
+              <button onClick={collapseBlock} className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-accent transition-colors">
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
@@ -220,13 +240,13 @@ export function ExperienceCanvas({
   );
 }
 
-/* ── Expand Button ─ Shown on blocks that can expand on desktop ── */
+/* ── Block Expand Button ── */
 
 export function BlockExpandButton({
   blockType,
   messageId,
   data,
-  className,
+  className: cls,
 }: {
   blockType: string;
   messageId: string;
@@ -234,7 +254,6 @@ export function BlockExpandButton({
   className?: string;
 }) {
   const { shouldExpand, expandBlock, isDesktop } = useExperienceRuntime();
-
   if (!isDesktop || !shouldExpand(blockType)) return null;
 
   return (
@@ -242,11 +261,11 @@ export function BlockExpandButton({
       onClick={() => expandBlock(messageId, blockType, data)}
       className={cn(
         "h-5 w-5 rounded-md flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors",
-        className
+        cls
       )}
       title="Expandir en panel lateral"
     >
-      <Maximize2 className="h-3 w-3 text-primary" />
+      <Minimize2 className="h-3 w-3 text-primary rotate-180" />
     </button>
   );
 }
