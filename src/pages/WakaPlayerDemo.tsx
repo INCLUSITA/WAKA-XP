@@ -146,13 +146,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
-    // Set guard FIRST to prevent re-entry from useEffect
     loadedFlowIdRef.current = flowId;
     setActiveFlowId(flowId);
-    // Mark history as loaded so the welcome-message effect won't fire
     historyLoaded.current = true;
 
-    // Immediately reset state to prevent stale data bleed
     resetHistory();
     setHistoryFromMessages([]);
     setFlowContext(null);
@@ -160,7 +157,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     setActiveScenarioConfig({});
 
     const full = await loadFlowFull(flowId);
-    // Guard: if user switched again while loading
     if (loadedFlowIdRef.current !== flowId) return;
 
     if (!full) {
@@ -186,7 +182,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     const cfg = full.scenarioConfig || {};
     setActiveScenarioConfig(cfg);
 
-    // Feed stored context into AI engine
     if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
     else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
     else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
@@ -324,13 +319,13 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback(async (flowId: string) => {
+  const handleLoadFlow = useCallback((flowId: string) => {
     setShowFlowsPanel(false);
-    // Call loader directly — avoids navigate → useEffect race condition
-    await loadFlowByIdRef.current(flowId);
-    // Update URL silently so bookmarking/refresh works (don't use navigate to avoid re-render loops)
-    window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
-  }, []);
+    // Reset guard so the URL-driven effect will trigger the load
+    loadedFlowIdRef.current = null;
+    // Use React Router navigate to update searchParams → triggers URL effect
+    navigate(`/player/live?flow=${flowId}`, { replace: true });
+  }, [navigate]);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
