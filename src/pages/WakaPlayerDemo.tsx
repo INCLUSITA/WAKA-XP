@@ -70,7 +70,7 @@ export default function WakaPlayerDemo() {
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
-  const { saveFlow, loadFlowFull } = useSavedPlayerFlows();
+  const { saveFlow, loadFlowFull, updateFlowConversation } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showFlowsPanel, setShowFlowsPanel] = useState(false);
