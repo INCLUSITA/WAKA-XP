@@ -221,37 +221,40 @@ async function generateWithAI(
     contextParts.push(`## Assets visuales subidos\n${sourceData.assets.map((a: any) => `- ${a.name} (${a.type})`).join("\n")}\nUsa estos assets como referencia para personalizar la experiencia visual.`);
   }
 
-  const systemPrompt = `Eres un generador de flujos conversacionales para WAKA XP, una plataforma de experiencias conversacionales omnicanal para Moov Africa en Burkina Faso.
+  const systemPrompt = `Eres un generador de flujos conversacionales para WAKA XP.
 
-Tu tarea es generar DOS cosas basándote en las fuentes proporcionadas:
+Tu tarea es generar DOS cosas basándote EXCLUSIVAMENTE en las fuentes proporcionadas:
 
-1. **conversation_snapshot**: Un array de mensajes que forman una conversación demo completa (5-15 mensajes). Cada mensaje tiene:
-   - id: string único (ej: "msg-1", "msg-2")
-   - text: contenido del mensaje (soporta markdown)
-   - direction: "inbound" (usuario) o "outbound" (bot)
-   - timestamp: ISO string
-   - source: "WAKA NEXUS · IA" para outbound
-   - quickReplies: array de strings (botones rápidos, para outbound)
-   - isSystemEvent: true para mensajes de sistema
-   - menu: array de {label, icon, description} para menús
-   - Otros bloques soberanos si aplica
+1. **conversation_snapshot**: Un array de mensajes demo (5-15 mensajes).
+2. **scenario_config**: Un objeto con systemPrompt, endpoints, intents, persona y tags.
 
-2. **scenario_config**: Un objeto con:
-   - systemPrompt: string — instrucciones para el motor de IA al continuar la conversación
-   - endpoints: array de {name, url, method, description} si el YAML/JSON define APIs
-   - intents: array de strings — intenciones principales del flujo
-   - persona: {name, tone, language} — personalidad del agente
-   - tags: array de strings — etiquetas del flujo
+REGLAS CRÍTICAS (OBLIGATORIAS):
+- No inventes marca, país, industria, nombres de clientes, IDs, ni contexto de negocio.
+- Si algo NO aparece en las fuentes, NO lo agregues.
+- Prohibido meter ejemplos por defecto como "Moov Africa", "Burkina Faso", "Moussa Traoré" o "J573554" salvo que aparezcan explícitamente en las fuentes.
+- No incluyas secretos ni credenciales (API keys, tokens, bearer, passwords).
+- Si detectas secretos en las fuentes, reemplázalos por "[REDACTED]" en la salida.
+- Usa el idioma dominante de las fuentes (si es mixto, prioriza el idioma del usuario en las instrucciones).
 
-El primer mensaje siempre debe ser un system event con "⚡ WAKA NEXUS · Canal souverain".
-El segundo mensaje debe ser el mensaje de bienvenida del bot.
-Incluye 2-3 intercambios de ejemplo realistas.
-Usa emojis apropiados y francés como idioma principal.
+FORMATO de conversation_snapshot por mensaje:
+- id: string único (ej: "msg-1")
+- text: contenido (markdown permitido)
+- direction: "inbound" o "outbound"
+- timestamp: ISO string
+- source: "WAKA NEXUS · IA" en mensajes outbound (opcional en inbound)
+- quickReplies: array de strings (solo si realmente aporta)
+- isSystemEvent: true solo para evento de sistema
+- menu: opcional [{ label, icon, description }]
 
-RESPONDE EXCLUSIVAMENTE con un JSON válido con esta estructura:
+REGLAS de estructura:
+- El primer mensaje debe ser system event con "⚡ WAKA NEXUS · Canal souverain".
+- El segundo mensaje debe ser bienvenida del bot alineada 100% al contexto de la fuente.
+- Incluye 2-3 intercambios realistas coherentes con el YAML/JSON/texto recibido.
+
+RESPONDE EXCLUSIVAMENTE con JSON válido:
 {
-  "conversation": [...mensajes...],
-  "config": { systemPrompt, endpoints, intents, persona, tags }
+  "conversation": [...],
+  "config": { "systemPrompt": "...", "endpoints": [], "intents": [], "persona": {}, "tags": [] }
 }`;
 
   const userPrompt = `Nombre del flujo: "${flowName}"
