@@ -23,6 +23,9 @@ export function useWakaPlayerAI() {
   const historyRef = useRef<ConversationMessage[]>([]);
   const flowContextRef = useRef<string | null>(null);
 
+  // Read context from PlayerContextProvider (graceful fallback)
+  const playerContext = usePlayerContext();
+
   const setFlowContext = useCallback((ctx: string | null) => {
     flowContextRef.current = ctx;
   }, []);
