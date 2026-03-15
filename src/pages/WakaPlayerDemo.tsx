@@ -20,14 +20,16 @@ import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
-import { ExperienceRuntimeProvider, useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
+import { ExperienceRuntimeProvider } from "@/contexts/ExperienceRuntimeContext";
 import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
 import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
+import { ExperienceModeSwitcher, type ExperienceMode } from "@/components/player/ExperienceModeSwitcher";
+import { UniversalContextMenu, type ContextTarget } from "@/components/player/UniversalContextMenu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
 import { AvatarOverlay } from "@/components/player/AvatarOverlay";
-import { PlayerContextMenu, type InsertableBlockType } from "@/components/player/PlayerContextMenu";
+import type { InsertableBlockType } from "@/components/player/PlayerContextMenu";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -87,6 +89,8 @@ export default function WakaPlayerDemo() {
   const voiceUrl = "https://www.waka.services/agents/voice/test/1a840cd6-80ab-49d5-ae53-2622b6b94bbb?primary_color=%234a148c&accent_color=%23ffc107&transcription=false&auto_mic=true";
   const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [contextTarget, setContextTarget] = useState<ContextTarget>({ type: "canvas" });
+  const [experienceMode, setExperienceMode] = useState<ExperienceMode>("expanded");
   const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Undo/Redo stack
@@ -600,9 +604,62 @@ export default function WakaPlayerDemo() {
     toast.success("Mensaje editado");
   }, [pushUndo, triggerAutoSave, messages.length]);
 
+  // ── Message manipulation for context menu ──
+  const handleDuplicateMessage = useCallback((msgId: string) => {
+    pushUndo();
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === msgId);
+      if (idx === -1) return prev;
+      const clone = { ...prev[idx], id: `dup-${Date.now()}`, timestamp: new Date() };
+      const next = [...prev];
+      next.splice(idx + 1, 0, clone);
+      return next;
+    });
+    triggerAutoSave();
+    toast.success("Mensaje duplicado");
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleDeleteMessage = useCallback((msgId: string) => {
+    pushUndo();
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    triggerAutoSave();
+    toast.success("Mensaje eliminado");
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleMoveMessage = useCallback((msgId: string, dir: "up" | "down") => {
+    pushUndo();
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === msgId);
+      if (idx === -1) return prev;
+      const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+      return next;
+    });
+    triggerAutoSave();
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleAIImprove = useCallback(async (msgId: string) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg?.text) return;
+    toast.info("Mejorando con IA…");
+    const response = await sendToAI(
+      `Améliore ce message pour qu'il soit plus clair, professionnel et engageant. Garde le même sens. Message original: "${msg.text}"`,
+      dataMode
+    );
+    if (response?.text) {
+      pushUndo();
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, text: response.text } : m));
+      triggerAutoSave();
+      toast.success("Mensaje mejorado con IA");
+    }
+  }, [messages, sendToAI, dataMode, pushUndo, triggerAutoSave]);
+
   // ── Block insertion from context menu ──
   const handleInsertBlock = useCallback((type: InsertableBlockType) => {
     setContextMenuPos(null);
+    setContextTarget({ type: "canvas" });
 
     if (type === "voiceCall") {
       setShowVoiceCall(true);
@@ -770,6 +827,7 @@ export default function WakaPlayerDemo() {
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
       <ExperienceCanvas
+        mode={experienceMode}
         header={
           <div className="flex items-center gap-3 border-b border-border px-6 py-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
@@ -799,11 +857,22 @@ export default function WakaPlayerDemo() {
                 v{versionCount} guardado
               </Badge>
             )}
+            <div className="ml-auto">
+              <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
+            </div>
           </div>
         }
         phone={
-          <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
-            <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
+          <div className={cn(
+            "flex flex-1 items-center justify-center overflow-hidden bg-muted/30",
+            experienceMode === "unbound" && "items-start pt-4"
+          )}>
+            <div className={cn(
+              "relative transition-all duration-300",
+              experienceMode === "unbound"
+                ? "w-[240px] h-[520px]"
+                : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]"
+            )}>
               <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
               <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
                 <div
@@ -853,7 +922,10 @@ export default function WakaPlayerDemo() {
                     onDeviceLockConsent={handleDeviceLockConsent}
                     onVoiceCall={() => setShowVoiceCall(true)}
                     onAvatarCall={() => setShowAvatar(true)}
-                    onContextMenu={(x, y) => setContextMenuPos({ x, y })}
+                    onContextMenu={(x, y) => {
+                      setContextMenuPos({ x, y });
+                      setContextTarget({ type: "canvas" });
+                    }}
                     onMessageEdit={handleMessageEdit}
                   />
                 </div>
@@ -958,13 +1030,28 @@ export default function WakaPlayerDemo() {
         activeFlowName={activeFlowContextName}
       />
 
-      {/* Right-click context menu */}
+      {/* Universal context menu */}
       {contextMenuPos && (
-        <PlayerContextMenu
+        <UniversalContextMenu
           x={contextMenuPos.x}
           y={contextMenuPos.y}
-          onInsert={handleInsertBlock}
+          target={contextTarget}
           onClose={() => setContextMenuPos(null)}
+          onInsertBlock={handleInsertBlock}
+          onEditMessage={(id) => {
+            // Trigger inline edit by simulating double-click behavior
+            const msg = messages.find((m) => m.id === id);
+            if (msg?.text) {
+              const newText = msg.text; // Edit handled in-place via WakaSovereignPlayer
+              handleMessageEdit(id, newText);
+            }
+          }}
+          onDuplicateMessage={handleDuplicateMessage}
+          onDeleteMessage={handleDeleteMessage}
+          onMoveUp={(id) => handleMoveMessage(id, "up")}
+          onMoveDown={(id) => handleMoveMessage(id, "down")}
+          onAIImprove={handleAIImprove}
+          onUndo={handleUndo}
         />
       )}
     </ExperienceRuntimeProvider>
