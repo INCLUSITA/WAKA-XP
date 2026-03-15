@@ -116,6 +116,8 @@ interface WakaSovereignPlayerProps {
   onVoiceCall?: () => void;
   onAvatarCall?: () => void;
   onContextMenu?: (x: number, y: number) => void;
+  /** Called when a message is edited via double-click */
+  onMessageEdit?: (msgId: string, newText: string) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
