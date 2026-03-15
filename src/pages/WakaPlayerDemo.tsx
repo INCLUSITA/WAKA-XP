@@ -856,6 +856,9 @@ export default function WakaPlayerDemo() {
                 v{versionCount} guardado
               </Badge>
             )}
+            <div className="ml-auto">
+              <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
+            </div>
           </div>
         }
         phone={
