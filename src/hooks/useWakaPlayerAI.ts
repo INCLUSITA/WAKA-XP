@@ -57,11 +57,25 @@ export function useWakaPlayerAI() {
       // Build enriched context from PlayerContextProvider
       const enrichedContext = buildEnrichedContext(playerContext, flowContextRef.current);
 
+      // Build memory context for ghost injection
+      const memoryContext = memory.isLoaded ? {
+        activeJourney: memory.activeJourney ? {
+          journeyName: memory.activeJourney.journeyName,
+          currentStepLabel: memory.activeJourney.currentStepLabel,
+          currentStepId: memory.activeJourney.currentStepId,
+          completedSteps: memory.activeJourney.completedSteps,
+        } : null,
+        preferredLanguage: memory.userProfile?.language,
+        lastViewedItems: memory.userProfile?.lastViewedItems,
+        totalSessions: memory.userProfile?.totalSessions || 1,
+      } : undefined;
+
       const { data, error } = await supabase.functions.invoke("waka-player-ai", {
         body: {
           messages: historyRef.current,
           dataMode,
           flowContext: enrichedContext || undefined,
+          memoryContext,
         },
       });
 
