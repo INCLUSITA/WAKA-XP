@@ -286,14 +286,22 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
         }
         phone={
           <div className={cn(
-            "flex flex-1 items-center justify-center overflow-hidden bg-muted/30",
-            experienceMode === "unbound" && "items-start pt-4"
+            "flex flex-1 items-center justify-center overflow-hidden",
+            experienceMode === "unbound" ? "items-start pt-6 bg-muted/10" : "bg-muted/30",
           )}>
             <div className={cn(
-              "relative transition-all duration-300",
-              experienceMode === "unbound" ? "w-[240px] h-[520px]" : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]"
+              "relative transition-all duration-500 ease-out",
+              experienceMode === "unbound"
+                ? "w-[250px] h-[540px] scale-[0.92] opacity-90"
+                : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]",
+              experienceMode === "expanded" && "phone-anchor-glow",
             )}>
-              <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
+              <div className={cn(
+                "absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)]",
+                experienceMode === "unbound"
+                  ? "shadow-[0_0_30px_rgba(0,0,0,0.08)]"
+                  : "shadow-[0_0_50px_rgba(0,0,0,0.12)]"
+              )} />
               <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
                 <div
                   className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
