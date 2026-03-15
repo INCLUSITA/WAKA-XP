@@ -32,7 +32,7 @@ const SECRET_PATTERNS = [
   /access[_-]?token/i,
   /private[_-]?key/i,
   /password/i,
-  /\btoken\b.*:\s*["'][A-Za-z0-9]/i,
+  /\btoken\b\s*:\s*["'][A-Za-z0-9]/i,
   /x-api-key/i,
 ];
 
