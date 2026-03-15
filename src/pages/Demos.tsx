@@ -98,9 +98,13 @@ export default function Demos() {
 
   const handleSaveDemo = async () => {
     if (!pendingFile) return;
-    const id = generateDemoId(pendingFile.name);
+    const baseId = generateDemoId(pendingFile.name);
+    const uniqueId = uploadedDemos.some((d) => d.id === baseId)
+      ? `${baseId}-${Date.now().toString(36)}`
+      : baseId;
+
     const demo: UploadedDemo = {
-      id, title: formTitle || pendingFile.name, description: formDesc || "Demo subido manualmente",
+      id: uniqueId, title: formTitle || pendingFile.name, description: formDesc || "Demo subido manualmente",
       icon: formIcon, color: formColor,
       tags: formTags ? formTags.split(",").map((t) => t.trim()).filter(Boolean) : ["Custom"],
       jsxSource: pendingFile.source, uploadedAt: new Date().toISOString(), status: "stable",

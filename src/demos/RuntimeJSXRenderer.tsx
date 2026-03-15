@@ -42,23 +42,25 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       // Transpile JSX → JS
       // Strip import/export before transpiling to avoid module issues
       let preProcessed = jsxSource;
-      // Strip all import statements (single-line and multi-line)
-      preProcessed = preProcessed.replace(/^import\s+[\s\S]*?from\s+['"].*?['"];?\s*$/gm, "");
-      preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
-      // Strip multi-line imports that span across lines (e.g. import {\n  Foo,\n  Bar\n} from "x")
-      preProcessed = preProcessed.replace(/import\s*\{[^}]*\}\s*from\s*['"][^'"]*['"];?/g, "");
-      // Strip remaining import type statements
-      preProcessed = preProcessed.replace(/import\s+type\s+[\s\S]*?from\s+['"].*?['"];?/g, "");
 
-      // Capture the default export component name BEFORE stripping
+      // Strip ES module syntax (single-line + multi-line imports)
+      preProcessed = preProcessed
+        .replace(/^\s*import\s+type[\s\S]*?from\s+['"][^'"]+['"]\s*;?\s*$/gm, "")
+        .replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]+['"]\s*;?\s*$/gm, "")
+        .replace(/^\s*import\s+['"][^'"]+['"]\s*;?\s*$/gm, "")
+        .replace(/^\s*import[^\n]*$/gm, "");
+
+      // Capture default export component name BEFORE stripping exports
       let componentName = "App";
-      const exportMatch = preProcessed.match(/export\s+default\s+function\s+([A-Za-z_]\w*)/);
-      if (exportMatch) {
-        componentName = exportMatch[1];
-      }
+      const exportFnMatch = preProcessed.match(/export\s+default\s+function\s+([A-Za-z_]\w*)/);
+      const exportRefMatch = preProcessed.match(/export\s+default\s+([A-Za-z_]\w*)\s*;?/);
+      if (exportFnMatch) componentName = exportFnMatch[1];
+      else if (exportRefMatch) componentName = exportRefMatch[1];
 
-      preProcessed = preProcessed.replace(/^export\s+default\s+/gm, "");
-      preProcessed = preProcessed.replace(/^export\s+/gm, "");
+      // Strip exports
+      preProcessed = preProcessed.replace(/^\s*export\s+default\s+/gm, "");
+      preProcessed = preProcessed.replace(/^\s*export\s+\{[^}]*\}\s*;?\s*$/gm, "");
+      preProcessed = preProcessed.replace(/^\s*export\s+/gm, "");
 
       const result = transform(preProcessed, {
         transforms: ["jsx", "typescript"],
