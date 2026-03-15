@@ -827,6 +827,7 @@ export default function WakaPlayerDemo() {
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
       <ExperienceCanvas
+        mode={experienceMode}
         header={
           <div className="flex items-center gap-3 border-b border-border px-6 py-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
