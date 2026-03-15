@@ -146,15 +146,18 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
+    // Set guard FIRST to prevent re-entry from useEffect
+    loadedFlowIdRef.current = flowId;
+    setActiveFlowId(flowId);
+    // Mark history as loaded so the welcome-message effect won't fire
+    historyLoaded.current = true;
+
     // Immediately reset state to prevent stale data bleed
-    setMessages([...WELCOME_MESSAGES]);
-    setActiveScenarioConfig({});
-    setActiveFlowTitle(null);
     resetHistory();
     setHistoryFromMessages([]);
     setFlowContext(null);
-    loadedFlowIdRef.current = flowId;
-    setActiveFlowId(flowId);
+    setActiveFlowTitle(null);
+    setActiveScenarioConfig({});
 
     const full = await loadFlowFull(flowId);
     // Guard: if user switched again while loading
@@ -174,6 +177,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       setMessages(rehydrated);
       setHistoryFromMessages(rehydrated);
     } else {
+      setMessages([...WELCOME_MESSAGES]);
       setHistoryFromMessages([]);
     }
 
@@ -320,12 +324,13 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback((flowId: string) => {
-    // Keep router state in sync (critical for useSearchParams flow loading)
-    navigate(`/player/live?flow=${flowId}`, { replace: true });
-    // Close panel; flow will load via URL-driven effect
+  const handleLoadFlow = useCallback(async (flowId: string) => {
     setShowFlowsPanel(false);
-  }, [navigate]);
+    // Call loader directly — avoids navigate → useEffect race condition
+    await loadFlowByIdRef.current(flowId);
+    // Update URL silently so bookmarking/refresh works (don't use navigate to avoid re-render loops)
+    window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
+  }, []);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
