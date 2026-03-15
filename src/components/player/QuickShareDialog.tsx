@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy, ExternalLink, Share2, Check } from "lucide-react";
-import { PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
+import { PUBLIC_APP_ORIGIN, PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
 
 interface QuickShareDialogProps {
   open: boolean;
