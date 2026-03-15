@@ -26,27 +26,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /** Patterns indicating API keys / secrets in YAML/JSON content */
-const SECRET_PATTERNS = [
-  /api[_-]?key/i,
-  /authorization:\s*bearer/i,
-  /secret[_-]?key/i,
-  /access[_-]?token/i,
-  /private[_-]?key/i,
-  /password/i,
-  /\btoken\b\s*:\s*["'][A-Za-z0-9]/i,
-  /x-api-key/i,
+const SECRET_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "API_KEY", pattern: /api[_-]?key/i },
+  { label: "X_API_KEY", pattern: /x-api-key/i },
+  { label: "BEARER_TOKEN", pattern: /authorization:\s*bearer/i },
+  { label: "ACCESS_TOKEN", pattern: /access[_-]?token/i },
+  { label: "SECRET_KEY", pattern: /secret[_-]?key/i },
+  { label: "PRIVATE_KEY", pattern: /private[_-]?key/i },
+  { label: "PASSWORD", pattern: /password/i },
+  { label: "TOKEN", pattern: /\btoken\b\s*:\s*["']?[A-Za-z0-9._-]{6,}/i },
+  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*api[^}]*key[^}]*\}/i },
 ];
 
 /** Detect secrets/API keys referenced in file content */
 function detectSecretReferences(content: string): string[] {
-  const found: string[] = [];
-  for (const pattern of SECRET_PATTERNS) {
+  const found = new Set<string>();
+  for (const { label, pattern } of SECRET_PATTERNS) {
     if (pattern.test(content)) {
-      const match = content.match(pattern);
-      if (match) found.push(match[0]);
+      found.add(label);
     }
   }
-  return [...new Set(found)];
+  return Array.from(found);
 }
 
 interface PlayerWorkbenchProps {
@@ -82,7 +82,6 @@ export function PlayerWorkbench({
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
-  const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
   const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   /** Also detect secrets in the stored scenario_config (YAML/JSON from previous sessions) */
@@ -114,9 +113,14 @@ export function PlayerWorkbench({
     return allSecrets;
   }, [assets, storedConfigSecrets]);
 
-  const allSecretsProvided = detectedSecrets.length === 0 || 
-    detectedSecrets.every(s => s.refs.every(r => secretValues[r]?.trim()));
-  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged && !allSecretsProvided;
+  const requiredSecretRefs = useMemo(
+    () => Array.from(new Set(detectedSecrets.flatMap((s) => s.refs))),
+    [detectedSecrets]
+  );
+
+  const allSecretsProvided = requiredSecretRefs.length === 0 ||
+    requiredSecretRefs.every((ref) => secretValues[ref]?.trim());
+  const hasMissingSecrets = requiredSecretRefs.length > 0 && !allSecretsProvided;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -148,7 +152,6 @@ export function PlayerWorkbench({
 
   const removeAsset = useCallback((index: number) => {
     setAssets((prev) => prev.filter((_, i) => i !== index));
-    setSecretsAcknowledged(false);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -235,11 +238,22 @@ export function PlayerWorkbench({
       }
     } catch (err: any) {
       console.error("Workbench submit error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al procesar instrucciones");
     } finally {
       setIsProcessing(false);
     }
-  }, [instructions, assets, engine, flowId, flowTitle, scenarioConfig, tenantId, onInstructionsSent]);
+  }, [instructions, assets, engine, flowId, flowTitle, scenarioConfig, tenantId, onInstructionsSent, secretValues]);
 
   const getAssetIcon = (asset: UploadedAsset) => {
     if (asset.name.endsWith(".json")) return <FileJson className="h-3 w-3 text-amber-500" />;
@@ -332,22 +346,22 @@ export function PlayerWorkbench({
           </div>
 
           {/* ── API Key / Secret Warning ── */}
-          {detectedSecrets.length > 0 && (
+          {requiredSecretRefs.length > 0 && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[11px] font-semibold text-foreground">
-                    Claves API detectadas
+                    API key obligatoria detectada
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Introduce las claves aquí para que los endpoints funcionen, o continúa en modo demo.
+                    Este flujo requiere credenciales para funcionar. No se puede continuar sin completar los campos.
                   </p>
                 </div>
               </div>
 
               {/* Inline secret inputs */}
-              {detectedSecrets.flatMap(s => s.refs).filter((v, i, a) => a.indexOf(v) === i).map((refName) => (
+              {requiredSecretRefs.map((refName) => (
                 <div key={refName} className="pl-6 space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                     <Key className="h-3 w-3" />
@@ -360,7 +374,7 @@ export function PlayerWorkbench({
                       value={secretValues[refName] || ""}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setSecretValues(prev => ({ ...prev, [refName]: val }));
+                        setSecretValues((prev) => ({ ...prev, [refName]: val }));
                       }}
                       className="h-7 text-[11px] font-mono flex-1"
                       autoComplete="off"
@@ -375,26 +389,9 @@ export function PlayerWorkbench({
                 </div>
               ))}
 
-              {!allSecretsProvided && !secretsAcknowledged && (
-                <div className="pl-6 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-[10px]"
-                    onClick={() => setSecretsAcknowledged(true)}
-                  >
-                    Continuar sin claves (demo)
-                  </Button>
-                </div>
-              )}
               {allSecretsProvided && (
                 <p className="text-[9px] text-primary pl-6 italic font-medium">
                   ✓ Claves configuradas — listas para usar.
-                </p>
-              )}
-              {secretsAcknowledged && !allSecretsProvided && (
-                <p className="text-[9px] text-muted-foreground pl-6 italic">
-                  ✓ Modo demo — los endpoints con autenticación no funcionarán.
                 </p>
               )}
             </div>
@@ -403,7 +400,7 @@ export function PlayerWorkbench({
           {/* ── Submit ── */}
           <Button
             onClick={handleSubmit}
-            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasUnacknowledgedSecrets}
+            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasMissingSecrets}
             className="w-full gap-2"
           >
             {isProcessing ? (
