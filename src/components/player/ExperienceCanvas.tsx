@@ -11,7 +11,7 @@
 
 import { type ReactNode, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minimize2, Smartphone, Layers, Monitor } from "lucide-react";
+import { X, Minimize2, Smartphone, Layers, Monitor, Zap, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 import type { ExperienceMode } from "./ExperienceModeSwitcher";
