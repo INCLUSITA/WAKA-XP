@@ -146,14 +146,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
-    console.log("[loadFlowById] START", flowId);
-    // Set guard FIRST to prevent re-entry from useEffect
     loadedFlowIdRef.current = flowId;
     setActiveFlowId(flowId);
-    // Mark history as loaded so the welcome-message effect won't fire
     historyLoaded.current = true;
 
-    // Immediately reset state to prevent stale data bleed
     resetHistory();
     setHistoryFromMessages([]);
     setFlowContext(null);
@@ -161,8 +157,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     setActiveScenarioConfig({});
 
     const full = await loadFlowFull(flowId);
-    console.log("[loadFlowById] loadFlowFull result:", full?.name, "msgs:", full?.conversationSnapshot?.length);
-    // Guard: if user switched again while loading
     if (loadedFlowIdRef.current !== flowId) return;
 
     if (!full) {
@@ -176,7 +170,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
         ...msg,
         timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
       }));
-      console.log("[loadFlowById] Setting messages:", rehydrated.length, "first:", rehydrated[0]?.text?.slice(0, 40));
       setMessages(rehydrated);
       setHistoryFromMessages(rehydrated);
     } else {
@@ -189,14 +182,12 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     const cfg = full.scenarioConfig || {};
     setActiveScenarioConfig(cfg);
 
-    // Feed stored context into AI engine
     if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
     else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
     else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
     else setFlowContext(null);
 
     await startNewConversation();
-    console.log("[loadFlowById] DONE, messages should be set");
     toast.success(`Flujo "${full.name}" cargado`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadFlowFull, resetHistory, setFlowContext, setHistoryFromMessages, startNewConversation, setDataMode]);
