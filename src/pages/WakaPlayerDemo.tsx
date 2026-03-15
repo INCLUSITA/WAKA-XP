@@ -373,6 +373,15 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                   <RotateCcw className="h-3 w-3" />
                   Recommencer
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/spatial")}
+                  className="h-7 text-[10px] gap-1 border-primary/20 text-primary/70 hover:text-primary hover:border-primary/40"
+                >
+                  <Globe className="h-3 w-3" />
+                  Spatial
+                </Button>
                 <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
               </div>
             </div>
