@@ -163,7 +163,12 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       }
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
-      setActiveScenarioConfig(full.scenarioConfig || {});
+      const cfg = full.scenarioConfig || {};
+      setActiveScenarioConfig(cfg);
+      // Feed stored context into AI engine so it responds according to the YAML/prompt
+      if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
+      else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
+      else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
       resetHistory();
       startNewConversation();
       toast.success(`Flujo "${full.name}" cargado`);

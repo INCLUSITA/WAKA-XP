@@ -82,6 +82,22 @@ export function PlayerWorkbench({
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
   const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
+
+  /** Also detect secrets in the stored scenario_config (YAML/JSON from previous sessions) */
+  const storedConfigSecrets = useMemo(() => {
+    const refs: { file: string; refs: string[] }[] = [];
+    const yaml = scenarioConfig?.sourceData?.yaml;
+    const json = scenarioConfig?.sourceData?.json;
+    if (yaml) {
+      const found = detectSecretReferences(yaml);
+      if (found.length > 0) refs.push({ file: "YAML (config guardada)", refs: found });
+    }
+    if (json) {
+      const found = detectSecretReferences(json);
+      if (found.length > 0) refs.push({ file: "JSON (config guardada)", refs: found });
+    }
+    return refs;
+  }, [scenarioConfig]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /** Detect API key references in uploaded assets */
