@@ -18,6 +18,7 @@ import { usePlayerActions } from "@/hooks/usePlayerActions";
 import { usePlayerAuthoring } from "@/hooks/usePlayerAuthoring";
 import { useBlockExpansion, findLastExpandableBlock } from "@/hooks/useBlockExpansion";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { QuickShareDialog } from "@/components/player/QuickShareDialog";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
