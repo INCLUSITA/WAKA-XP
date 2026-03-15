@@ -540,7 +540,20 @@ export function WakaSovereignPlayer({
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold text-white tracking-wide">{botName}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[14px] font-bold text-white tracking-wide">{botName}</p>
+                {/* ── Data Policy Badge ── */}
+                <span className={cn(
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider border",
+                  mode === "libre" && "bg-[hsl(120,50%,45%)/0.2] text-[hsl(120,70%,80%)] border-[hsl(120,50%,50%)/0.3]",
+                  mode === "subventionné" && "bg-[hsl(35,80%,50%)/0.2] text-[hsl(35,90%,80%)] border-[hsl(35,80%,50%)/0.3]",
+                  mode === "zero-rated" && "bg-[hsl(0,60%,50%)/0.2] text-[hsl(0,70%,85%)] border-[hsl(0,60%,50%)/0.3]",
+                )}>
+                  {mode === "libre" && <><span className="h-1.5 w-1.5 rounded-full bg-[hsl(120,60%,65%)]" />Libre</>}
+                  {mode === "subventionné" && <><span className="h-1.5 w-1.5 rounded-full bg-[hsl(35,80%,60%)]" />Subv.</>}
+                  {mode === "zero-rated" && <><span className="h-1.5 w-1.5 rounded-full bg-[hsl(0,60%,60%)]" />Zero</>}
+                </span>
+              </div>
               <div className="flex items-center gap-1.5">
                 {status === "online" && (
                   <>
