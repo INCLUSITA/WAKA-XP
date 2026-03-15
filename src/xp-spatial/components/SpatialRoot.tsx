@@ -47,6 +47,7 @@ export function SpatialRoot() {
   const spatial = useSpatialExperience();
   const { sendToAI, isThinking } = useWakaPlayerAI();
   const msgIdCounter = useRef(100);
+  const navigate = useNavigate();
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
