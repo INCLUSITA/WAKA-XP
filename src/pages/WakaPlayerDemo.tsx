@@ -142,7 +142,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
   const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
   const loadedFlowIdRef = useRef<string | null>(null);
-  const [flowLoadCounter, setFlowLoadCounter] = useState(0);
+  const [flowLoadKey, setFlowLoadKey] = useState(0);
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
@@ -193,6 +193,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadFlowFull, resetHistory, setFlowContext, setHistoryFromMessages, startNewConversation, setDataMode]);
 
+  // Keep a stable ref to loadFlowById to avoid stale closures in callbacks
+  const loadFlowByIdRef = useRef(loadFlowById);
+  loadFlowByIdRef.current = loadFlowById;
+
   // Load flow from URL param on mount or URL change
   useEffect(() => {
     if (!flowIdParam) {
@@ -201,10 +205,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       setActiveFlowTitle(null);
       return;
     }
-    if (loadedFlowIdRef.current === flowIdParam && flowLoadCounter === 0) return;
-    loadFlowById(flowIdParam);
+    if (loadedFlowIdRef.current === flowIdParam) return;
+    loadFlowByIdRef.current(flowIdParam);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowIdParam, flowLoadCounter]);
+  }, [flowIdParam, flowLoadKey]);
 
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
