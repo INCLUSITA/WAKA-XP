@@ -378,6 +378,15 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowShareDialog(true)}
+                  className="h-7 text-[10px] gap-1 border-accent/20 text-accent/70 hover:text-accent hover:border-accent/40"
+                >
+                  <Share2 className="h-3 w-3" />
+                  Compartir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => navigate("/spatial")}
                   className="h-7 text-[10px] gap-1 border-primary/20 text-primary/70 hover:text-primary hover:border-primary/40"
                 >
