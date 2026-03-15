@@ -744,6 +744,29 @@ export default function WakaPlayerDemo() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+  // Get the last message that has expandable blocks for the side panel renderer
+  const expandedBlockForRenderer = (() => {
+    // Find the most recent message with an expandable sovereign block
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.direction !== "outbound") continue;
+      if (msg.catalog) return { blockType: "catalog", data: { catalog: msg.catalog } };
+      if (msg.payment) return { blockType: "payment", data: { payment: msg.payment } };
+      if (msg.paymentConfirmation) return { blockType: "paymentConfirmation", data: { paymentConfirmation: msg.paymentConfirmation } };
+      if (msg.creditSimulation) return { blockType: "creditSimulation", data: { creditSimulation: msg.creditSimulation } };
+      if (msg.creditContract) return { blockType: "creditContract", data: { creditContract: msg.creditContract } };
+      if (msg.clientStatus) return { blockType: "clientStatus", data: { clientStatus: msg.clientStatus } };
+      if (msg.momoAccount) return { blockType: "momoAccount", data: { momoAccount: msg.momoAccount } };
+      if (msg.servicePlans) return { blockType: "servicePlans", data: { servicePlans: msg.servicePlans } };
+      if (msg.inlineForm) return { blockType: "inlineForm", data: { inlineForm: msg.inlineForm } };
+      if (msg.training) return { blockType: "training", data: { training: msg.training } };
+      if (msg.mediaCarousel) return { blockType: "mediaCarousel", data: { mediaCarousel: msg.mediaCarousel } };
+      if (msg.location) return { blockType: "location", data: { location: msg.location } };
+      if (msg.certificate) return { blockType: "certificate", data: { certificate: msg.certificate } };
+    }
+    return null;
+  })();
+
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
       <ExperienceCanvas
