@@ -568,7 +568,16 @@ export function WakaSovereignPlayer({
         )}
 
         {/* ── Chat area ── */}
-        <div className="flex-1 overflow-y-auto relative" ref={scrollRef}>
+        <div
+          className="flex-1 overflow-y-auto relative"
+          ref={scrollRef}
+          onContextMenu={(e) => {
+            if (onContextMenu) {
+              e.preventDefault();
+              onContextMenu(e.clientX, e.clientY);
+            }
+          }}
+        >
           {/* Salamandra watermark — hidden in zero-rated */}
           {mode !== "zero-rated" && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
