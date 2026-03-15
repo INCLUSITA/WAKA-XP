@@ -4,11 +4,14 @@
  * Multi-zone layout for the Adaptive Experience Runtime.
  * Modes: framed | expanded | unbound
  * Phone is always the narrative anchor.
+ *
+ * Surface plan governs: primarySurface, threadSurface, phoneVisible,
+ * secondarySurfaces, avatarSlot, overlayAllowed, richnessTier.
  */
 
-import { type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minimize2, Smartphone } from "lucide-react";
+import { X, Minimize2, Smartphone, Layers, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 import type { ExperienceMode } from "./ExperienceModeSwitcher";
@@ -28,6 +31,63 @@ interface ExperienceCanvasProps {
   className?: string;
 }
 
+/**
+ * SurfacePlan — Derived from mode + device + expandedBlock.
+ * Governs which zones are active and how they're laid out.
+ */
+interface SurfacePlan {
+  primarySurface: "phone" | "canvas" | "split";
+  threadSurface: "phone-inline" | "phone-anchored";
+  phoneVisible: boolean;
+  secondarySurfaces: ("side-panel" | "overlay" | "modal" | "fullscreen")[];
+  avatarSlot: "none" | "inline" | "panel" | "canvas";
+  overlayAllowed: boolean;
+  richnessTier: "minimal" | "standard" | "rich";
+}
+
+function deriveSurfacePlan(
+  mode: ExperienceMode,
+  isDesktop: boolean,
+  isMobile: boolean,
+  hasExpandedBlock: boolean,
+  avatarEnabled: boolean,
+): SurfacePlan {
+  if (isMobile || mode === "framed") {
+    return {
+      primarySurface: "phone",
+      threadSurface: "phone-inline",
+      phoneVisible: true,
+      secondarySurfaces: [],
+      avatarSlot: avatarEnabled ? "inline" : "none",
+      overlayAllowed: false,
+      richnessTier: isMobile ? "minimal" : "standard",
+    };
+  }
+
+  if (mode === "unbound") {
+    return {
+      primarySurface: "canvas",
+      threadSurface: "phone-anchored",
+      phoneVisible: true,
+      secondarySurfaces: ["side-panel", "overlay", "modal", "fullscreen"],
+      avatarSlot: avatarEnabled ? "canvas" : "none",
+      overlayAllowed: true,
+      richnessTier: "rich",
+    };
+  }
+
+  // expanded
+  return {
+    primarySurface: hasExpandedBlock ? "split" : "phone",
+    threadSurface: "phone-inline",
+    phoneVisible: true,
+    secondarySurfaces: hasExpandedBlock ? ["side-panel"] : [],
+    avatarSlot: avatarEnabled ? "panel" : "none",
+    overlayAllowed: true,
+    richnessTier: "rich",
+  };
+}
+
 export function ExperienceCanvas({
   phone, toolbar, workbench,
   sidePanelContent, overlayContent, modalContent, fullscreenContent,
@@ -35,6 +95,11 @@ export function ExperienceCanvas({
 }: ExperienceCanvasProps) {
   const { isDesktop, isMobile, expandedBlock, collapseBlock } = useExperienceRuntime();
   const effectiveMode = isMobile ? "framed" : mode;
+
+  const surfacePlan = useMemo(
+    () => deriveSurfacePlan(effectiveMode, isDesktop, isMobile, !!expandedBlock, avatarEnabled),
+    [effectiveMode, isDesktop, isMobile, expandedBlock, avatarEnabled]
+  );
 
   const showSidePanel =
     effectiveMode !== "framed" &&
@@ -48,19 +113,26 @@ export function ExperienceCanvas({
     <div className={cn("flex h-full flex-col bg-background overflow-hidden", className)}>
       {header}
 
-      <div className="flex flex-1 min-h-0 relative">
+      {/* Surface plan indicator (dev-visible via data attribute) */}
+      <div className="flex flex-1 min-h-0 relative" data-surface={surfacePlan.primarySurface} data-richness={surfacePlan.richnessTier}>
         {/* ─── Phone Zone ─── */}
         <div className={cn(
           "flex flex-col transition-all duration-500 ease-out relative",
           effectiveMode === "framed" && "flex-1",
-          effectiveMode === "expanded" && "flex-1",
+          effectiveMode === "expanded" && (showSidePanel ? "w-[50%] shrink-0" : "flex-1"),
           effectiveMode === "unbound" && "w-[280px] shrink-0 border-r border-border/60"
         )}>
-          {/* Unbound mode: phone label */}
+          {/* Mode label overlays */}
           {effectiveMode === "unbound" && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1 border border-border/50 shadow-sm">
               <Smartphone className="h-3 w-3 text-muted-foreground" />
               <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Canal mobile</span>
+            </div>
+          )}
+          {effectiveMode === "expanded" && showSidePanel && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-background/80 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-primary/15 shadow-sm">
+              <Layers className="h-2.5 w-2.5 text-primary/60" />
+              <span className="text-[8px] font-bold text-primary/60 uppercase tracking-wider">Ancla narrativa</span>
             </div>
           )}
           {phone}
@@ -68,7 +140,7 @@ export function ExperienceCanvas({
 
         {/* ─── Unbound Canvas Zone ─── */}
         {effectiveMode === "unbound" && (
-          <div className="flex-1 flex flex-col min-w-0 bg-muted/10">
+          <div className="flex-1 flex flex-col min-w-0 bg-muted/5">
             {/* Canvas header */}
             <div className="flex items-center gap-2 px-6 py-3 border-b border-border/40 bg-card/50 backdrop-blur-sm shrink-0">
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -78,19 +150,25 @@ export function ExperienceCanvas({
               <span className="text-[9px] text-muted-foreground ml-1">
                 Unbound · Haute fidélité
               </span>
+              <div className="ml-auto flex items-center gap-1.5">
+                <Monitor className="h-3 w-3 text-muted-foreground/50" />
+                <span className="text-[8px] text-muted-foreground/50 uppercase tracking-wider">
+                  {surfacePlan.richnessTier}
+                </span>
+              </div>
             </div>
 
             <div className="flex-1 overflow-auto p-8">
               {sidePanelContent ? (
-                <div className="max-w-[720px] mx-auto space-y-6">
+                <div className="max-w-[720px] mx-auto space-y-6 waka-panel-enter">
                   {sidePanelContent}
                   <AvatarSlot mode="unbound" enabled={avatarEnabled} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center space-y-4 max-w-[340px]">
-                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center mx-auto border border-primary/10">
-                      <span className="text-3xl">🎨</span>
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center mx-auto border border-primary/8">
+                      <Layers className="h-8 w-8 text-primary/20" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">Mode Unbound</p>
@@ -112,7 +190,7 @@ export function ExperienceCanvas({
           {showSidePanel && effectiveMode === "expanded" && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 440, opacity: 1 }}
+              animate={{ width: "50%", opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="border-l border-border/60 bg-card overflow-hidden shrink-0"
@@ -133,7 +211,7 @@ export function ExperienceCanvas({
                     <Minimize2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 waka-panel-enter">
                   {sidePanelContent}
                   <AvatarSlot mode="expanded" enabled={avatarEnabled} />
                 </div>
