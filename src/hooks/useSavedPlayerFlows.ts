@@ -183,6 +183,7 @@ export function useSavedPlayerFlows() {
     loadFlows,
     saveFlow,
     loadFlowFull,
+    updateFlowConversation,
     updateFlowStatus,
     updateFlowName,
     deleteFlow,
