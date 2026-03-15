@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import wakaLogo from "@/assets/waka-salamandra.jpg";
 import { DataModeContext, useDataMode } from "./dataMode";
 import type { DataMode } from "./dataMode";
+import { BlockVariantWrapper } from "./BlockVariantWrapper";
 import {
   ProductCatalog, type CatalogProduct,
   InlineForm, type FormField,
