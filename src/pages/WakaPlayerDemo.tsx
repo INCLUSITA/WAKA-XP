@@ -861,6 +861,20 @@ export default function WakaPlayerDemo() {
         </div>
       </div>
 
+      {/* ─── Center: Builder Toolbar ─── */}
+      <PlayerBuilderToolbar
+        versionCount={versionCount}
+        versions={versionEntries}
+        onInsertBlock={handleInsertBlock}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onRestart={handleNewConversation}
+        onSave={() => setShowSaveDialog(true)}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        activeFlowId={activeFlowId}
+      />
+
       {/* ─── Right: Player Workbench ─── */}
       <div className="w-[360px] border-l border-border bg-card flex flex-col shrink-0">
         <PlayerWorkbench
