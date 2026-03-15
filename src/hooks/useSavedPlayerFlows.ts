@@ -118,6 +118,22 @@ export function useSavedPlayerFlows() {
     };
   }, []);
 
+  const updateFlowConversation = useCallback(async (
+    flowId: string,
+    messages: PlayerMessage[],
+    dataMode: DataMode,
+    scenarioConfig?: Record<string, any>,
+  ) => {
+    const payload: Record<string, any> = {
+      conversation_snapshot: messages as any,
+      message_count: messages.length,
+      data_mode: dataMode,
+    };
+    if (scenarioConfig) payload.scenario_config = scenarioConfig as any;
+
+    await supabase.from("player_saved_flows").update(payload).eq("id", flowId);
+  }, []);
+
   const updateFlowStatus = useCallback(async (flowId: string, status: FlowStatus) => {
     await supabase.from("player_saved_flows").update({ status }).eq("id", flowId);
     await loadFlows();
@@ -167,6 +183,7 @@ export function useSavedPlayerFlows() {
     loadFlows,
     saveFlow,
     loadFlowFull,
+    updateFlowConversation,
     updateFlowStatus,
     updateFlowName,
     deleteFlow,

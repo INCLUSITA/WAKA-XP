@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
 import { AvatarOverlay } from "@/components/player/AvatarOverlay";
+import { PlayerContextMenu, type InsertableBlockType } from "@/components/player/PlayerContextMenu";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -69,7 +70,7 @@ export default function WakaPlayerDemo() {
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
-  const { saveFlow, loadFlowFull } = useSavedPlayerFlows();
+  const { saveFlow, loadFlowFull, updateFlowConversation } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showFlowsPanel, setShowFlowsPanel] = useState(false);
@@ -81,7 +82,9 @@ export default function WakaPlayerDemo() {
   const [avatarUrl, setAvatarUrl] = useState("https://avatar.waka.africa/agent");
   const voiceUrl = "https://www.waka.services/agents/voice/test/1a840cd6-80ab-49d5-ae53-2622b6b94bbb?primary_color=%234a148c&accent_color=%23ffc107&transcription=false&auto_mic=true";
   const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
-
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [versionCount, setVersionCount] = useState(0);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
@@ -522,6 +525,161 @@ export default function WakaPlayerDemo() {
     }
   }, [setFlowContext]);
 
+  // ── Auto-save after changes ──
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      if (!activeFlowId || !tenantId) return;
+      try {
+        await updateFlowConversation(activeFlowId, messages, dataMode, activeScenarioConfig);
+        setVersionCount((v) => v + 1);
+      } catch (err) {
+        console.error("Auto-save error:", err);
+      }
+    }, 1500);
+  }, [activeFlowId, tenantId, messages, dataMode, activeScenarioConfig, updateFlowConversation]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
+
+  // ── Block insertion from context menu ──
+  const handleInsertBlock = useCallback((type: InsertableBlockType) => {
+    setContextMenuPos(null);
+
+    if (type === "voiceCall") {
+      setShowVoiceCall(true);
+      return;
+    }
+    if (type === "avatar") {
+      setShowAvatar(true);
+      return;
+    }
+
+    const blockMsg: PlayerMessage = {
+      id: `block-${Date.now()}`,
+      text: "",
+      direction: "outbound",
+      timestamp: new Date(),
+      source: "WAKA Builder",
+    };
+
+    switch (type) {
+      case "text":
+        blockMsg.text = "Nouveau message — double-cliquez pour éditer";
+        break;
+      case "richCard":
+        blockMsg.richCard = { title: "Titre de la carte", description: "Description", icon: "🎯", bgGradient: "linear-gradient(135deg, hsl(270,50%,45%), hsl(300,40%,50%))", actions: ["Action 1", "Action 2"] };
+        break;
+      case "menu":
+        blockMsg.text = "Sélectionnez une option :";
+        blockMsg.menu = [
+          { label: "Option 1", icon: "📱", description: "Description option 1" },
+          { label: "Option 2", icon: "💼", description: "Description option 2" },
+          { label: "Option 3", icon: "🎯", description: "Description option 3" },
+        ];
+        blockMsg.menuTitle = "Menu";
+        break;
+      case "quickReplies":
+        blockMsg.text = "Choisissez une réponse :";
+        blockMsg.quickReplies = ["Réponse 1", "Réponse 2", "Réponse 3"];
+        break;
+      case "catalog":
+        blockMsg.catalog = {
+          title: "Nos produits",
+          products: [
+            { id: "p1", name: "Produit 1", price: "5.000 FCFA", image: "", emoji: "📱" },
+            { id: "p2", name: "Produit 2", price: "12.000 FCFA", image: "", emoji: "💻" },
+          ],
+        };
+        break;
+      case "inlineForm":
+        blockMsg.inlineForm = {
+          title: "Formulaire",
+          fields: [
+            { id: "name", label: "Nom complet", type: "text", required: true },
+            { id: "phone", label: "Téléphone", type: "phone", required: true },
+          ],
+          submitLabel: "Envoyer",
+          icon: "📝",
+        };
+        break;
+      case "location":
+        blockMsg.location = { name: "Ouagadougou", address: "Burkina Faso", distance: "2.5 km" };
+        break;
+      case "payment":
+        blockMsg.payment = {
+          title: "Paiement",
+          total: "15.000 FCFA",
+          currency: "XOF",
+          items: [{ label: "Service", amount: "15.000 FCFA" }],
+          methods: ["mobile_money", "card"],
+        };
+        break;
+      case "rating":
+        blockMsg.rating = { title: "Évaluez notre service", type: "stars" };
+        break;
+      case "certificate":
+        blockMsg.certificate = { title: "Certificat de Formation", recipient: "Nom du participant", module: "Formation WAKA", date: new Date().toISOString().split("T")[0], badge: "🏆" };
+        break;
+      case "training":
+        blockMsg.training = {
+          title: "Formation en cours",
+          overallProgress: 35,
+          modules: [
+            { id: "m1", name: "Module 1", progress: 100, status: "completed" as const },
+            { id: "m2", name: "Module 2", progress: 40, status: "current" as const },
+            { id: "m3", name: "Module 3", progress: 0, status: "locked" as const },
+          ],
+        };
+        break;
+      case "mediaCarousel":
+        blockMsg.mediaCarousel = {
+          title: "Galerie",
+          slides: [
+            { id: "s1", type: "image", src: "/placeholder.svg", caption: "Image 1" },
+            { id: "s2", type: "image", src: "/placeholder.svg", caption: "Image 2" },
+          ],
+        };
+        break;
+      case "creditSimulation":
+        blockMsg.creditSimulation = { title: "Simulation crédit", amount: "150.000 FCFA", monthly_payment: "13.125 FCFA", total_cost: "157.500 FCFA", interest_rate: "8.5%", term: "12 mois" };
+        break;
+      case "clientStatus":
+        blockMsg.clientStatus = { client_name: "Client Test", phone: "+226 70 00 00 00", active_credits: 1, total_balance: "25.000 FCFA" };
+        break;
+      case "momoAccount":
+        blockMsg.momoAccount = { title: "Compte MoMo", account_number: "70-00-00-00", account_type: "standard", status: "Actif", message: "Votre compte est prêt" };
+        break;
+      case "servicePlans":
+        blockMsg.servicePlans = {
+          title: "Forfaits disponibles",
+          category: "general",
+          plans: [
+            { sku: "basic", name: "Basic", price: "2.000 FCFA/mois", features: ["1 GB data", "Appels illimités"] },
+            { sku: "pro", name: "Pro", price: "5.000 FCFA/mois", features: ["5 GB data", "Appels illimités", "SMS illimités"], badge: "⭐ Recommandé" },
+          ],
+        };
+        break;
+      case "paymentConfirmation":
+        blockMsg.paymentConfirmation = { title: "Confirmation de paiement", amount_paid: "15.000 FCFA", status: "success", message: "Paiement reçu via Moov Money" };
+        break;
+      case "creditContract":
+        blockMsg.creditContract = { title: "Contrat de crédit", credit_voice_id: `CTR-${Date.now()}`, credit_type: "BNPL", amount: "150.000 FCFA", term: "12 mois", monthly_payment: "13.125 FCFA", status: "pending" };
+        break;
+      case "deviceLockConsent":
+        blockMsg.deviceLockConsent = { title: "Consentement Device Lock", device_name: "Samsung Galaxy A14", amount: "150.000 FCFA", message: "En acceptant, votre appareil sera verrouillé en cas de défaut de paiement." };
+        break;
+    }
+
+    setMessages((prev) => [...prev, blockMsg]);
+    saveMessage(blockMsg);
+    triggerAutoSave();
+    toast.success(`Bloc "${type}" inséré`);
+  }, [saveMessage, triggerAutoSave]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -551,6 +709,12 @@ export default function WakaPlayerDemo() {
             <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
               <Zap className="h-2.5 w-2.5" />
               Thinking…
+            </Badge>
+          )}
+          {activeFlowId && versionCount > 0 && (
+            <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
+              <History className="h-2.5 w-2.5" />
+              v{versionCount} guardado
             </Badge>
           )}
         </div>
@@ -607,6 +771,7 @@ export default function WakaPlayerDemo() {
                   onDeviceLockConsent={handleDeviceLockConsent}
                   onVoiceCall={() => setShowVoiceCall(true)}
                   onAvatarCall={() => setShowAvatar(true)}
+                  onContextMenu={(x, y) => setContextMenuPos({ x, y })}
                 />
               </div>
 
@@ -679,6 +844,16 @@ export default function WakaPlayerDemo() {
         onSelect={handleFlowContextSelect}
         activeFlowName={activeFlowContextName}
       />
+
+      {/* Right-click context menu for inserting blocks */}
+      {contextMenuPos && (
+        <PlayerContextMenu
+          x={contextMenuPos.x}
+          y={contextMenuPos.y}
+          onInsert={handleInsertBlock}
+          onClose={() => setContextMenuPos(null)}
+        />
+      )}
     </div>
   );
 }
