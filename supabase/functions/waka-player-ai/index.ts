@@ -364,7 +364,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "suggest_quick_replies",
-      description: "Suggest quick reply buttons. ALWAYS use to guide conversation after every response.",
+      description: "OBLIGATOIRE dans CHAQUE réponse. Suggest quick reply buttons to guide conversation. After completing a flow, include navigation options like 'Autres services'. During a flow, match buttons to the current question. Never leave the user without buttons.",
       parameters: {
         type: "object",
         properties: {
