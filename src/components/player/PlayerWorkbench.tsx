@@ -152,7 +152,6 @@ export function PlayerWorkbench({
 
   const removeAsset = useCallback((index: number) => {
     setAssets((prev) => prev.filter((_, i) => i !== index));
-    setSecretsAcknowledged(false);
   }, []);
 
   const handleSubmit = useCallback(async () => {
