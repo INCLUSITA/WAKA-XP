@@ -4,8 +4,11 @@
  * Renders sovereign blocks in their expanded (desktop) form
  * when they escape the phone simulator into the side panel, overlay, or modal.
  * Uses the BlockVariantWrapper to apply "expanded" variant styles.
+ *
+ * Includes a "collapse" pill to return the block to phone-inline.
  */
 
+import { Minimize2, Maximize2 } from "lucide-react";
 import {
   ProductCatalog, type CatalogProduct,
   InlineForm, type FormField,
@@ -25,7 +28,7 @@ import {
 } from "./sovereign-blocks";
 import { Badge } from "@/components/ui/badge";
 import { BlockVariantWrapper } from "./BlockVariantWrapper";
-import { Maximize2 } from "lucide-react";
+import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 
 interface ExpandedBlockRendererProps {
   blockType: string;
@@ -54,15 +57,24 @@ export function ExpandedBlockRenderer({
   onSelectPlan,
   onDeviceLockConsent,
 }: ExpandedBlockRendererProps) {
+  const { collapseBlock } = useExperienceRuntime();
+
   return (
     <BlockVariantWrapper blockType={blockType}>
-      <div className="space-y-4">
-        {/* Expanded badge */}
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 waka-panel-enter">
+        {/* Header with expanded badge + collapse */}
+        <div className="flex items-center justify-between">
           <Badge variant="outline" className="text-[9px] border-primary/20 text-primary gap-1">
             <Maximize2 className="h-2.5 w-2.5" />
             Vue expansée · Desktop
           </Badge>
+          <button
+            onClick={collapseBlock}
+            className="waka-collapse-pill"
+          >
+            <Minimize2 className="h-3 w-3" />
+            Replier
+          </button>
         </div>
 
         {/* Render the block in expanded form */}

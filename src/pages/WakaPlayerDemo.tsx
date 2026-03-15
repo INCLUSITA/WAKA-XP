@@ -23,6 +23,7 @@ import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
 import { ExperienceRuntimeProvider } from "@/contexts/ExperienceRuntimeContext";
+import { PlayerContextProvider } from "@/contexts/PlayerContextProvider";
 import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
 import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
 import { ExperienceModeSwitcher, type ExperienceMode } from "@/components/player/ExperienceModeSwitcher";
@@ -94,15 +95,18 @@ function extractOptionsFromText(text: string): string[] {
 export default function WakaPlayerDemo() {
   const { tenantId } = useWorkspace();
   const [dataMode, setDataMode] = useState<DataMode>("libre");
+  const [scenarioConfig, setScenarioConfig] = useState<Record<string, any>>({});
 
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
-      <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} />
+      <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
+        <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+      </PlayerContextProvider>
     </ExperienceRuntimeProvider>
   );
 }
 
-function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>> }) {
+function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScenarioConfigProp, setScenarioConfig: setActiveScenarioConfigProp }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>>; scenarioConfig: Record<string, any>; setScenarioConfig: React.Dispatch<React.SetStateAction<Record<string, any>>> }) {
   const navigate = useNavigate();
   const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
@@ -117,7 +121,8 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
   const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
   const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
+  const activeScenarioConfig = activeScenarioConfigProp;
+  const setActiveScenarioConfig = setActiveScenarioConfigProp;
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [contextTarget, setContextTarget] = useState<ContextTarget>({ type: "canvas" });
   const historyLoaded = useRef(false);

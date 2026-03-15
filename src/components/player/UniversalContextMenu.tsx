@@ -15,7 +15,7 @@ import {
   GitCompare, Upload, RotateCcw, Redo2,
   ChevronRight, X, BookOpen, MessageCircle, GripHorizontal,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 import type { InsertableBlockType } from "./PlayerContextMenu";
@@ -146,6 +146,14 @@ export function UniversalContextMenu({
     return () => { clearTimeout(t); window.removeEventListener("mousedown", h); };
   }, [onClose, isMobile]);
 
+  // Back button handler for mobile browser
+  useEffect(() => {
+    if (!isMobile) return;
+    const handlePopState = () => onClose();
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isMobile, onClose]);
+
   const isMessage = target.type === "message";
   const isBlock = target.type === "block";
   const msgId = (target as any).messageId;
@@ -216,15 +224,24 @@ export function UniversalContextMenu({
 
   /* ── Target badge ── */
   const targetBadge = (
-    <div className={cn("px-4 py-2.5 border-b border-border/50", isMobile ? "bg-muted/20" : "bg-muted/30")}>
-      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+    <div className={cn(
+      "border-b border-border/50",
+      isMobile ? "px-5 py-3 bg-muted/15" : "px-4 py-2.5 bg-muted/30"
+    )}>
+      <p className={cn(
+        "font-bold text-muted-foreground uppercase tracking-widest",
+        isMobile ? "text-[10px]" : "text-[9px]"
+      )}>
         {target.type === "message" && `Message ${(target as any).direction === "inbound" ? "utilisateur" : "bot"}`}
         {target.type === "block" && `Bloc: ${(target as any).blockType}`}
         {target.type === "canvas" && "Canvas"}
         {target.type === "group" && `${(target as any).messageIds.length} sélectionnés`}
       </p>
       {isMessage && (target as any).text && (
-        <p className="text-[10px] text-foreground/70 mt-0.5 truncate max-w-[260px] italic">
+        <p className={cn(
+          "text-foreground/70 mt-0.5 truncate italic",
+          isMobile ? "text-[11px] max-w-[300px]" : "text-[10px] max-w-[260px]"
+        )}>
           "{((target as any).text as string).substring(0, 60)}"
         </p>
       )}
@@ -235,11 +252,14 @@ export function UniversalContextMenu({
   const mainContent = (
     <>
       {targetBadge}
-      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto")}>
+      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto overscroll-contain")}>
         {groups.map((group, gi) => (
           <div key={group.id}>
-            {gi > 0 && <div className="my-1.5 mx-4 h-px bg-border/40" />}
-            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest px-4 pt-2 pb-1 flex items-center gap-1.5">
+            {gi > 0 && <div className={cn("h-px bg-border/40", isMobile ? "my-2 mx-5" : "my-1.5 mx-4")} />}
+            <p className={cn(
+              "font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5",
+              isMobile ? "text-[9px] px-5 pt-3 pb-1.5" : "text-[8px] px-4 pt-2 pb-1"
+            )}>
               <group.icon className="h-3 w-3" style={{ color: group.color }} />
               {group.label}
             </p>
@@ -250,22 +270,26 @@ export function UniversalContextMenu({
                 disabled={item.disabled}
                 className={cn(
                   "w-full flex items-center gap-3 text-left transition-colors group",
-                  isMobile ? "px-4 py-3" : "px-4 py-2",
-                  item.danger ? "hover:bg-destructive/8 active:bg-destructive/12 text-destructive" : "hover:bg-accent/30 active:bg-accent/50",
+                  isMobile ? "px-5 py-3.5 min-h-[48px]" : "px-4 py-2",
+                  item.danger
+                    ? "hover:bg-destructive/8 active:bg-destructive/12 text-destructive"
+                    : "hover:bg-accent/30 active:bg-accent/50",
                   item.disabled && "opacity-40 cursor-not-allowed"
                 )}
               >
                 <item.icon className={cn(
                   "shrink-0",
-                  isMobile ? "h-4.5 w-4.5" : "h-3.5 w-3.5",
+                  isMobile ? "h-5 w-5" : "h-3.5 w-3.5",
                   item.danger ? "text-destructive" : "text-muted-foreground group-hover:text-foreground"
                 )} />
                 <span className={cn(
                   "font-medium flex-1",
-                  isMobile ? "text-[13px]" : "text-[11px]",
+                  isMobile ? "text-[14px]" : "text-[11px]",
                   item.danger ? "" : "text-foreground"
                 )}>{item.label}</span>
-                {item.shortcut && <span className="text-[9px] text-muted-foreground/60 font-mono">{item.shortcut}</span>}
+                {item.shortcut && !isMobile && (
+                  <span className="text-[9px] text-muted-foreground/60 font-mono">{item.shortcut}</span>
+                )}
                 {item.id === "insert-block" && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />}
               </button>
             ))}
@@ -278,25 +302,37 @@ export function UniversalContextMenu({
   /* ── Insert blocks view ── */
   const insertContent = (
     <>
-      <div className={cn("px-4 py-2.5 border-b border-border/50 flex items-center justify-between", isMobile ? "bg-muted/20" : "bg-muted/30")}>
+      <div className={cn(
+        "border-b border-border/50 flex items-center justify-between",
+        isMobile ? "px-5 py-3 bg-muted/15" : "px-4 py-2.5 bg-muted/30"
+      )}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveView("main")}
-            className="h-6 w-6 rounded-md flex items-center justify-center hover:bg-accent/50 transition-colors"
+            className={cn(
+              "rounded-md flex items-center justify-center hover:bg-accent/50 transition-colors",
+              isMobile ? "h-8 w-8" : "h-6 w-6"
+            )}
           >
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground rotate-180" />
+            <ChevronRight className={cn("text-muted-foreground rotate-180", isMobile ? "h-4 w-4" : "h-3.5 w-3.5")} />
           </button>
-          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+          <p className={cn(
+            "font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5",
+            isMobile ? "text-[10px]" : "text-[9px]"
+          )}>
             <Plus className="h-3 w-3 text-primary" />
             Blocs disponibles
           </p>
         </div>
       </div>
-      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto")}>
+      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto overscroll-contain")}>
         {INSERT_GROUPS.map((group, gi) => (
           <div key={group.label}>
-            {gi > 0 && <div className="my-1 mx-4 h-px bg-border/30" />}
-            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest px-4 pt-2 pb-1">
+            {gi > 0 && <div className={cn("h-px bg-border/30", isMobile ? "my-1.5 mx-5" : "my-1 mx-4")} />}
+            <p className={cn(
+              "font-bold text-muted-foreground uppercase tracking-widest",
+              isMobile ? "text-[9px] px-5 pt-3 pb-1.5" : "text-[8px] px-4 pt-2 pb-1"
+            )}>
               {group.label}
             </p>
             {group.items.map((item) => (
@@ -305,11 +341,11 @@ export function UniversalContextMenu({
                 onClick={() => { onInsertBlock(item.type); onClose(); }}
                 className={cn(
                   "w-full flex items-center gap-3 text-left hover:bg-accent/30 active:bg-accent/50 transition-colors",
-                  isMobile ? "px-4 py-3" : "px-4 py-2",
+                  isMobile ? "px-5 py-3.5 min-h-[48px]" : "px-4 py-2",
                 )}
               >
-                <item.icon className={cn("text-primary shrink-0", isMobile ? "h-4.5 w-4.5" : "h-3.5 w-3.5")} />
-                <span className={cn("font-medium text-foreground", isMobile ? "text-[13px]" : "text-[11px]")}>{item.label}</span>
+                <item.icon className={cn("text-primary shrink-0", isMobile ? "h-5 w-5" : "h-3.5 w-3.5")} />
+                <span className={cn("font-medium text-foreground", isMobile ? "text-[14px]" : "text-[11px]")}>{item.label}</span>
               </button>
             ))}
           </div>
@@ -318,41 +354,11 @@ export function UniversalContextMenu({
     </>
   );
 
-  // ── Mobile: Bottom Sheet ──
+  // ── Mobile: Bottom Sheet with swipe-to-dismiss ──
   if (isMobile) {
-    return (
-      <>
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[199] bg-black/50 backdrop-blur-[2px]"
-          onClick={onClose}
-        />
-        {/* Sheet */}
-        <motion.div
-          ref={ref}
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="fixed inset-x-0 bottom-0 z-[200] rounded-t-2xl bg-popover border-t border-border/60 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] max-h-[80vh] overflow-hidden flex flex-col"
-        >
-          {/* Drag handle */}
-          <div className="flex justify-center py-3 shrink-0">
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/20" />
-          </div>
-
-          <div className="flex-1 overflow-y-auto pb-safe">
-            {activeView === "insert" ? insertContent : mainContent}
-          </div>
-
-          {/* Safe area bottom padding for iOS */}
-          <div className="h-2 shrink-0" />
-        </motion.div>
-      </>
-    );
+    return <MobileBottomSheet ref={ref} onClose={onClose} activeView={activeView}>
+      {activeView === "insert" ? insertContent : mainContent}
+    </MobileBottomSheet>;
   }
 
   // ── Desktop: Positioned Popup ──
@@ -376,6 +382,65 @@ export function UniversalContextMenu({
     </motion.div>
   );
 }
+
+/* ── Mobile Bottom Sheet with swipe-to-dismiss ── */
+
+import React from "react";
+
+const MobileBottomSheet = React.forwardRef<
+  HTMLDivElement,
+  { onClose: () => void; activeView: string; children: React.ReactNode }
+>(({ onClose, activeView, children }, ref) => {
+  const sheetY = useMotionValue(0);
+  const backdropOpacity = useTransform(sheetY, [0, 300], [1, 0]);
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      onClose();
+    }
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{ opacity: backdropOpacity }}
+        className="fixed inset-0 z-[199] bg-black/50 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <motion.div
+        ref={ref}
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        drag="y"
+        dragConstraints={{ top: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        style={{ y: sheetY }}
+        className="fixed inset-x-0 bottom-0 z-[200] rounded-t-2xl bg-popover border-t border-border/60 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] max-h-[85vh] overflow-hidden flex flex-col"
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center py-3.5 shrink-0 cursor-grab active:cursor-grabbing touch-none">
+          <div className="waka-bottom-sheet-handle" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-safe">
+          {children}
+        </div>
+
+        {/* Safe area bottom padding for iOS */}
+        <div className="h-2 shrink-0" style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)" }} />
+      </motion.div>
+    </>
+  );
+});
+MobileBottomSheet.displayName = "MobileBottomSheet";
 
 /* ── Long Press Hook for mobile ── */
 
