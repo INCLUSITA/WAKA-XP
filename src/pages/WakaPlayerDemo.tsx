@@ -863,8 +863,16 @@ export default function WakaPlayerDemo() {
           </div>
         }
         phone={
-          <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
-            <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
+          <div className={cn(
+            "flex flex-1 items-center justify-center overflow-hidden bg-muted/30",
+            experienceMode === "unbound" && "items-start pt-4"
+          )}>
+            <div className={cn(
+              "relative transition-all duration-300",
+              experienceMode === "unbound"
+                ? "w-[240px] h-[520px]"
+                : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]"
+            )}>
               <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
               <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
                 <div
