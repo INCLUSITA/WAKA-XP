@@ -1,10 +1,8 @@
 /**
  * UniversalContextMenu — Enterprise-grade context menu for the Experience Canvas.
  * 
- * Desktop: positioned popup at cursor
- * Mobile: animated bottom sheet
- * 
- * Action groups: Insert, Edit, AI Enhance, Link, Version/Governance
+ * Desktop: positioned popup at cursor with grouped actions
+ * Mobile: animated bottom sheet with swipe-to-dismiss and large touch targets
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -14,8 +12,8 @@ import {
   Award, GraduationCap, Image as ImageIcon, Calculator, UserCheck,
   Wallet, LayoutList, Receipt, FileSignature, Lock, Phone, User,
   Copy, Trash2, ArrowUp, ArrowDown, Wand2, Languages, Smartphone,
-  GitCompare, Upload, RotateCcw, Redo2, Camera,
-  ChevronRight, X, Link, Zap, BookOpen, MessageCircle,
+  GitCompare, Upload, RotateCcw, Redo2,
+  ChevronRight, X, BookOpen, MessageCircle, GripHorizontal,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -72,20 +70,45 @@ interface UniversalContextMenuProps {
 
 /* ── Insert sub-menu items ── */
 
-const INSERT_ITEMS: { type: InsertableBlockType; label: string; icon: React.ElementType; group: string }[] = [
-  { type: "text", label: "Message texte", icon: MessageSquare, group: "Mensajes" },
-  { type: "richCard", label: "Carte enrichie", icon: Sparkles, group: "Mensajes" },
-  { type: "menu", label: "Menu interactif", icon: LayoutList, group: "Mensajes" },
-  { type: "quickReplies", label: "Réponses rapides", icon: MessageCircle, group: "Mensajes" },
-  { type: "catalog", label: "Catalogue", icon: ShoppingCart, group: "Comercio" },
-  { type: "payment", label: "Paiement", icon: CreditCard, group: "Comercio" },
-  { type: "inlineForm", label: "Formulaire", icon: FileText, group: "Formularios" },
-  { type: "creditSimulation", label: "Simulation crédit", icon: Calculator, group: "Finanzas" },
-  { type: "rating", label: "Évaluation", icon: Star, group: "Formularios" },
-  { type: "mediaCarousel", label: "Carrousel", icon: ImageIcon, group: "Media" },
-  { type: "training", label: "Formation", icon: GraduationCap, group: "Media" },
-  { type: "voiceCall", label: "WAKA Voice", icon: Phone, group: "Canales" },
-  { type: "avatar", label: "Avatar", icon: User, group: "Canales" },
+const INSERT_GROUPS: { label: string; items: { type: InsertableBlockType; label: string; icon: React.ElementType }[] }[] = [
+  {
+    label: "Messages",
+    items: [
+      { type: "text", label: "Message texte", icon: MessageSquare },
+      { type: "richCard", label: "Carte enrichie", icon: Sparkles },
+      { type: "menu", label: "Menu interactif", icon: LayoutList },
+      { type: "quickReplies", label: "Réponses rapides", icon: MessageCircle },
+    ],
+  },
+  {
+    label: "Commerce",
+    items: [
+      { type: "catalog", label: "Catalogue", icon: ShoppingCart },
+      { type: "payment", label: "Paiement", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { type: "creditSimulation", label: "Simulation crédit", icon: Calculator },
+    ],
+  },
+  {
+    label: "Formulaires",
+    items: [
+      { type: "inlineForm", label: "Formulaire", icon: FileText },
+      { type: "rating", label: "Évaluation", icon: Star },
+    ],
+  },
+  {
+    label: "Média & Canaux",
+    items: [
+      { type: "mediaCarousel", label: "Carrousel", icon: ImageIcon },
+      { type: "training", label: "Formation", icon: GraduationCap },
+      { type: "voiceCall", label: "WAKA Voice", icon: Phone },
+      { type: "avatar", label: "Avatar", icon: User },
+    ],
+  },
 ];
 
 /* ── Component ── */
@@ -97,8 +120,7 @@ export function UniversalContextMenu({
   onAIImprove, onAITranslate, onAISimplify, onAIMobileFriendly, onAIExpand,
   onCreateBranch, onCompareVersions, onPromote, onUndo, onRedo,
 }: UniversalContextMenuProps) {
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [insertSubOpen, setInsertSubOpen] = useState(false);
+  const [activeView, setActiveView] = useState<"main" | "insert">("main");
   const ref = useRef<HTMLDivElement>(null);
 
   let isMobile = false;
@@ -116,7 +138,7 @@ export function UniversalContextMenu({
   }, [onClose]);
 
   useEffect(() => {
-    if (isMobile) return; // Bottom sheet handles its own dismiss
+    if (isMobile) return;
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
@@ -132,47 +154,47 @@ export function UniversalContextMenu({
   const groups: ActionGroup[] = [];
 
   groups.push({
-    id: "insert", label: "Insertar", icon: Plus, color: "hsl(var(--primary))",
-    items: [{ id: "insert-block", label: "Insertar bloque…", icon: Plus }],
+    id: "insert", label: "Insérer", icon: Plus, color: "hsl(var(--primary))",
+    items: [{ id: "insert-block", label: "Insérer un bloc…", icon: Plus }],
   });
 
   if (isMessage || isBlock) {
     const editItems: ActionItem[] = [];
-    if (isMessage) editItems.push({ id: "edit", label: "Editar mensaje", icon: Pencil, shortcut: "Dbl-clic" });
-    editItems.push({ id: "duplicate", label: "Duplicar", icon: Copy });
-    editItems.push({ id: "move-up", label: "Mover arriba", icon: ArrowUp });
-    editItems.push({ id: "move-down", label: "Mover abajo", icon: ArrowDown });
-    editItems.push({ id: "delete", label: "Eliminar", icon: Trash2, danger: true });
-    groups.push({ id: "edit", label: "Editar", icon: Pencil, color: "hsl(220,55%,50%)", items: editItems });
+    if (isMessage) editItems.push({ id: "edit", label: "Éditer le message", icon: Pencil, shortcut: "Dbl-clic" });
+    editItems.push({ id: "duplicate", label: "Dupliquer", icon: Copy });
+    editItems.push({ id: "move-up", label: "Monter", icon: ArrowUp });
+    editItems.push({ id: "move-down", label: "Descendre", icon: ArrowDown });
+    editItems.push({ id: "delete", label: "Supprimer", icon: Trash2, danger: true });
+    groups.push({ id: "edit", label: "Éditer", icon: Pencil, color: "hsl(220,55%,50%)", items: editItems });
   }
 
   if (isMessage || isBlock) {
     groups.push({
-      id: "ai", label: "Mejorar con IA", icon: Sparkles, color: "hsl(270,55%,55%)",
+      id: "ai", label: "Améliorer avec IA", icon: Sparkles, color: "hsl(var(--accent))",
       items: [
-        { id: "ai-improve", label: "Reescribir / Mejorar", icon: Wand2 },
-        { id: "ai-simplify", label: "Simplificar", icon: BookOpen },
-        { id: "ai-translate", label: "Traducir FR↔EN", icon: Languages },
-        { id: "ai-mobile", label: "Adaptar mobile-first", icon: Smartphone },
-        { id: "ai-expand", label: "Expandir / Enriquecer", icon: Sparkles },
+        { id: "ai-improve", label: "Réécrire / Améliorer", icon: Wand2 },
+        { id: "ai-simplify", label: "Simplifier", icon: BookOpen },
+        { id: "ai-translate", label: "Traduire FR↔EN", icon: Languages },
+        { id: "ai-mobile", label: "Adapter mobile-first", icon: Smartphone },
+        { id: "ai-expand", label: "Enrichir / Développer", icon: Sparkles },
       ],
     });
   }
 
   groups.push({
-    id: "version", label: "Versión", icon: GitBranch, color: "hsl(160,50%,40%)",
+    id: "version", label: "Version", icon: GitBranch, color: "hsl(160,50%,40%)",
     items: [
-      { id: "undo", label: "Deshacer", icon: RotateCcw, shortcut: "Ctrl+Z" },
-      { id: "redo", label: "Rehacer", icon: Redo2, shortcut: "Ctrl+Y" },
-      { id: "branch", label: "Crear rama", icon: GitBranch },
-      { id: "compare", label: "Comparar versiones", icon: GitCompare },
-      { id: "promote", label: "Promover a producción", icon: Upload },
+      { id: "undo", label: "Annuler", icon: RotateCcw, shortcut: "⌘Z" },
+      { id: "redo", label: "Refaire", icon: Redo2, shortcut: "⌘Y" },
+      { id: "branch", label: "Créer branche", icon: GitBranch },
+      { id: "compare", label: "Comparer versions", icon: GitCompare },
+      { id: "promote", label: "Promouvoir", icon: Upload },
     ],
   });
 
   const handleAction = useCallback((actionId: string) => {
     switch (actionId) {
-      case "insert-block": setInsertSubOpen(true); return;
+      case "insert-block": setActiveView("insert"); return;
       case "edit": onEditMessage?.(msgId); break;
       case "duplicate": onDuplicateMessage?.(msgId); break;
       case "delete": onDeleteMessage?.(msgId); break;
@@ -192,29 +214,32 @@ export function UniversalContextMenu({
     onClose();
   }, [msgId, onClose, onEditMessage, onDuplicateMessage, onDeleteMessage, onMoveUp, onMoveDown, onAIImprove, onAITranslate, onAISimplify, onAIMobileFriendly, onAIExpand, onUndo, onRedo, onCreateBranch, onCompareVersions, onPromote]);
 
-  const menuContent = (
-    <>
-      {/* Target indicator */}
-      <div className="px-3 py-2 border-b border-border bg-muted/30">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-          {target.type === "message" && `Mensaje ${(target as any).direction === "inbound" ? "usuario" : "bot"}`}
-          {target.type === "block" && `Bloque: ${(target as any).blockType}`}
-          {target.type === "canvas" && "Canvas"}
-          {target.type === "group" && `${(target as any).messageIds.length} seleccionados`}
+  /* ── Target badge ── */
+  const targetBadge = (
+    <div className={cn("px-4 py-2.5 border-b border-border/50", isMobile ? "bg-muted/20" : "bg-muted/30")}>
+      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+        {target.type === "message" && `Message ${(target as any).direction === "inbound" ? "utilisateur" : "bot"}`}
+        {target.type === "block" && `Bloc: ${(target as any).blockType}`}
+        {target.type === "canvas" && "Canvas"}
+        {target.type === "group" && `${(target as any).messageIds.length} sélectionnés`}
+      </p>
+      {isMessage && (target as any).text && (
+        <p className="text-[10px] text-foreground/70 mt-0.5 truncate max-w-[260px] italic">
+          "{((target as any).text as string).substring(0, 60)}"
         </p>
-        {isMessage && (target as any).text && (
-          <p className="text-[10px] text-foreground mt-0.5 truncate max-w-[230px]">
-            "{((target as any).text as string).substring(0, 50)}"
-          </p>
-        )}
-      </div>
+      )}
+    </div>
+  );
 
-      {/* Action groups */}
-      <div className="py-1 max-h-[360px] overflow-y-auto">
+  /* ── Main menu content ── */
+  const mainContent = (
+    <>
+      {targetBadge}
+      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto")}>
         {groups.map((group, gi) => (
           <div key={group.id}>
-            {gi > 0 && <div className="my-1 mx-3 h-px bg-border" />}
-            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider px-3 pt-1.5 pb-0.5 flex items-center gap-1.5">
+            {gi > 0 && <div className="my-1.5 mx-4 h-px bg-border/40" />}
+            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest px-4 pt-2 pb-1 flex items-center gap-1.5">
               <group.icon className="h-3 w-3" style={{ color: group.color }} />
               {group.label}
             </p>
@@ -224,15 +249,24 @@ export function UniversalContextMenu({
                 onClick={() => handleAction(item.id)}
                 disabled={item.disabled}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors group",
-                  item.danger ? "hover:bg-destructive/10 text-destructive" : "hover:bg-accent",
+                  "w-full flex items-center gap-3 text-left transition-colors group",
+                  isMobile ? "px-4 py-3" : "px-4 py-2",
+                  item.danger ? "hover:bg-destructive/8 active:bg-destructive/12 text-destructive" : "hover:bg-accent/30 active:bg-accent/50",
                   item.disabled && "opacity-40 cursor-not-allowed"
                 )}
               >
-                <item.icon className={cn("h-3.5 w-3.5 shrink-0", item.danger ? "text-destructive" : "text-muted-foreground group-hover:text-foreground")} />
-                <span className={cn("text-[11px] font-medium flex-1", item.danger ? "" : "text-foreground")}>{item.label}</span>
-                {item.shortcut && <span className="text-[9px] text-muted-foreground">{item.shortcut}</span>}
-                {item.id === "insert-block" && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                <item.icon className={cn(
+                  "shrink-0",
+                  isMobile ? "h-4.5 w-4.5" : "h-3.5 w-3.5",
+                  item.danger ? "text-destructive" : "text-muted-foreground group-hover:text-foreground"
+                )} />
+                <span className={cn(
+                  "font-medium flex-1",
+                  isMobile ? "text-[13px]" : "text-[11px]",
+                  item.danger ? "" : "text-foreground"
+                )}>{item.label}</span>
+                {item.shortcut && <span className="text-[9px] text-muted-foreground/60 font-mono">{item.shortcut}</span>}
+                {item.id === "insert-block" && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />}
               </button>
             ))}
           </div>
@@ -241,32 +275,47 @@ export function UniversalContextMenu({
     </>
   );
 
-  const insertContent = insertSubOpen && (
-    <div className={cn(isMobile ? "border-t border-border" : "w-[230px] rounded-xl border border-border bg-popover shadow-2xl overflow-hidden")}>
-      <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-          <Plus className="h-3 w-3" />
-          Bloques disponibles
-        </p>
-        {isMobile && (
-          <button onClick={() => setInsertSubOpen(false)} className="text-muted-foreground">
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-      <div className="py-1 max-h-[300px] overflow-y-auto">
-        {INSERT_ITEMS.map((item) => (
+  /* ── Insert blocks view ── */
+  const insertContent = (
+    <>
+      <div className={cn("px-4 py-2.5 border-b border-border/50 flex items-center justify-between", isMobile ? "bg-muted/20" : "bg-muted/30")}>
+        <div className="flex items-center gap-2">
           <button
-            key={item.type}
-            onClick={() => { onInsertBlock(item.type); onClose(); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-accent transition-colors"
+            onClick={() => setActiveView("main")}
+            className="h-6 w-6 rounded-md flex items-center justify-center hover:bg-accent/50 transition-colors"
           >
-            <item.icon className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-[11px] font-medium text-foreground">{item.label}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground rotate-180" />
           </button>
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+            <Plus className="h-3 w-3 text-primary" />
+            Blocs disponibles
+          </p>
+        </div>
+      </div>
+      <div className={cn("py-1.5", isMobile ? "max-h-[55vh]" : "max-h-[380px]", "overflow-y-auto")}>
+        {INSERT_GROUPS.map((group, gi) => (
+          <div key={group.label}>
+            {gi > 0 && <div className="my-1 mx-4 h-px bg-border/30" />}
+            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest px-4 pt-2 pb-1">
+              {group.label}
+            </p>
+            {group.items.map((item) => (
+              <button
+                key={item.type}
+                onClick={() => { onInsertBlock(item.type); onClose(); }}
+                className={cn(
+                  "w-full flex items-center gap-3 text-left hover:bg-accent/30 active:bg-accent/50 transition-colors",
+                  isMobile ? "px-4 py-3" : "px-4 py-2",
+                )}
+              >
+                <item.icon className={cn("text-primary shrink-0", isMobile ? "h-4.5 w-4.5" : "h-3.5 w-3.5")} />
+                <span className={cn("font-medium text-foreground", isMobile ? "text-[13px]" : "text-[11px]")}>{item.label}</span>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
-    </div>
+    </>
   );
 
   // ── Mobile: Bottom Sheet ──
@@ -278,7 +327,7 @@ export function UniversalContextMenu({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[199] bg-black/40"
+          className="fixed inset-0 z-[199] bg-black/50 backdrop-blur-[2px]"
           onClick={onClose}
         />
         {/* Sheet */}
@@ -287,35 +336,44 @@ export function UniversalContextMenu({
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
-          className="fixed inset-x-0 bottom-0 z-[200] rounded-t-2xl bg-popover border-t border-border shadow-2xl max-h-[75vh] overflow-hidden flex flex-col"
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          className="fixed inset-x-0 bottom-0 z-[200] rounded-t-2xl bg-popover border-t border-border/60 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] max-h-[80vh] overflow-hidden flex flex-col"
         >
           {/* Drag handle */}
-          <div className="flex justify-center py-2 shrink-0">
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+          <div className="flex justify-center py-3 shrink-0">
+            <div className="h-1 w-10 rounded-full bg-muted-foreground/20" />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {insertSubOpen ? insertContent : menuContent}
+          <div className="flex-1 overflow-y-auto pb-safe">
+            {activeView === "insert" ? insertContent : mainContent}
           </div>
+
+          {/* Safe area bottom padding for iOS */}
+          <div className="h-2 shrink-0" />
         </motion.div>
       </>
     );
   }
 
   // ── Desktop: Positioned Popup ──
-  const menuW = insertSubOpen ? 500 : 260;
+  const menuW = 280;
   const menuH = 420;
-  const left = Math.min(x, window.innerWidth - menuW - 8);
-  const top = Math.min(y, window.innerHeight - menuH - 8);
+  const left = Math.min(x, window.innerWidth - menuW - 12);
+  const top = Math.min(y, window.innerHeight - menuH - 12);
 
   return (
-    <div ref={ref} style={{ position: "fixed", left, top, zIndex: 200 }} className="flex gap-0.5">
-      <div className="w-[260px] rounded-xl border border-border bg-popover shadow-2xl overflow-hidden">
-        {menuContent}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.12 }}
+      style={{ position: "fixed", left, top, zIndex: 200 }}
+    >
+      <div className="w-[280px] rounded-xl border border-border/60 bg-popover shadow-2xl overflow-hidden">
+        {activeView === "insert" ? insertContent : mainContent}
       </div>
-      {insertContent}
-    </div>
+    </motion.div>
   );
 }
 
