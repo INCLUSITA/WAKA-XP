@@ -26,27 +26,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /** Patterns indicating API keys / secrets in YAML/JSON content */
-const SECRET_PATTERNS = [
-  /api[_-]?key/i,
-  /authorization:\s*bearer/i,
-  /secret[_-]?key/i,
-  /access[_-]?token/i,
-  /private[_-]?key/i,
-  /password/i,
-  /\btoken\b\s*:\s*["'][A-Za-z0-9]/i,
-  /x-api-key/i,
+const SECRET_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "API_KEY", pattern: /api[_-]?key/i },
+  { label: "X_API_KEY", pattern: /x-api-key/i },
+  { label: "BEARER_TOKEN", pattern: /authorization:\s*bearer/i },
+  { label: "ACCESS_TOKEN", pattern: /access[_-]?token/i },
+  { label: "SECRET_KEY", pattern: /secret[_-]?key/i },
+  { label: "PRIVATE_KEY", pattern: /private[_-]?key/i },
+  { label: "PASSWORD", pattern: /password/i },
+  { label: "TOKEN", pattern: /\btoken\b\s*:\s*["']?[A-Za-z0-9._-]{6,}/i },
+  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*api[^}]*key[^}]*\}/i },
 ];
 
 /** Detect secrets/API keys referenced in file content */
 function detectSecretReferences(content: string): string[] {
-  const found: string[] = [];
-  for (const pattern of SECRET_PATTERNS) {
+  const found = new Set<string>();
+  for (const { label, pattern } of SECRET_PATTERNS) {
     if (pattern.test(content)) {
-      const match = content.match(pattern);
-      if (match) found.push(match[0]);
+      found.add(label);
     }
   }
-  return [...new Set(found)];
+  return Array.from(found);
 }
 
 interface PlayerWorkbenchProps {
@@ -82,7 +82,6 @@ export function PlayerWorkbench({
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
-  const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
   const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   /** Also detect secrets in the stored scenario_config (YAML/JSON from previous sessions) */
@@ -114,9 +113,14 @@ export function PlayerWorkbench({
     return allSecrets;
   }, [assets, storedConfigSecrets]);
 
-  const allSecretsProvided = detectedSecrets.length === 0 || 
-    detectedSecrets.every(s => s.refs.every(r => secretValues[r]?.trim()));
-  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged && !allSecretsProvided;
+  const requiredSecretRefs = useMemo(
+    () => Array.from(new Set(detectedSecrets.flatMap((s) => s.refs))),
+    [detectedSecrets]
+  );
+
+  const allSecretsProvided = requiredSecretRefs.length === 0 ||
+    requiredSecretRefs.every((ref) => secretValues[ref]?.trim());
+  const hasMissingSecrets = requiredSecretRefs.length > 0 && !allSecretsProvided;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
