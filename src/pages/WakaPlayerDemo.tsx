@@ -525,6 +525,167 @@ export default function WakaPlayerDemo() {
     }
   }, [setFlowContext]);
 
+  // ── Auto-save after changes ──
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      if (!activeFlowId || !tenantId) return;
+      try {
+        await saveFlow(
+          activeFlowTitle || "Flujo auto-guardado",
+          "",
+          messages,
+          dataMode,
+          "sandbox",
+          activeFlowId
+        );
+        setVersionCount((v) => v + 1);
+      } catch (err) {
+        console.error("Auto-save error:", err);
+      }
+    }, 1500);
+  }, [activeFlowId, tenantId, activeFlowTitle, messages, dataMode, saveFlow]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
+
+  // ── Block insertion from context menu ──
+  const handleInsertBlock = useCallback((type: InsertableBlockType) => {
+    setContextMenuPos(null);
+
+    if (type === "voiceCall") {
+      setShowVoiceCall(true);
+      return;
+    }
+    if (type === "avatar") {
+      setShowAvatar(true);
+      return;
+    }
+
+    const blockMsg: PlayerMessage = {
+      id: `block-${Date.now()}`,
+      text: "",
+      direction: "outbound",
+      timestamp: new Date(),
+      source: "WAKA Builder",
+    };
+
+    switch (type) {
+      case "text":
+        blockMsg.text = "Nouveau message — double-cliquez pour éditer";
+        break;
+      case "richCard":
+        blockMsg.richCard = { title: "Titre de la carte", description: "Description", icon: "🎯", bgGradient: "linear-gradient(135deg, hsl(270,50%,45%), hsl(300,40%,50%))", actions: ["Action 1", "Action 2"] };
+        break;
+      case "menu":
+        blockMsg.text = "Sélectionnez une option :";
+        blockMsg.menu = [
+          { label: "Option 1", icon: "📱", description: "Description option 1" },
+          { label: "Option 2", icon: "💼", description: "Description option 2" },
+          { label: "Option 3", icon: "🎯", description: "Description option 3" },
+        ];
+        blockMsg.menuTitle = "Menu";
+        break;
+      case "quickReplies":
+        blockMsg.text = "Choisissez une réponse :";
+        blockMsg.quickReplies = ["Réponse 1", "Réponse 2", "Réponse 3"];
+        break;
+      case "catalog":
+        blockMsg.catalog = {
+          title: "Nos produits",
+          products: [
+            { id: "p1", name: "Produit 1", price: "5.000 FCFA", image: "", description: "Description du produit" },
+            { id: "p2", name: "Produit 2", price: "12.000 FCFA", image: "", description: "Autre produit" },
+          ],
+        };
+        break;
+      case "inlineForm":
+        blockMsg.inlineForm = {
+          title: "Formulaire",
+          fields: [
+            { key: "name", label: "Nom complet", type: "text", required: true },
+            { key: "phone", label: "Téléphone", type: "tel", required: true },
+          ],
+          submitLabel: "Envoyer",
+          icon: "📝",
+        };
+        break;
+      case "location":
+        blockMsg.location = { lat: 12.3714, lng: -1.5197, label: "Ouagadougou", address: "Burkina Faso" };
+        break;
+      case "payment":
+        blockMsg.payment = {
+          title: "Paiement",
+          amount: "15.000 FCFA",
+          currency: "XOF",
+          items: [{ label: "Service", amount: "15.000 FCFA" }],
+          methods: ["mobile_money", "card"],
+        };
+        break;
+      case "rating":
+        blockMsg.rating = { title: "Évaluez notre service", type: "stars" };
+        break;
+      case "certificate":
+        blockMsg.certificate = { title: "Certificat de Formation", recipientName: "Nom du participant", courseName: "Formation WAKA", completionDate: new Date().toISOString().split("T")[0], certificateId: `CERT-${Date.now()}` };
+        break;
+      case "training":
+        blockMsg.training = {
+          title: "Formation en cours",
+          overallProgress: 35,
+          modules: [
+            { id: "m1", title: "Module 1", progress: 100, status: "completed" as const },
+            { id: "m2", title: "Module 2", progress: 40, status: "in_progress" as const },
+            { id: "m3", title: "Module 3", progress: 0, status: "locked" as const },
+          ],
+        };
+        break;
+      case "mediaCarousel":
+        blockMsg.mediaCarousel = {
+          title: "Galerie",
+          slides: [
+            { id: "s1", type: "image", src: "/placeholder.svg", caption: "Image 1" },
+            { id: "s2", type: "image", src: "/placeholder.svg", caption: "Image 2" },
+          ],
+        };
+        break;
+      case "creditSimulation":
+        blockMsg.creditSimulation = { amount: 150000, currency: "FCFA", term: 12, rate: 8.5, monthlyPayment: 13125, totalCost: 157500 };
+        break;
+      case "clientStatus":
+        blockMsg.clientStatus = { name: "Client Test", status: "active", kycLevel: "verified", accountId: "CLI-001", balance: "25.000 FCFA" };
+        break;
+      case "momoAccount":
+        blockMsg.momoAccount = { accountName: "Compte MoMo", balance: "8.750 FCFA", currency: "XOF", phone: "+226 70 00 00 00", status: "active" };
+        break;
+      case "servicePlans":
+        blockMsg.servicePlans = {
+          title: "Forfaits disponibles",
+          plans: [
+            { sku: "basic", name: "Basic", price: "2.000 FCFA/mois", features: ["1 GB data", "Appels illimités"] },
+            { sku: "pro", name: "Pro", price: "5.000 FCFA/mois", features: ["5 GB data", "Appels illimités", "SMS illimités"], recommended: true },
+          ],
+        };
+        break;
+      case "paymentConfirmation":
+        blockMsg.paymentConfirmation = { transactionId: `TXN-${Date.now()}`, amount: "15.000 FCFA", status: "success", method: "Moov Money", date: new Date().toISOString() };
+        break;
+      case "creditContract":
+        blockMsg.creditContract = { contractId: `CTR-${Date.now()}`, amount: "150.000 FCFA", term: "12 mois", rate: "8.5%", status: "pending" };
+        break;
+      case "deviceLockConsent":
+        blockMsg.deviceLockConsent = { deviceName: "Samsung Galaxy A14", imei: "000000000000000", provider: "WAKA Finance", terms: "En acceptant, votre appareil sera verrouillé en cas de défaut de paiement." };
+        break;
+    }
+
+    setMessages((prev) => [...prev, blockMsg]);
+    saveMessage(blockMsg);
+    triggerAutoSave();
+    toast.success(`Bloc "${type}" inséré`);
+  }, [saveMessage, triggerAutoSave]);
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
