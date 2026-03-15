@@ -39,6 +39,7 @@ import SimulatorShell from "./pages/SimulatorShell";
 import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 import PlayerFlowsPage from "./pages/PlayerFlowsPage";
 import SpatialPage from "./pages/SpatialPage";
+import PublicPlayerPage from "./pages/PublicPlayerPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => {
             {/* Public routes */}
             <Route path="/share/:id" element={<ShareDemo />} />
             <Route path="/shared/:token" element={<SharedDemo />} />
+            <Route path="/player/public" element={<PublicPlayerPage />} />
             <Route path="/login" element={<LoginPage />} />
 
             {/* Protected routes */}

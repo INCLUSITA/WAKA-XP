@@ -30,7 +30,8 @@ export function QuickShareDialog({ open, onClose, flowTitle, currentUrl }: Quick
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const demoUrl = currentUrl || `${window.location.origin}/player/live`;
+  // Always point to the public (no-auth) player route
+  const demoUrl = `${window.location.origin}/player/public`;
 
   const createShare = useMutation({
     mutationFn: async () => {
@@ -43,7 +44,7 @@ export function QuickShareDialog({ open, onClose, flowTitle, currentUrl }: Quick
         .insert({
           title,
           demo_url: demoUrl,
-          demo_type: "redirect",
+          demo_type: "iframe",
           expires_at: expiresAt,
           created_by: user?.id || null,
           tenant_id: tenant?.id || null,
