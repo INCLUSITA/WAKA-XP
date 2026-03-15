@@ -142,7 +142,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
   const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
   const loadedFlowIdRef = useRef<string | null>(null);
-  const [flowLoadCounter, setFlowLoadCounter] = useState(0);
+  const [flowLoadKey, setFlowLoadKey] = useState(0);
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
@@ -193,6 +193,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadFlowFull, resetHistory, setFlowContext, setHistoryFromMessages, startNewConversation, setDataMode]);
 
+  // Keep a stable ref to loadFlowById to avoid stale closures in callbacks
+  const loadFlowByIdRef = useRef(loadFlowById);
+  loadFlowByIdRef.current = loadFlowById;
+
   // Load flow from URL param on mount or URL change
   useEffect(() => {
     if (!flowIdParam) {
@@ -201,10 +205,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       setActiveFlowTitle(null);
       return;
     }
-    if (loadedFlowIdRef.current === flowIdParam && flowLoadCounter === 0) return;
-    loadFlowById(flowIdParam);
+    if (loadedFlowIdRef.current === flowIdParam) return;
+    loadFlowByIdRef.current(flowIdParam);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowIdParam, flowLoadCounter]);
+  }, [flowIdParam, flowLoadKey]);
 
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
@@ -316,18 +320,14 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback(async (flowId: string) => {
+  const handleLoadFlow = useCallback((flowId: string) => {
+    // Load flow immediately BEFORE closing panel to avoid Sheet unmount interference
+    loadedFlowIdRef.current = null;
+    window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
+    loadFlowByIdRef.current(flowId);
+    // Close panel after load is initiated
     setShowFlowsPanel(false);
-    // Update URL for bookmarkability
-    navigate(`/player/live?flow=${flowId}`, { replace: true });
-    // If same flow, force reload via counter; otherwise loadFlowById handles it
-    if (flowId === loadedFlowIdRef.current) {
-      setFlowLoadCounter((c) => c + 1);
-    } else {
-      // Directly load — don't wait for URL effect in case React Router batches
-      loadFlowById(flowId);
-    }
-  }, [navigate, loadFlowById]);
+  }, []);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
