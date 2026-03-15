@@ -133,7 +133,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const avatarUrl = "https://avatar.waka.africa/agent";
 
   // ── External Hooks ──
-  const { sendToAI, isThinking, setFlowContext, resetHistory } = useWakaPlayerAI();
+  const { sendToAI, isThinking, setFlowContext, resetHistory, setHistoryFromMessages } = useWakaPlayerAI();
   const { saveMessage, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
   const { saveFlow, loadFlowFull, updateFlowConversation } = useSavedPlayerFlows();
 
@@ -146,11 +146,13 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   /** Core flow loader — called both from URL changes and direct selection */
   const loadFlowById = useCallback(async (flowId: string) => {
-    // Immediately reset state to prevent stale data
+    // Immediately reset state to prevent stale data bleed
     setMessages([...WELCOME_MESSAGES]);
     setActiveScenarioConfig({});
     setActiveFlowTitle(null);
     resetHistory();
+    setHistoryFromMessages([]);
+    setFlowContext(null);
     loadedFlowIdRef.current = flowId;
     setActiveFlowId(flowId);
 
@@ -158,7 +160,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     // Guard: if user switched again while loading
     if (loadedFlowIdRef.current !== flowId) return;
 
-    if (!full) { toast.error("No se pudo cargar el flujo seleccionado"); return; }
+    if (!full) {
+      toast.error("No se pudo cargar el flujo seleccionado");
+      return;
+    }
 
     const savedConversation = full.conversationSnapshot;
     if (savedConversation && savedConversation.length > 0) {
@@ -167,6 +172,9 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
         timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
       }));
       setMessages(rehydrated);
+      setHistoryFromMessages(rehydrated);
+    } else {
+      setHistoryFromMessages([]);
     }
 
     setDataMode(full.dataMode);
@@ -178,11 +186,12 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
     else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
     else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
+    else setFlowContext(null);
 
-    startNewConversation();
+    await startNewConversation();
     toast.success(`Flujo "${full.name}" cargado`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadFlowFull, resetHistory, setFlowContext, startNewConversation, setDataMode]);
+  }, [loadFlowFull, resetHistory, setFlowContext, setHistoryFromMessages, startNewConversation, setDataMode]);
 
   // Load flow from URL param on mount or URL change
   useEffect(() => {
