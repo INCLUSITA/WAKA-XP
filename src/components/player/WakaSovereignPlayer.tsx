@@ -415,6 +415,7 @@ export function WakaSovereignPlayer({
   onDeviceLockConsent,
   onVoiceCall,
   onAvatarCall,
+  onContextMenu,
   status = "online",
   statusBar,
   dataMode: externalMode,
