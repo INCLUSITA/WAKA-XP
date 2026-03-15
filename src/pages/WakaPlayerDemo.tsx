@@ -307,11 +307,18 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback((flowId: string) => {
+  const handleLoadFlow = useCallback(async (flowId: string) => {
     setShowFlowsPanel(false);
-    if (flowId === flowIdParam) return;
-    navigate(`/player/live?flow=${flowId}`);
-  }, [navigate, flowIdParam]);
+    // Update URL for bookmarkability
+    navigate(`/player/live?flow=${flowId}`, { replace: true });
+    // If same flow, force reload via counter; otherwise loadFlowById handles it
+    if (flowId === loadedFlowIdRef.current) {
+      setFlowLoadCounter((c) => c + 1);
+    } else {
+      // Directly load — don't wait for URL effect in case React Router batches
+      loadFlowById(flowId);
+    }
+  }, [navigate, loadFlowById]);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
