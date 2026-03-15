@@ -6,12 +6,13 @@
  * - AI Engine selector (WAKA AI, Azure, BYOM)
  * - Merge additional sources into the current flow
  * - Flow lifecycle controls (save, status, new conversation)
+ * - API key detection for YAML/JSON endpoints
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   Send, Upload, FileJson, FileText, Image as ImageIcon, RotateCcw,
-  Save, Sparkles, Loader2, FolderOpen, Pencil,
+  Save, Sparkles, Loader2, FolderOpen, Pencil, AlertTriangle, Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,30 @@ import { cn } from "@/lib/utils";
 import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEngineSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+/** Patterns indicating API keys / secrets in YAML/JSON content */
+const SECRET_PATTERNS = [
+  /api[_-]?key/i,
+  /authorization:\s*bearer/i,
+  /secret[_-]?key/i,
+  /access[_-]?token/i,
+  /private[_-]?key/i,
+  /password/i,
+  /\btoken\b.*:\s*["'][A-Za-z0-9]/i,
+  /x-api-key/i,
+];
+
+/** Detect secrets/API keys referenced in file content */
+function detectSecretReferences(content: string): string[] {
+  const found: string[] = [];
+  for (const pattern of SECRET_PATTERNS) {
+    if (pattern.test(content)) {
+      const match = content.match(pattern);
+      if (match) found.push(match[0]);
+    }
+  }
+  return [...new Set(found)];
+}
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
@@ -56,7 +81,22 @@ export function PlayerWorkbench({
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
+  const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /** Detect API key references in uploaded assets */
+  const detectedSecrets = useMemo(() => {
+    const allSecrets: { file: string; refs: string[] }[] = [];
+    for (const asset of assets) {
+      if (asset.content) {
+        const refs = detectSecretReferences(asset.content);
+        if (refs.length > 0) allSecrets.push({ file: asset.name, refs });
+      }
+    }
+    return allSecrets;
+  }, [assets]);
+
+  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
