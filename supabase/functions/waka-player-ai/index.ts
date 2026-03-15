@@ -125,28 +125,54 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 2. Afficher avec show_client_status
 
 ## RÈGLES DE RÉPONSE — CRITIQUES
-- **BOUTONS 100% CONTEXTUELS** : Les quick replies DOIVENT correspondre EXACTEMENT à ce que tu viens de demander ou proposer. JAMAIS de boutons génériques ("Voir les téléphones", "Mon solde", "Menu principal") quand la conversation attend une réponse spécifique.
-  
-  ⛔ INTERDIT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["Voir les téléphones", "Mon solde"] 
-  ✅ CORRECT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["✅ Oui, confirmer", "✏️ Non, corriger"]
-  
-  ⛔ INTERDIT : Tu demandes le numéro de téléphone puis suggest_quick_replies: ["Assurance santé", "Menu principal"]
-  ✅ CORRECT : Tu demandes le numéro de téléphone → PAS de quick replies (l'utilisateur doit taper)
-  
-  RÈGLE D'OR : Si ta question attend une saisie libre (nom, téléphone, montant), NE PAS envoyer de quick replies. Si ta question propose des choix, les quick replies doivent refléter EXACTEMENT ces choix.
-  
-  Exemples corrects :
-  - Choix binaire : ["✅ Oui", "❌ Non"]
-  - Choix produit : ["🏥 Pack Individuel", "👨‍👩‍👧 Pack Famille"]
-  - Choix paiement : ["💰 Comptant", "📅 Financement"]
-  - Confirmation : ["✅ Confirmer", "✏️ Modifier", "❌ Annuler"]
-  - Après action complète : ["📋 Menu principal", "💬 Autre question"]
-  
-  Les boutons de navigation générique ("Menu principal") ne sont acceptables QUE après la conclusion d'un flux complet, JAMAIS au milieu d'une interaction.
+
+### RÈGLE 1 : TOUJOURS DES BOUTONS — JAMAIS DE CUL-DE-SAC
+Tu dois TOUJOURS appeler suggest_quick_replies dans CHAQUE réponse, sans exception.
+L'utilisateur ne doit JAMAIS se retrouver sans options de navigation.
+
+### RÈGLE 2 : BOUTONS 100% CONTEXTUELS AU MILIEU D'UN FLUX
+Quand tu es EN TRAIN de guider un flux (BNPL, KYC, paiement, etc.), les quick replies doivent correspondre EXACTEMENT à ce que tu viens de demander ou proposer.
+
+⛔ INTERDIT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["Voir les téléphones", "Mon solde"] 
+✅ CORRECT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["✅ Oui, confirmer", "✏️ Non, corriger"]
+
+⛔ INTERDIT : Tu demandes le numéro de téléphone puis suggest_quick_replies: ["Assurance santé", "Menu principal"]
+✅ CORRECT : Tu demandes le numéro de téléphone → suggest_quick_replies: ["❌ Annuler"] uniquement
+
+RÈGLE D'OR : Si ta question attend une saisie libre (nom, téléphone, montant), offrir seulement un bouton d'annulation ou de retour. Si ta question propose des choix, les quick replies doivent refléter EXACTEMENT ces choix.
+
+Exemples corrects en milieu de flux :
+- Choix binaire : ["✅ Oui", "❌ Non"]
+- Choix produit : ["🏥 Pack Individuel", "👨‍👩‍👧 Pack Famille"]
+- Choix paiement : ["💰 Comptant", "📅 Financement"]
+- Confirmation : ["✅ Confirmer", "✏️ Modifier", "❌ Annuler"]
+- Saisie libre attendue : ["❌ Annuler"]
+
+### RÈGLE 3 : APRÈS UN FLUX COMPLÉTÉ — OFFRIR CONTINUITÉ
+Après la conclusion d'un flux (paiement confirmé, crédit créé, compte ouvert, etc.), tu dois TOUJOURS proposer des quick replies de continuité qui :
+1. Permettent de revenir au menu de services
+2. Proposent des services complémentaires logiques
+3. Donnent une sortie gracieuse
+
+Exemples après conclusion :
+- Après BNPL complété : ["📱 Voir d'autres téléphones", "💳 Mon solde", "📋 Autres services", "👋 Merci, c'est tout"]
+- Après MoMo ouvert : ["💰 Faire un paiement", "📱 Voir les téléphones", "📋 Autres services"]
+- Après paiement : ["💳 Voir mon solde", "📋 Autres services", "👋 Merci"]
+- Après KYC : ["📱 Voir les téléphones", "🏥 Assurance", "📋 Tous les services"]
+
+### RÈGLE 4 : CONTINUITÉ CONVERSATIONNELLE
+- Tu dois TOUJOURS maintenir le contexte de la conversation précédente
+- Si l'utilisateur revient au menu principal, salue-le brièvement SANS répéter le message d'accueil complet
+- Si l'utilisateur a déjà interagi, fais référence à ce qui a été fait : "Votre compte MoMo est prêt ! Autre chose ?"
+- Propose toujours des services complémentaires pertinents basés sur ce que l'utilisateur a déjà exploré
+
+### RÈGLE 5 : MENU PRINCIPAL / SERVICES
+Quand l'utilisateur demande le menu, les services, ou "que peux-tu faire", propose TOUJOURS un menu structuré avec ces options principales :
+suggest_quick_replies: ["📱 Téléphones BNPL", "🌐 Fibre optique", "🏥 Assurance santé", "💰 Compte MoMo", "💳 Mon solde"]
 
 - Toujours répondre en français sauf si l'utilisateur parle autre langue
 - Être proactif : anticiper les besoins
-- Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies si pertinent
+- Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies OBLIGATOIRE
 - Si l'intention n'est pas claire, poser une question avec quick replies contextuels
 - Après chaque action API, toujours afficher un bloc souverain avec les résultats`;
 
@@ -338,7 +364,7 @@ const SOVEREIGN_TOOLS = [
     type: "function",
     function: {
       name: "suggest_quick_replies",
-      description: "Suggest quick reply buttons. ALWAYS use to guide conversation after every response.",
+      description: "OBLIGATOIRE dans CHAQUE réponse. Suggest quick reply buttons to guide conversation. After completing a flow, include navigation options like 'Autres services'. During a flow, match buttons to the current question. Never leave the user without buttons.",
       parameters: {
         type: "object",
         properties: {
