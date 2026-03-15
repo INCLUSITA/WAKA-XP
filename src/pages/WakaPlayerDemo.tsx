@@ -248,7 +248,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
   const status = isThinking ? "typing" : "online";
 
   return (
-    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
+    <>
       <ExperienceCanvas
         mode={experienceMode}
         avatarEnabled={false}
