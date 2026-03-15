@@ -45,9 +45,30 @@ export type SpatialSurfaceType =
   | "media_surface"
   | "form_surface";
 
+/** Typed block identifier for sovereign block routing */
+export type SpatialBlockType =
+  | "catalog"
+  | "payment"
+  | "momo"
+  | "creditSimulation"
+  | "creditContract"
+  | "servicePlans"
+  | "clientStatus"
+  | "training"
+  | "location"
+  | "paymentConfirmation"
+  | "deviceLockConsent"
+  | "form"
+  | "certificate"
+  | "mediaCarousel";
+
 export interface SpatialSurfacePayload {
   title?: string;
   subtitle?: string;
+  /** Which sovereign block type this payload carries */
+  blockType?: SpatialBlockType;
+  /** The actual sovereign block data from PlayerMessage */
+  blockData?: unknown;
   items?: Array<Record<string, unknown>>;
   metadata?: Record<string, unknown>;
   raw?: unknown;
@@ -72,6 +93,8 @@ export interface SpatialRenderDecision {
   presentationMode: SpatialPresentationMode;
   phonePose: PhonePose;
   surfaceType: SpatialSurfaceType;
+  /** Extracted payload from the PlayerMessage sovereign blocks */
+  payload?: SpatialSurfacePayload;
   hudText?: string;
   triggerHaptics?: boolean;
   keepChatMessage?: boolean;
