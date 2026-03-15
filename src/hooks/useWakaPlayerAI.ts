@@ -219,9 +219,60 @@ export function useWakaPlayerAI() {
     } finally {
       setIsThinking(false);
     }
-  }, []);
+  }, [playerContext]);
 
   const resetHistory = useCallback(() => { historyRef.current = []; }, []);
 
   return { sendToAI, isThinking, resetHistory, setFlowContext, flowContext: flowContextRef.current };
+}
+
+/**
+ * Build enriched flowContext string from PlayerContextProvider data.
+ * Merges explicit flowContext with persona/tools/knowledge/policies.
+ */
+function buildEnrichedContext(
+  ctx: ReturnType<typeof usePlayerContext>,
+  explicitFlowContext: string | null,
+): string | null {
+  const parts: string[] = [];
+
+  // Explicit flow context always takes priority
+  if (explicitFlowContext) {
+    parts.push(explicitFlowContext);
+  }
+
+  // System prompt from provider
+  if (ctx.systemPrompt && ctx.systemPrompt !== explicitFlowContext) {
+    parts.push(ctx.systemPrompt);
+  }
+
+  // Persona info
+  if (ctx.persona && ctx.persona.name !== "WAKA XP") {
+    parts.push(`[Persona] Nom: ${ctx.persona.name}, Rôle: ${ctx.persona.role}, Langue: ${ctx.persona.language}${ctx.persona.greeting ? `, Salutation: ${ctx.persona.greeting}` : ""}`);
+  }
+
+  // Tools
+  if (ctx.tools.length > 0) {
+    const toolNames = ctx.tools.map(t => `${t.name}: ${t.description}`).join("; ");
+    parts.push(`[Outils disponibles] ${toolNames}`);
+  }
+
+  // Knowledge
+  if (ctx.knowledge.length > 0) {
+    const knowledgeLabels = ctx.knowledge.map(k => k.label).join(", ");
+    parts.push(`[Base de connaissances] ${knowledgeLabels}`);
+  }
+
+  // Policies
+  if (ctx.policies.length > 0) {
+    const rules = ctx.policies.map(p => p.rule).join("; ");
+    parts.push(`[Règles] ${rules}`);
+  }
+
+  // Intents
+  if (ctx.intents.length > 0) {
+    parts.push(`[Intents reconnus] ${ctx.intents.join(", ")}`);
+  }
+
+  return parts.length > 0 ? parts.join("\n\n") : null;
 }
