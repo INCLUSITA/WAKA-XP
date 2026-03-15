@@ -651,8 +651,17 @@ export function WakaSovereignPlayer({
                               "max-w-[85%] rounded-2xl px-3.5 py-2 shadow-sm",
                               isBot
                                 ? "bg-white text-[hsl(220,15%,15%)] rounded-bl-md border border-[hsl(220,15%,92%)]"
-                                : "bg-[hsl(270,45%,50%)] text-white rounded-br-md"
+                                : "bg-[hsl(270,45%,50%)] text-white rounded-br-md",
+                              onMessageEdit && "cursor-pointer"
                             )}
+                            onDoubleClick={() => {
+                              if (onMessageEdit && msg.text && !msg.isVoice) {
+                                setEditingMsgId(msg.id);
+                                setEditText(msg.text);
+                                setTimeout(() => editInputRef.current?.focus(), 50);
+                              }
+                            }}
+                            title={onMessageEdit ? "Double-clic pour éditer" : undefined}
                           >
                             {msg.isVoice ? (
                               <div className="flex items-center gap-2 min-w-[120px]">
@@ -661,6 +670,42 @@ export function WakaSovereignPlayer({
                                 </div>
                                 <VoiceWaveform active={false} />
                                 <span className="text-[9px] opacity-50 ml-auto">0:12</span>
+                              </div>
+                            ) : editingMsgId === msg.id ? (
+                              <div className="space-y-1.5">
+                                <textarea
+                                  ref={editInputRef}
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      if (editText.trim()) {
+                                        onMessageEdit(msg.id, editText.trim());
+                                      }
+                                      setEditingMsgId(null);
+                                    }
+                                    if (e.key === "Escape") {
+                                      setEditingMsgId(null);
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    if (editText.trim() && editText.trim() !== msg.text) {
+                                      onMessageEdit(msg.id, editText.trim());
+                                    }
+                                    setEditingMsgId(null);
+                                  }}
+                                  className={cn(
+                                    "w-full min-h-[40px] text-[13px] leading-[1.55] bg-transparent border-0 outline-none resize-none p-0",
+                                    isBot ? "text-[hsl(220,15%,15%)]" : "text-white placeholder:text-white/50"
+                                  )}
+                                  rows={Math.max(2, editText.split("\n").length)}
+                                />
+                                <div className="flex items-center gap-1.5">
+                                  <span className={cn("text-[8px]", isBot ? "text-[hsl(220,10%,55%)]" : "text-white/50")}>
+                                    Enter = guardar · Esc = cancelar
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <p className="text-[13px] leading-[1.55] whitespace-pre-wrap break-words">
