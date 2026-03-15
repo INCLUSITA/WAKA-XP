@@ -263,69 +263,143 @@
   background: hsl(var(--border) / 0.9);
 }
 
-/* ── Block Variant System ── */
+/* ══════════════════════════════════════════════════ */
+/* ── Block Variant System — Perceptible Differences */
+/* ══════════════════════════════════════════════════ */
 
-/* Compact: mobile-optimized with larger touch targets */
+/*
+ * COMPACT: Mobile-first. Big touch targets, tight spacing, flat buttons.
+ */
 .waka-block-compact {
-  @apply text-sm leading-relaxed;
+  @apply text-sm leading-relaxed p-2;
+  border-radius: 8px;
+}
+.waka-block-compact > div {
+  @apply space-y-1;
 }
 .waka-block-compact button,
 .waka-block-compact [role="button"] {
   min-height: 48px;
   min-width: 48px;
-  @apply text-sm font-medium;
+  border-radius: 8px;
+  @apply text-sm font-semibold w-full;
+  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--primary));
+  border: none;
+}
+.waka-block-compact button:active,
+.waka-block-compact [role="button"]:active {
+  background: hsl(var(--primary) / 0.16);
+  transform: scale(0.98);
 }
 .waka-block-compact img {
   border-radius: 8px;
+  max-height: 128px;
+  object-fit: cover;
+  width: 100%;
 }
 .waka-block-compact .waka-block-title {
-  @apply text-sm font-semibold;
+  @apply text-sm font-bold;
 }
 .waka-block-compact .waka-block-subtitle {
   @apply text-xs text-muted-foreground;
 }
 
-/* Standard: default desktop rendering */
+/*
+ * STANDARD: Balanced desktop. Outlined buttons, moderate spacing, soft shadows.
+ */
 .waka-block-standard {
-  @apply text-sm;
+  @apply text-sm p-3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
+}
+.waka-block-standard > div {
+  @apply space-y-2;
 }
 .waka-block-standard button,
 .waka-block-standard [role="button"] {
   min-height: 36px;
+  border-radius: 8px;
+  @apply text-sm font-medium;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--foreground));
+  transition: background 0.15s, border-color 0.15s;
+}
+.waka-block-standard button:hover,
+.waka-block-standard [role="button"]:hover {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--primary) / 0.3);
+}
+.waka-block-standard img {
+  border-radius: 10px;
+}
+.waka-block-standard .waka-block-title {
+  @apply text-sm font-semibold;
 }
 
-/* Expanded: rich desktop with more space and polish */
+/*
+ * EXPANDED: Rich desktop panel. Gradient buttons, generous spacing, glow shadows.
+ */
 .waka-block-expanded {
-  @apply text-base;
+  @apply text-base p-4;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 16px hsl(var(--foreground) / 0.06),
+    0 0 40px -12px hsl(var(--primary) / 0.08);
 }
 .waka-block-expanded > div {
   @apply space-y-4;
 }
 .waka-block-expanded img {
   border-radius: 12px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  width: 100%;
 }
 .waka-block-expanded .waka-block-title {
   @apply text-lg font-bold;
 }
+.waka-block-expanded .waka-block-subtitle {
+  @apply text-sm text-muted-foreground;
+}
 .waka-block-expanded button,
 .waka-block-expanded [role="button"] {
-  @apply transition-all duration-200;
-  min-height: 40px;
+  min-height: 44px;
+  border-radius: 12px;
+  @apply text-sm font-semibold px-5;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.18);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .waka-block-expanded button:hover,
 .waka-block-expanded [role="button"]:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(var(--primary) / 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px hsl(var(--primary) / 0.22);
+}
+.waka-block-expanded button:active,
+.waka-block-expanded [role="button"]:active {
+  transform: translateY(0);
 }
 
-/* Zero-rated: ultra-light for low-data environments */
+/*
+ * ZERO-RATED: Ultra-light. No images, no shadows, no animations, text-only.
+ * Monospace feel. Underlined text links instead of buttons.
+ */
 .waka-block-zero {
-  @apply text-xs leading-snug;
-  box-shadow: none !important;
+  @apply text-xs leading-snug p-1.5;
   border-radius: 4px !important;
+  box-shadow: none !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--background)) !important;
+}
+.waka-block-zero > div {
+  @apply space-y-0.5;
 }
 .waka-block-zero img {
-  display: none;
+  display: none !important;
 }
 .waka-block-zero svg:not(.waka-essential-icon) {
   display: none;
@@ -338,11 +412,48 @@
 .waka-block-zero .animate-spin {
   animation: none !important;
 }
+.waka-block-zero .waka-block-title {
+  @apply text-xs font-bold;
+}
+.waka-block-zero .waka-block-subtitle {
+  display: none;
+}
 .waka-block-zero button,
 .waka-block-zero [role="button"] {
-  min-height: 36px;
-  border-radius: 4px !important;
+  min-height: 32px;
+  border-radius: 2px !important;
   @apply text-xs font-medium;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 4px 2px;
+}
+.waka-block-zero button:hover,
+.waka-block-zero [role="button"]:hover {
+  color: hsl(var(--foreground));
+}
+
+/* ── Variant transition wrapper ── */
+[data-variant] {
+  transition: padding 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ── Data policy surface tints ── */
+[data-policy="libre"] {
+  /* Full richness — no override needed */
+}
+[data-policy="subventionné"] {
+  --_surface-dim: 0.92;
+}
+[data-policy="subventionné"] img {
+  filter: grayscale(0.15) contrast(0.95);
+}
+[data-policy="zero-rated"] {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace !important;
+  letter-spacing: -0.01em;
 }
 
 /* ── Phone Anchor Glow ── */

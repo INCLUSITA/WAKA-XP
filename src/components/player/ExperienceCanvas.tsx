@@ -11,7 +11,7 @@
 
 import { type ReactNode, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minimize2, Smartphone, Layers, Monitor } from "lucide-react";
+import { X, Minimize2, Smartphone, Layers, Monitor, Zap, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 import type { ExperienceMode } from "./ExperienceModeSwitcher";
@@ -93,7 +93,7 @@ export function ExperienceCanvas({
   sidePanelContent, overlayContent, modalContent, fullscreenContent,
   header, mode = "expanded", avatarEnabled = false, className,
 }: ExperienceCanvasProps) {
-  const { isDesktop, isMobile, expandedBlock, collapseBlock } = useExperienceRuntime();
+  const { isDesktop, isMobile, expandedBlock, collapseBlock, dataPolicy } = useExperienceRuntime();
   const effectiveMode = isMobile ? "framed" : mode;
 
   const surfacePlan = useMemo(
@@ -196,12 +196,25 @@ export function ExperienceCanvas({
               className="border-l border-border/60 bg-card overflow-hidden shrink-0"
             >
               <div className="h-full flex flex-col">
-                {/* Panel header */}
+                {/* ── Slot-Content Header ── */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-border/60 bg-muted/20">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center">
+                      <Layers className="h-3 w-3 text-primary" />
+                    </div>
                     <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">
                       {expandedBlock?.blockType ? getBlockLabel(expandedBlock.blockType) : "Panel expansé"}
+                    </span>
+                    {/* Policy micro-badge */}
+                    <span className={cn(
+                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider",
+                      dataPolicy === "libre" && "bg-[hsl(120,40%,50%)/0.1] text-[hsl(120,50%,40%)]",
+                      dataPolicy === "subventionné" && "bg-[hsl(35,60%,50%)/0.1] text-[hsl(35,70%,40%)]",
+                      dataPolicy === "zero-rated" && "bg-[hsl(0,50%,50%)/0.1] text-[hsl(0,60%,45%)]",
+                    )}>
+                      {dataPolicy === "libre" && <><Zap className="h-2 w-2" />Libre</>}
+                      {dataPolicy === "subventionné" && <><Wifi className="h-2 w-2" />Subv.</>}
+                      {dataPolicy === "zero-rated" && <><WifiOff className="h-2 w-2" />Zero</>}
                     </span>
                   </div>
                   <button
