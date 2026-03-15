@@ -122,19 +122,15 @@ export default function WakaPlayerDemo() {
     });
   }, [flowIdParam, loadFlowFull]);
 
-  // Load generic conversation history only when NOT loading a saved flow
+  // When NOT loading a saved flow, always start fresh
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
     historyLoaded.current = true;
 
-    loadHistory().then((history) => {
-      if (history.length > 0) {
-        setMessages(history);
-      } else {
-        WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
-      }
-    });
-  }, [conversationId, loadHistory, saveMessage, flowIdParam]);
+    // Start fresh — save welcome messages as the beginning of a new conversation
+    resetHistory();
+    WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
+  }, [conversationId, saveMessage, flowIdParam, resetHistory]);
 
   const status = isThinking ? "typing" : "online";
 
