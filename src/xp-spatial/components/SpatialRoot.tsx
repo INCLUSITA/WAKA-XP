@@ -11,10 +11,12 @@ import { useSpatialExperience } from "../hooks/useSpatialExperience";
 import { resolveSpatialDecision } from "../adapters/spatialPresentationAdapter";
 import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { PlayerContextProvider } from "@/contexts/PlayerContextProvider";
 import { PlayerMemoryProvider } from "@/contexts/PlayerMemoryProvider";
 import { motion } from "framer-motion";
+import { Monitor } from "lucide-react";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
@@ -45,6 +47,7 @@ export function SpatialRoot() {
   const spatial = useSpatialExperience();
   const { sendToAI, isThinking } = useWakaPlayerAI();
   const msgIdCounter = useRef(100);
+  const navigate = useNavigate();
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
@@ -189,12 +192,26 @@ export function SpatialRoot() {
       {/* Layer HUD */}
       <PeripheralHUD hud={spatial.hud} />
 
-      {/* WAKA Spatial branding */}
-      <div className="fixed bottom-6 left-8 z-20 flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-[hsl(160,84%,45%)]" />
-        <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[hsl(210,10%,35%)]">
-          WAKA XP Spatial
-        </span>
+      {/* WAKA Spatial branding + mode switcher */}
+      <div className="fixed bottom-6 left-8 z-20 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[hsl(160,84%,45%)]" />
+          <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[hsl(210,10%,35%)]">
+            WAKA XP Spatial
+          </span>
+        </div>
+        <button
+          onClick={() => navigate("/player/live")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium
+                    bg-[hsl(228,14%,12%)]/80 backdrop-blur-xl
+                    border border-[hsl(228,14%,20%)]
+                    text-[hsl(210,20%,60%)]
+                    hover:border-[hsl(160,60%,40%)]/50 hover:text-[hsl(160,84%,50%)]
+                    transition-all duration-200"
+        >
+          <Monitor className="w-3 h-3" />
+          Standard
+        </button>
       </div>
     </div>
   );

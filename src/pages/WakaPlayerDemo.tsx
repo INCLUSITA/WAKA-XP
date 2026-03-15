@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -372,6 +372,15 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                 >
                   <RotateCcw className="h-3 w-3" />
                   Recommencer
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/spatial")}
+                  className="h-7 text-[10px] gap-1 border-primary/20 text-primary/70 hover:text-primary hover:border-primary/40"
+                >
+                  <Globe className="h-3 w-3" />
+                  Spatial
                 </Button>
                 <ExperienceModeSwitcher mode={experienceMode} onChange={setExperienceMode} />
               </div>
