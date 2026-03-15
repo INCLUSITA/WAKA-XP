@@ -418,6 +418,7 @@ export function WakaSovereignPlayer({
   onVoiceCall,
   onAvatarCall,
   onContextMenu,
+  onMessageEdit,
   status = "online",
   statusBar,
   dataMode: externalMode,
@@ -432,9 +433,12 @@ export function WakaSovereignPlayer({
   const [voiceActive, setVoiceActive] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
