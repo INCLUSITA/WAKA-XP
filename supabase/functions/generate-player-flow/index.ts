@@ -272,6 +272,17 @@ async function generateWithAI(
     contextParts.push(`## Assets visuales subidos\n${sourceData.assets.map((a: any) => `- ${a.name} (${a.type})`).join("\n")}\nUsa estos assets como referencia para personalizar la experiencia visual.`);
   }
 
+  if (sourceData.secretValues && typeof sourceData.secretValues === "object") {
+    const configured = Object.keys(sourceData.secretValues).filter((k) => {
+      const value = sourceData.secretValues[k];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+
+    if (configured.length > 0) {
+      contextParts.push(`## Credenciales disponibles\nEl usuario configuró: ${configured.join(", ")}.\nNo reveles ni repitas valores de credenciales.`);
+    }
+  }
+
   const systemPrompt = `Eres un generador de flujos conversacionales para WAKA XP.
 
 Tu tarea es generar DOS cosas basándote EXCLUSIVAMENTE en las fuentes proporcionadas:
