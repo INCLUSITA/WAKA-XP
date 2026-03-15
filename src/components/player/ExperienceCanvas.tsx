@@ -1,11 +1,9 @@
 /**
  * ExperienceCanvas
  * ────────────────
- * The multi-zone layout for the Adaptive Experience Runtime.
- * Supports three visual modes:
- *   - framed:   Phone is the only container, everything inside
- *   - expanded: Phone visible + blocks escape to side panel/overlay/modal
- *   - unbound:  Phone shrinks to narrative reference, canvas dominates
+ * Multi-zone layout for the Adaptive Experience Runtime.
+ * Modes: framed | expanded | unbound
+ * Includes avatar slot for future AvatarCoordinator integration.
  */
 
 import { type ReactNode } from "react";
@@ -14,43 +12,29 @@ import { X, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
 import type { ExperienceMode } from "./ExperienceModeSwitcher";
+import { AvatarSlot } from "./AvatarSlot";
 
 interface ExperienceCanvasProps {
-  /** The phone simulator component */
   phone: ReactNode;
-  /** The builder toolbar (between phone and workbench) */
   toolbar?: ReactNode;
-  /** The workbench panel */
   workbench?: ReactNode;
-  /** Content to render in the expanded side panel */
   sidePanelContent?: ReactNode;
-  /** Content for the overlay zone */
   overlayContent?: ReactNode;
-  /** Content for the modal zone */
   modalContent?: ReactNode;
-  /** Content for the fullscreen zone */
   fullscreenContent?: ReactNode;
-  /** Page header */
   header?: ReactNode;
-  /** Current experience mode */
   mode?: ExperienceMode;
+  /** Show avatar slot placeholder */
+  avatarEnabled?: boolean;
   className?: string;
 }
 
 export function ExperienceCanvas({
-  phone,
-  toolbar,
-  workbench,
-  sidePanelContent,
-  overlayContent,
-  modalContent,
-  fullscreenContent,
-  header,
-  mode = "expanded",
-  className,
+  phone, toolbar, workbench,
+  sidePanelContent, overlayContent, modalContent, fullscreenContent,
+  header, mode = "expanded", avatarEnabled = false, className,
 }: ExperienceCanvasProps) {
   const { isDesktop, isMobile, expandedBlock, collapseBlock } = useExperienceRuntime();
-
   const effectiveMode = isMobile ? "framed" : mode;
 
   const showSidePanel =
@@ -67,18 +51,16 @@ export function ExperienceCanvas({
 
       <div className="flex flex-1 min-h-0 relative">
         {/* ─── Phone Zone ─── */}
-        <div
-          className={cn(
-            "flex flex-col transition-all duration-300 ease-out",
-            effectiveMode === "framed" && "flex-1",
-            effectiveMode === "expanded" && "flex-1",
-            effectiveMode === "unbound" && "w-[260px] shrink-0 border-r border-border"
-          )}
-        >
+        <div className={cn(
+          "flex flex-col transition-all duration-300 ease-out",
+          effectiveMode === "framed" && "flex-1",
+          effectiveMode === "expanded" && "flex-1",
+          effectiveMode === "unbound" && "w-[260px] shrink-0 border-r border-border"
+        )}>
           {phone}
         </div>
 
-        {/* ─── Unbound Canvas Zone ── (only in unbound mode) ─── */}
+        {/* ─── Unbound Canvas Zone ─── */}
         {effectiveMode === "unbound" && (
           <div className="flex-1 flex flex-col min-w-0">
             <div className="flex-1 overflow-auto p-6">
@@ -91,6 +73,8 @@ export function ExperienceCanvas({
                     </span>
                   </div>
                   {sidePanelContent}
+                  {/* Avatar slot in unbound mode */}
+                  <AvatarSlot mode="unbound" enabled={avatarEnabled} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -103,6 +87,7 @@ export function ExperienceCanvas({
                       Los bloques soberanos se renderizan aquí en alta fidelidad.
                       Interactúa con el player para generar contenido expandido.
                     </p>
+                    <AvatarSlot mode="unbound" enabled={avatarEnabled} className="mt-4" />
                   </div>
                 </div>
               )}
@@ -135,8 +120,10 @@ export function ExperienceCanvas({
                     <Minimize2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {sidePanelContent}
+                  {/* Avatar slot in expanded mode */}
+                  <AvatarSlot mode="expanded" enabled={avatarEnabled} />
                 </div>
               </div>
             </motion.div>
@@ -243,15 +230,9 @@ export function ExperienceCanvas({
 /* ── Block Expand Button ── */
 
 export function BlockExpandButton({
-  blockType,
-  messageId,
-  data,
-  className: cls,
+  blockType, messageId, data, className: cls,
 }: {
-  blockType: string;
-  messageId: string;
-  data: Record<string, any>;
-  className?: string;
+  blockType: string; messageId: string; data: Record<string, any>; className?: string;
 }) {
   const { shouldExpand, expandBlock, isDesktop } = useExperienceRuntime();
   if (!isDesktop || !shouldExpand(blockType)) return null;
