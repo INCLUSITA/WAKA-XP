@@ -187,7 +187,31 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     const botMsg: PlayerMessage = { id: `bot-${Date.now()}`, text: "", direction: "outbound", timestamp: new Date(), ...partial, quickReplies };
     setMessages((prev) => [...prev, botMsg]);
     saveMessage(botMsg, extra);
-  }, [saveMessage]);
+
+    // Auto-extract client info from sovereign blocks to update header dynamically
+    if (partial.clientStatus) {
+      const cs = partial.clientStatus as Record<string, any>;
+      const name = cs.client_name || cs.clientName;
+      if (name) {
+        setActiveScenarioConfig((prev: Record<string, any>) => ({
+          ...prev,
+          clientName: name,
+          balance: cs.total_balance || cs.balance || prev.balance || "",
+        }));
+      }
+    }
+    if (partial.momoAccount) {
+      const ma = partial.momoAccount as Record<string, any>;
+      const name = ma.holder_name || ma.holderName || ma.client_name;
+      if (name) {
+        setActiveScenarioConfig((prev: Record<string, any>) => ({
+          ...prev,
+          clientName: name,
+          balance: ma.balance || prev.balance || "",
+        }));
+      }
+    }
+  }, [saveMessage, setActiveScenarioConfig]);
 
   // ── Extracted Hooks ──
   const actions = usePlayerActions({
