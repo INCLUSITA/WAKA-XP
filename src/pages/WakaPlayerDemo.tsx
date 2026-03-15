@@ -844,6 +844,16 @@ export default function WakaPlayerDemo() {
         onSelect={handleFlowContextSelect}
         activeFlowName={activeFlowContextName}
       />
+
+      {/* Right-click context menu for inserting blocks */}
+      {contextMenuPos && (
+        <PlayerContextMenu
+          x={contextMenuPos.x}
+          y={contextMenuPos.y}
+          onInsert={handleInsertBlock}
+          onClose={() => setContextMenuPos(null)}
+        />
+      )}
     </div>
   );
 }
