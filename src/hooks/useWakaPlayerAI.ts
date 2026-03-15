@@ -32,6 +32,19 @@ export function useWakaPlayerAI() {
     flowContextRef.current = ctx;
   }, []);
 
+  const setHistoryFromMessages = useCallback((messages: PlayerMessage[]) => {
+    const normalized = messages
+      .filter((m) => !m.isSystemEvent)
+      .map((m) => ({
+        role: m.direction === "inbound" ? "user" as const : "assistant" as const,
+        content: (m.text || "").trim(),
+      }))
+      .filter((m) => m.content.length > 0)
+      .slice(-40);
+
+    historyRef.current = normalized;
+  }, []);
+
   const sendToAI = useCallback(async (
     userText: string,
     dataMode: DataMode,
