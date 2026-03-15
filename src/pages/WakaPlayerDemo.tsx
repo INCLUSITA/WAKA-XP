@@ -726,11 +726,17 @@ export default function WakaPlayerDemo() {
         break;
     }
 
+    pushUndo();
     setMessages((prev) => [...prev, blockMsg]);
     saveMessage(blockMsg);
     triggerAutoSave();
+    // Add version entry for block insertion
+    setVersionEntries((prev) => [
+      { id: `ve-${Date.now()}`, label: `Bloque "${type}" insertado`, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), messageCount: messages.length + 1 },
+      ...prev,
+    ]);
     toast.success(`Bloc "${type}" inséré`);
-  }, [saveMessage, triggerAutoSave]);
+  }, [saveMessage, triggerAutoSave, pushUndo, messages.length]);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
