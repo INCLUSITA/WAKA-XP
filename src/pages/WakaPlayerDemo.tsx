@@ -73,12 +73,7 @@ const MODE_COLORS: Record<DataMode, string> = {
   "zero-rated": "bg-[hsl(220,10%,50%)]/10 text-[hsl(220,10%,40%)]",
 };
 
-const FALLBACK_REPLIES = [
-  "📱 Voir les téléphones",
-  "💳 Mon solde",
-  "🏥 Assurance santé",
-  "🏠 Menu principal",
-];
+// FALLBACK_REPLIES removed — AI provides 100% contextual buttons or none
 
 /** Extract numbered/bulleted options from text */
 function extractOptionsFromText(text: string): string[] {
