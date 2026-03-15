@@ -39,6 +39,7 @@ import SimulatorShell from "./pages/SimulatorShell";
 import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 import PlayerFlowsPage from "./pages/PlayerFlowsPage";
 import SpatialPage from "./pages/SpatialPage";
+import PublicPlayerPage from "./pages/PublicPlayerPage";
 
 import NotFound from "./pages/NotFound";
 
