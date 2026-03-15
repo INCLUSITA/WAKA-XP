@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
