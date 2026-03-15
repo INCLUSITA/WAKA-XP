@@ -143,37 +143,54 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const loadedFlowIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!flowIdParam) { loadedFlowIdRef.current = null; setActiveFlowId(null); setActiveFlowTitle(null); return; }
+    if (!flowIdParam) {
+      loadedFlowIdRef.current = null;
+      setActiveFlowId(null);
+      setActiveFlowTitle(null);
+      return;
+    }
     if (loadedFlowIdRef.current === flowIdParam) return;
+
+    // Immediately reset state to prevent showing stale data from previous flow
+    setMessages([...WELCOME_MESSAGES]);
+    setActiveScenarioConfig({});
+    setActiveFlowTitle(null);
+    resetHistory();
+
     loadedFlowIdRef.current = flowIdParam;
     setActiveFlowId(flowIdParam);
+
     loadFlowFull(flowIdParam).then((full) => {
+      // Guard: if user navigated away while loading, don't apply stale results
+      if (loadedFlowIdRef.current !== flowIdParam) return;
+
       if (!full) { toast.error("No se pudo cargar el flujo seleccionado"); return; }
-      // Use the saved conversation_snapshot if it has content; otherwise fall back to welcome
+
+      // Use the saved conversation_snapshot if it has content; otherwise keep welcome
       const savedConversation = full.conversationSnapshot;
       if (savedConversation && savedConversation.length > 0) {
-        // Rehydrate timestamps (they come as strings from JSON)
         const rehydrated = savedConversation.map((msg: any) => ({
           ...msg,
           timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
         }));
         setMessages(rehydrated);
-      } else {
-        setMessages([...WELCOME_MESSAGES]);
       }
+
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
       const cfg = full.scenarioConfig || {};
       setActiveScenarioConfig(cfg);
+
       // Feed stored context into AI engine so it responds according to the YAML/prompt
       if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
       else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
       else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
-      resetHistory();
+
       startNewConversation();
       toast.success(`Flujo "${full.name}" cargado`);
     });
-  }, [flowIdParam, loadFlowFull, resetHistory, startNewConversation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flowIdParam]);
 
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
