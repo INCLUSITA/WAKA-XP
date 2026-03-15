@@ -444,6 +444,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
           onRedo={authoring.handleRedo}
         />
       )}
-    </ExperienceRuntimeProvider>
+    </>
   );
 }
