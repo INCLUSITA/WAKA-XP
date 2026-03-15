@@ -1015,13 +1015,28 @@ export default function WakaPlayerDemo() {
         activeFlowName={activeFlowContextName}
       />
 
-      {/* Right-click context menu */}
+      {/* Universal context menu */}
       {contextMenuPos && (
-        <PlayerContextMenu
+        <UniversalContextMenu
           x={contextMenuPos.x}
           y={contextMenuPos.y}
-          onInsert={handleInsertBlock}
+          target={contextTarget}
           onClose={() => setContextMenuPos(null)}
+          onInsertBlock={handleInsertBlock}
+          onEditMessage={(id) => {
+            // Trigger inline edit by simulating double-click behavior
+            const msg = messages.find((m) => m.id === id);
+            if (msg?.text) {
+              const newText = msg.text; // Edit handled in-place via WakaSovereignPlayer
+              handleMessageEdit(id, newText);
+            }
+          }}
+          onDuplicateMessage={handleDuplicateMessage}
+          onDeleteMessage={handleDeleteMessage}
+          onMoveUp={(id) => handleMoveMessage(id, "up")}
+          onMoveDown={(id) => handleMoveMessage(id, "down")}
+          onAIImprove={handleAIImprove}
+          onUndo={handleUndo}
         />
       )}
     </ExperienceRuntimeProvider>
