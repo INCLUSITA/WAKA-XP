@@ -238,11 +238,22 @@ export function PlayerWorkbench({
       }
     } catch (err: any) {
       console.error("Workbench submit error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al procesar instrucciones");
     } finally {
       setIsProcessing(false);
     }
-  }, [instructions, assets, engine, flowId, flowTitle, scenarioConfig, tenantId, onInstructionsSent]);
+  }, [instructions, assets, engine, flowId, flowTitle, scenarioConfig, tenantId, onInstructionsSent, secretValues]);
 
   const getAssetIcon = (asset: UploadedAsset) => {
     if (asset.name.endsWith(".json")) return <FileJson className="h-3 w-3 text-amber-500" />;
