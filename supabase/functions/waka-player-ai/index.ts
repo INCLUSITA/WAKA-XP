@@ -914,7 +914,7 @@ serve(async (req) => {
     // Multi-pass loop: keep executing CORE tool calls until AI produces a final response
     const MAX_PASSES = 5;
     let conversationMessages = [
-      { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection },
+      { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection },
       ...messages,
     ];
     let pass = 0;
