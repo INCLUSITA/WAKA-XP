@@ -262,3 +262,19 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--border) / 0.9);
 }
+
+/* ── Block Variant System ── */
+.waka-block-compact {
+  @apply text-sm;
+}
+.waka-block-standard {
+  /* default rendering */
+}
+.waka-block-expanded {
+  @apply text-base;
+}
+.waka-block-zero {
+  @apply text-xs;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+}
