@@ -13,16 +13,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SECRET_REQUIREMENT_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
-  { label: "API_KEY", pattern: /api[_-]?key/i },
-  { label: "X_API_KEY", pattern: /x-api-key/i },
-  { label: "BEARER_TOKEN", pattern: /authorization:\s*bearer/i },
-  { label: "ACCESS_TOKEN", pattern: /access[_-]?token/i },
-  { label: "SECRET_KEY", pattern: /secret[_-]?key/i },
-  { label: "PRIVATE_KEY", pattern: /private[_-]?key/i },
-  { label: "PASSWORD", pattern: /password/i },
-  { label: "TOKEN", pattern: /\btoken\b\s*:\s*["']?[A-Za-z0-9._-]{6,}/i },
-  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*api[^}]*key[^}]*\}/i },
+// Only detect actual PLACEHOLDER patterns like ${API_KEY}, {{API_KEY}}, <API_KEY>
+// Do NOT flag documentation mentions of "api-key" or "x-api-key"
+const PLACEHOLDER_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*(?:api[_-]?key|token|secret|password)[^}]*\}/i },
+  { label: "TEMPLATE_PLACEHOLDER", pattern: /\{\{[^}]*(?:api[_-]?key|token|secret|password)[^}]*\}\}/i },
+  { label: "ANGLE_PLACEHOLDER", pattern: /<(?:YOUR|INSERT|REPLACE)[_-](?:API[_-]?KEY|TOKEN|SECRET)[^>]*>/i },
 ];
 
 function detectRequiredSecretsFromSource(sourceData: any): string[] {
@@ -31,7 +27,7 @@ function detectRequiredSecretsFromSource(sourceData: any): string[] {
   const collected = new Set<string>();
   const inspect = (content?: string) => {
     if (!content || typeof content !== "string") return;
-    for (const { label, pattern } of SECRET_REQUIREMENT_PATTERNS) {
+    for (const { label, pattern } of PLACEHOLDER_PATTERNS) {
       if (pattern.test(content)) collected.add(label);
     }
   };
