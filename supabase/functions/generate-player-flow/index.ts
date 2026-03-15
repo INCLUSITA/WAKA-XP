@@ -13,6 +13,43 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SECRET_REQUIREMENT_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "API_KEY", pattern: /api[_-]?key/i },
+  { label: "X_API_KEY", pattern: /x-api-key/i },
+  { label: "BEARER_TOKEN", pattern: /authorization:\s*bearer/i },
+  { label: "ACCESS_TOKEN", pattern: /access[_-]?token/i },
+  { label: "SECRET_KEY", pattern: /secret[_-]?key/i },
+  { label: "PRIVATE_KEY", pattern: /private[_-]?key/i },
+  { label: "PASSWORD", pattern: /password/i },
+  { label: "TOKEN", pattern: /\btoken\b\s*:\s*["']?[A-Za-z0-9._-]{6,}/i },
+  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*api[^}]*key[^}]*\}/i },
+];
+
+function detectRequiredSecretsFromSource(sourceData: any): string[] {
+  if (!sourceData) return [];
+
+  const collected = new Set<string>();
+  const inspect = (content?: string) => {
+    if (!content || typeof content !== "string") return;
+    for (const { label, pattern } of SECRET_REQUIREMENT_PATTERNS) {
+      if (pattern.test(content)) collected.add(label);
+    }
+  };
+
+  inspect(sourceData.instructions);
+  inspect(sourceData.yaml);
+  inspect(sourceData.json);
+
+  return Array.from(collected);
+}
+
+function findMissingSecrets(required: string[], providedValues: Record<string, unknown>): string[] {
+  return required.filter((name) => {
+    const value = providedValues?.[name];
+    return typeof value !== "string" || value.trim().length === 0;
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
