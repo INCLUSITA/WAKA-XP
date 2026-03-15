@@ -86,6 +86,13 @@ export default function WakaPlayerDemo() {
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Undo/Redo stack
+  const undoStack = useRef<PlayerMessage[][]>([]);
+  const redoStack = useRef<PlayerMessage[][]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  // Version history entries
+  const [versionEntries, setVersionEntries] = useState<Array<{ id: string; label: string; timestamp: string; messageCount: number }>>([]);
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
