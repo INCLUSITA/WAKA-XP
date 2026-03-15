@@ -79,7 +79,7 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
           <span>Total</span>
           <span>{payment.total}</span>
         </div>
-        <button onClick={handlePay}>Payer</button>
+        <button onClick={handlePay} className="mt-1.5 w-full py-1.5 text-[11px] font-bold text-primary underline underline-offset-2 text-left">→ Payer {payment.total} {payment.currency || "FCFA"}</button>
       </div>
     );
   }
