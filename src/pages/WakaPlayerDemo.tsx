@@ -20,14 +20,16 @@ import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
-import { ExperienceRuntimeProvider, useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
+import { ExperienceRuntimeProvider } from "@/contexts/ExperienceRuntimeContext";
 import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
 import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
+import { ExperienceModeSwitcher, type ExperienceMode } from "@/components/player/ExperienceModeSwitcher";
+import { UniversalContextMenu, type ContextTarget } from "@/components/player/UniversalContextMenu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
 import { AvatarOverlay } from "@/components/player/AvatarOverlay";
-import { PlayerContextMenu, type InsertableBlockType } from "@/components/player/PlayerContextMenu";
+import type { InsertableBlockType } from "@/components/player/PlayerContextMenu";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
