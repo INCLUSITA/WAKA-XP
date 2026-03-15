@@ -253,30 +253,33 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
         mode={experienceMode}
         avatarEnabled={false}
         header={
-          <div className="flex items-center gap-3 border-b border-border px-6 py-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
+          <div className="flex items-center gap-3 border-b border-border/60 px-6 py-2.5 bg-card/50 backdrop-blur-sm">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/player")} className="h-8 w-8 p-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-bold text-foreground">Waka XP Runtime</h1>
-            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
-              <Bot className="h-3 w-3" /> ADAPTIVE
-            </Badge>
-            <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-foreground tracking-tight">WAKA XP</h1>
+              <Badge variant="outline" className="text-[9px] border-primary/20 text-primary gap-1 h-5">
+                <Bot className="h-2.5 w-2.5" /> RUNTIME
+              </Badge>
+            </div>
+            <div className="h-4 w-px bg-border/50" />
+            <Badge className={cn("text-[8px] border-0 font-bold h-5", MODE_COLORS[dataMode])}>
               {MODE_LABELS[dataMode]}
             </Badge>
             {activeFlowTitle && (
-              <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
-                {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+              <Badge variant="outline" className="text-[9px] border-accent/20 text-accent h-5">
+                {activeFlowTitle.length > 24 ? `${activeFlowTitle.slice(0, 24)}…` : activeFlowTitle}
               </Badge>
             )}
             {isThinking && (
-              <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
-                <Zap className="h-2.5 w-2.5" /> Thinking…
+              <Badge variant="outline" className="text-[9px] border-accent/30 text-accent animate-pulse gap-1 h-5">
+                <Zap className="h-2.5 w-2.5" /> IA…
               </Badge>
             )}
             {activeFlowId && authoring.versionCount > 0 && (
-              <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
-                v{authoring.versionCount} guardado
+              <Badge variant="outline" className="text-[9px] border-primary/20 text-primary/70 gap-1 h-5">
+                v{authoring.versionCount}
               </Badge>
             )}
             <div className="ml-auto">
@@ -286,14 +289,22 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
         }
         phone={
           <div className={cn(
-            "flex flex-1 items-center justify-center overflow-hidden bg-muted/30",
-            experienceMode === "unbound" && "items-start pt-4"
+            "flex flex-1 items-center justify-center overflow-hidden",
+            experienceMode === "unbound" ? "items-start pt-6 bg-muted/10" : "bg-muted/30",
           )}>
             <div className={cn(
-              "relative transition-all duration-300",
-              experienceMode === "unbound" ? "w-[240px] h-[520px]" : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]"
+              "relative transition-all duration-500 ease-out",
+              experienceMode === "unbound"
+                ? "w-[250px] h-[540px] scale-[0.92] opacity-90"
+                : "w-[375px] h-[812px] max-h-[calc(100vh-80px)]",
+              experienceMode === "expanded" && "phone-anchor-glow",
             )}>
-              <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
+              <div className={cn(
+                "absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)]",
+                experienceMode === "unbound"
+                  ? "shadow-[0_0_30px_rgba(0,0,0,0.08)]"
+                  : "shadow-[0_0_50px_rgba(0,0,0,0.12)]"
+              )} />
               <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
                 <div
                   className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"

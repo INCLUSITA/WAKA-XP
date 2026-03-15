@@ -264,17 +264,64 @@
 }
 
 /* ── Block Variant System ── */
+
+/* Compact: mobile-optimized with larger touch targets */
 .waka-block-compact {
   @apply text-sm;
 }
-.waka-block-standard {
-  /* default rendering */
+.waka-block-compact button,
+.waka-block-compact [role="button"] {
+  min-height: 44px;
 }
+.waka-block-compact img {
+  border-radius: 8px;
+}
+
+/* Standard: default desktop rendering */
+.waka-block-standard {
+  /* inherits base styles */
+}
+
+/* Expanded: rich desktop with more space and polish */
 .waka-block-expanded {
   @apply text-base;
 }
+.waka-block-expanded > div {
+  @apply space-y-4;
+}
+.waka-block-expanded img {
+  border-radius: 12px;
+}
+
+/* Zero-rated: ultra-light for low-data environments */
 .waka-block-zero {
   @apply text-xs;
   box-shadow: none !important;
   border-radius: 4px !important;
+}
+.waka-block-zero img {
+  display: none;
+}
+.waka-block-zero svg:not(.waka-essential-icon) {
+  display: none;
+}
+.waka-block-zero [data-decorative] {
+  display: none;
+}
+.waka-block-zero .animate-pulse,
+.waka-block-zero .animate-bounce,
+.waka-block-zero .animate-spin {
+  animation: none !important;
+}
+
+/* ── Phone Anchor Glow ── */
+.phone-anchor-glow {
+  box-shadow:
+    0 0 40px -8px hsl(var(--accent) / 0.08),
+    0 20px 60px -15px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Safe area padding for iOS bottom sheet ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
