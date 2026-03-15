@@ -115,6 +115,7 @@ interface WakaSovereignPlayerProps {
   onDeviceLockConsent?: (accepted: boolean) => void;
   onVoiceCall?: () => void;
   onAvatarCall?: () => void;
+  onContextMenu?: (x: number, y: number) => void;
   status?: "online" | "typing" | "offline";
   statusBar?: { label: string; value: string; accent?: boolean };
   dataMode?: DataMode;
