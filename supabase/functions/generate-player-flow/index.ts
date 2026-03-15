@@ -151,6 +151,42 @@ function parseSourceDirectly(sourceData: any): { conversation: any[]; config: Re
   return { conversation, config };
 }
 
+interface GeneratedPayload {
+  conversation: any[];
+  config: Record<string, any>;
+}
+
+function redactSensitiveTokens(text: string): string {
+  const patterns: RegExp[] = [
+    /waka_live_[A-Za-z0-9]+/g,
+    /x-api-key\s*[:=]\s*[A-Za-z0-9._-]+/gi,
+    /\b(?:sk|pk)_[A-Za-z0-9_-]{20,}\b/g,
+    /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi,
+  ];
+
+  return patterns.reduce((value, pattern) => value.replace(pattern, "[REDACTED]"), text);
+}
+
+function sanitizeGeneratedPayload(payload: GeneratedPayload): GeneratedPayload {
+  const conversation = (payload.conversation || []).map((message: any) => ({
+    ...message,
+    text: typeof message?.text === "string" ? redactSensitiveTokens(message.text) : message?.text,
+    source: typeof message?.source === "string" ? redactSensitiveTokens(message.source) : message?.source,
+    quickReplies: Array.isArray(message?.quickReplies)
+      ? message.quickReplies.map((reply: any) => typeof reply === "string" ? redactSensitiveTokens(reply) : reply)
+      : message?.quickReplies,
+  }));
+
+  const config = {
+    ...(payload.config || {}),
+    systemPrompt: typeof payload.config?.systemPrompt === "string"
+      ? redactSensitiveTokens(payload.config.systemPrompt)
+      : payload.config?.systemPrompt,
+  };
+
+  return { conversation, config };
+}
+
 /* ── AI-powered generation ── */
 async function generateWithAI(
   apiKey: string,
