@@ -62,15 +62,18 @@ interface BlockVariantWrapperProps {
 export function BlockVariantWrapper({ blockType, children, className }: BlockVariantWrapperProps) {
   let variant: BlockVariant = "standard";
   let zone: BlockZone = "phone-inline";
+  let policy: DataPolicy = "libre";
 
   try {
     const { device, dataPolicy, resolveBlockZone } = useExperienceRuntime();
     zone = resolveBlockZone(blockType);
     variant = resolveBlockVariant(blockType, device.deviceClass, dataPolicy, zone);
+    policy = dataPolicy;
   } catch {
     // Graceful fallback if not wrapped in ExperienceRuntimeProvider
     variant = "standard";
     zone = "phone-inline";
+    policy = "libre";
   }
 
   return (
@@ -80,6 +83,7 @@ export function BlockVariantWrapper({ blockType, children, className }: BlockVar
         data-variant={variant}
         data-zone={zone}
         data-block={blockType}
+        data-policy={policy}
       >
         {children}
       </div>
