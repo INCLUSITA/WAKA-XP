@@ -114,7 +114,9 @@ export function PlayerWorkbench({
     return allSecrets;
   }, [assets, storedConfigSecrets]);
 
-  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged;
+  const allSecretsProvided = detectedSecrets.length === 0 || 
+    detectedSecrets.every(s => s.refs.every(r => secretValues[r]?.trim()));
+  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged && !allSecretsProvided;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
