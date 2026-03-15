@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, History } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
+import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
@@ -85,6 +86,13 @@ export default function WakaPlayerDemo() {
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Undo/Redo stack
+  const undoStack = useRef<PlayerMessage[][]>([]);
+  const redoStack = useRef<PlayerMessage[][]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  // Version history entries
+  const [versionEntries, setVersionEntries] = useState<Array<{ id: string; label: string; timestamp: string; messageCount: number }>>([]);
   // Determine if we're in "saved flow" mode
   const flowIdParam = searchParams.get("flow");
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
@@ -545,6 +553,50 @@ export default function WakaPlayerDemo() {
     };
   }, []);
 
+  // ── Undo / Redo ──
+  const pushUndo = useCallback(() => {
+    undoStack.current.push([...messages]);
+    if (undoStack.current.length > 50) undoStack.current.shift();
+    redoStack.current = [];
+    setCanUndo(true);
+    setCanRedo(false);
+  }, [messages]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.current.length === 0) return;
+    redoStack.current.push([...messages]);
+    const prev = undoStack.current.pop()!;
+    setMessages(prev);
+    setCanUndo(undoStack.current.length > 0);
+    setCanRedo(true);
+    triggerAutoSave();
+  }, [messages, triggerAutoSave]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.current.length === 0) return;
+    undoStack.current.push([...messages]);
+    const next = redoStack.current.pop()!;
+    setMessages(next);
+    setCanUndo(true);
+    setCanRedo(redoStack.current.length > 0);
+    triggerAutoSave();
+  }, [messages, triggerAutoSave]);
+
+  // ── Message editing (double-click) ──
+  const handleMessageEdit = useCallback((msgId: string, newText: string) => {
+    pushUndo();
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, text: newText } : m))
+    );
+    triggerAutoSave();
+    // Add version entry
+    setVersionEntries((prev) => [
+      { id: `ve-${Date.now()}`, label: `Editado: "${newText.substring(0, 30)}…"`, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), messageCount: messages.length },
+      ...prev,
+    ]);
+    toast.success("Mensaje editado");
+  }, [pushUndo, triggerAutoSave, messages.length]);
+
   // ── Block insertion from context menu ──
   const handleInsertBlock = useCallback((type: InsertableBlockType) => {
     setContextMenuPos(null);
@@ -674,11 +726,17 @@ export default function WakaPlayerDemo() {
         break;
     }
 
+    pushUndo();
     setMessages((prev) => [...prev, blockMsg]);
     saveMessage(blockMsg);
     triggerAutoSave();
+    // Add version entry for block insertion
+    setVersionEntries((prev) => [
+      { id: `ve-${Date.now()}`, label: `Bloque "${type}" insertado`, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), messageCount: messages.length + 1 },
+      ...prev,
+    ]);
     toast.success(`Bloc "${type}" inséré`);
-  }, [saveMessage, triggerAutoSave]);
+  }, [saveMessage, triggerAutoSave, pushUndo, messages.length]);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -713,7 +771,6 @@ export default function WakaPlayerDemo() {
           )}
           {activeFlowId && versionCount > 0 && (
             <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
-              <History className="h-2.5 w-2.5" />
               v{versionCount} guardado
             </Badge>
           )}
@@ -772,6 +829,7 @@ export default function WakaPlayerDemo() {
                   onVoiceCall={() => setShowVoiceCall(true)}
                   onAvatarCall={() => setShowAvatar(true)}
                   onContextMenu={(x, y) => setContextMenuPos({ x, y })}
+                  onMessageEdit={handleMessageEdit}
                 />
               </div>
 
@@ -802,6 +860,20 @@ export default function WakaPlayerDemo() {
           </div>
         </div>
       </div>
+
+      {/* ─── Center: Builder Toolbar ─── */}
+      <PlayerBuilderToolbar
+        versionCount={versionCount}
+        versions={versionEntries}
+        onInsertBlock={handleInsertBlock}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onRestart={handleNewConversation}
+        onSave={() => setShowSaveDialog(true)}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        activeFlowId={activeFlowId}
+      />
 
       {/* ─── Right: Player Workbench ─── */}
       <div className="w-[360px] border-l border-border bg-card flex flex-col shrink-0">
