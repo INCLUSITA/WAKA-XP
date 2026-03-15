@@ -12,9 +12,10 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import {
   Send, Upload, FileJson, FileText, Image as ImageIcon, RotateCcw,
-  Save, Sparkles, Loader2, FolderOpen, Pencil, AlertTriangle, Key,
+  Save, Sparkles, Loader2, FolderOpen, Pencil, AlertTriangle, Key, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
