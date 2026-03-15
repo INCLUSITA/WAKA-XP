@@ -542,6 +542,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       />
 
       <SaveFlowDialog open={showSaveDialog} onClose={() => setShowSaveDialog(false)} onSave={handleSaveFlow} isSaving={isSaving} />
+      <QuickShareDialog open={showShareDialog} onClose={() => setShowShareDialog(false)} flowTitle={activeFlowTitle} currentUrl={window.location.href} />
 
       <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
         <SheetContent side="right" className="w-[400px] p-0">
