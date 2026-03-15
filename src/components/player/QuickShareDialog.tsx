@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy, ExternalLink, Share2, Check } from "lucide-react";
-import { PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
+import { PUBLIC_APP_ORIGIN, PUBLIC_SHARE_ORIGIN } from "@/lib/constants";
 
 interface QuickShareDialogProps {
   open: boolean;
@@ -30,8 +30,12 @@ export function QuickShareDialog({ open, onClose, flowTitle, currentUrl }: Quick
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Always point to the public (no-auth) player route
-  const demoUrl = `${window.location.origin}/player/public`;
+  // Always point to branded public domain (never preview/lovable domains)
+  const current = currentUrl ? new URL(currentUrl) : null;
+  const activeFlow = current?.searchParams.get("flow");
+  const demoUrl = activeFlow
+    ? `${PUBLIC_APP_ORIGIN}/player/public?flow=${encodeURIComponent(activeFlow)}`
+    : `${PUBLIC_APP_ORIGIN}/player/public`;
 
   const createShare = useMutation({
     mutationFn: async () => {
