@@ -92,6 +92,17 @@ function extractOptionsFromText(text: string): string[] {
 }
 
 export default function WakaPlayerDemo() {
+  const { tenantId } = useWorkspace();
+  const [dataMode, setDataMode] = useState<DataMode>("libre");
+
+  return (
+    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
+      <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} />
+    </ExperienceRuntimeProvider>
+  );
+}
+
+function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>> }) {
   const navigate = useNavigate();
   const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
