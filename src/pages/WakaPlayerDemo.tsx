@@ -771,6 +771,7 @@ export default function WakaPlayerDemo() {
                   onDeviceLockConsent={handleDeviceLockConsent}
                   onVoiceCall={() => setShowVoiceCall(true)}
                   onAvatarCall={() => setShowAvatar(true)}
+                  onContextMenu={(x, y) => setContextMenuPos({ x, y })}
                 />
               </div>
 
