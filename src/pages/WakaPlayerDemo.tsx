@@ -332,7 +332,15 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                     messages={messages}
                     botName="WAKA XP 🇧🇫"
                     status={status}
-                    statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
+                    statusBar={{
+                      label: activeScenarioConfig?.clientName
+                        ? `👤 ${activeScenarioConfig.clientName}`
+                        : "Bienvenue sur WAKA XP",
+                      value: activeScenarioConfig?.clientName
+                        ? (activeScenarioConfig.balance || "")
+                        : "Votre assistant intelligent",
+                      accent: !!activeScenarioConfig?.clientName,
+                    }}
                     dataMode={dataMode}
                     onDataModeChange={actions.handleDataModeChange}
                     onSend={actions.handleSend}
