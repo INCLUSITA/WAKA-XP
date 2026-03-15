@@ -322,16 +322,13 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   const handleLoadFlow = useCallback((flowId: string) => {
     setShowFlowsPanel(false);
-    // Clear loaded ref so useEffect or direct call will pick up the change
     loadedFlowIdRef.current = null;
-    // Update URL for bookmarkability
-    navigate(`/player/live?flow=${flowId}`, { replace: true });
-    // Always load directly via stable ref — avoids stale closure issues
-    // Use queueMicrotask to ensure Sheet unmount doesn't interfere
-    queueMicrotask(() => {
+    // Escape Sheet portal context with setTimeout — navigate() fails inside portals
+    setTimeout(() => {
+      window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
       loadFlowByIdRef.current(flowId);
-    });
-  }, [navigate]);
+    }, 60);
+  }, []);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
