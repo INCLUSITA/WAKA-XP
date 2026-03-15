@@ -142,7 +142,49 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const [activeFlowId, setActiveFlowId] = useState<string | null>(flowIdParam);
   const [activeFlowTitle, setActiveFlowTitle] = useState<string | null>(null);
   const loadedFlowIdRef = useRef<string | null>(null);
+  const [flowLoadCounter, setFlowLoadCounter] = useState(0);
 
+  /** Core flow loader — called both from URL changes and direct selection */
+  const loadFlowById = useCallback(async (flowId: string) => {
+    // Immediately reset state to prevent stale data
+    setMessages([...WELCOME_MESSAGES]);
+    setActiveScenarioConfig({});
+    setActiveFlowTitle(null);
+    resetHistory();
+    loadedFlowIdRef.current = flowId;
+    setActiveFlowId(flowId);
+
+    const full = await loadFlowFull(flowId);
+    // Guard: if user switched again while loading
+    if (loadedFlowIdRef.current !== flowId) return;
+
+    if (!full) { toast.error("No se pudo cargar el flujo seleccionado"); return; }
+
+    const savedConversation = full.conversationSnapshot;
+    if (savedConversation && savedConversation.length > 0) {
+      const rehydrated = savedConversation.map((msg: any) => ({
+        ...msg,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+      }));
+      setMessages(rehydrated);
+    }
+
+    setDataMode(full.dataMode);
+    setActiveFlowTitle(full.name);
+    const cfg = full.scenarioConfig || {};
+    setActiveScenarioConfig(cfg);
+
+    // Feed stored context into AI engine
+    if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
+    else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
+    else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
+
+    startNewConversation();
+    toast.success(`Flujo "${full.name}" cargado`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadFlowFull, resetHistory, setFlowContext, startNewConversation, setDataMode]);
+
+  // Load flow from URL param on mount or URL change
   useEffect(() => {
     if (!flowIdParam) {
       loadedFlowIdRef.current = null;
@@ -150,48 +192,10 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       setActiveFlowTitle(null);
       return;
     }
-    if (loadedFlowIdRef.current === flowIdParam) return;
-
-    // Immediately reset state to prevent showing stale data from previous flow
-    setMessages([...WELCOME_MESSAGES]);
-    setActiveScenarioConfig({});
-    setActiveFlowTitle(null);
-    resetHistory();
-
-    loadedFlowIdRef.current = flowIdParam;
-    setActiveFlowId(flowIdParam);
-
-    loadFlowFull(flowIdParam).then((full) => {
-      // Guard: if user navigated away while loading, don't apply stale results
-      if (loadedFlowIdRef.current !== flowIdParam) return;
-
-      if (!full) { toast.error("No se pudo cargar el flujo seleccionado"); return; }
-
-      // Use the saved conversation_snapshot if it has content; otherwise keep welcome
-      const savedConversation = full.conversationSnapshot;
-      if (savedConversation && savedConversation.length > 0) {
-        const rehydrated = savedConversation.map((msg: any) => ({
-          ...msg,
-          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-        }));
-        setMessages(rehydrated);
-      }
-
-      setDataMode(full.dataMode);
-      setActiveFlowTitle(full.name);
-      const cfg = full.scenarioConfig || {};
-      setActiveScenarioConfig(cfg);
-
-      // Feed stored context into AI engine so it responds according to the YAML/prompt
-      if (cfg.systemPrompt) setFlowContext(cfg.systemPrompt);
-      else if (cfg.sourceData?.yaml) setFlowContext(cfg.sourceData.yaml);
-      else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
-
-      startNewConversation();
-      toast.success(`Flujo "${full.name}" cargado`);
-    });
+    if (loadedFlowIdRef.current === flowIdParam && flowLoadCounter === 0) return;
+    loadFlowById(flowIdParam);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowIdParam]);
+  }, [flowIdParam, flowLoadCounter]);
 
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
@@ -303,11 +307,18 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback((flowId: string) => {
+  const handleLoadFlow = useCallback(async (flowId: string) => {
     setShowFlowsPanel(false);
-    if (flowId === flowIdParam) return;
-    navigate(`/player/live?flow=${flowId}`);
-  }, [navigate, flowIdParam]);
+    // Update URL for bookmarkability
+    navigate(`/player/live?flow=${flowId}`, { replace: true });
+    // If same flow, force reload via counter; otherwise loadFlowById handles it
+    if (flowId === loadedFlowIdRef.current) {
+      setFlowLoadCounter((c) => c + 1);
+    } else {
+      // Directly load — don't wait for URL effect in case React Router batches
+      loadFlowById(flowId);
+    }
+  }, [navigate, loadFlowById]);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
