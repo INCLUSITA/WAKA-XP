@@ -267,12 +267,13 @@
 
 /* Compact: mobile-optimized with larger touch targets */
 .waka-block-compact {
-  @apply text-sm;
+  @apply text-sm leading-relaxed;
 }
 .waka-block-compact button,
 .waka-block-compact [role="button"] {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
+  @apply text-sm font-medium;
 }
 .waka-block-compact img {
   border-radius: 8px;
@@ -280,10 +281,17 @@
 .waka-block-compact .waka-block-title {
   @apply text-sm font-semibold;
 }
+.waka-block-compact .waka-block-subtitle {
+  @apply text-xs text-muted-foreground;
+}
 
 /* Standard: default desktop rendering */
 .waka-block-standard {
-  /* inherits base styles */
+  @apply text-sm;
+}
+.waka-block-standard button,
+.waka-block-standard [role="button"] {
+  min-height: 36px;
 }
 
 /* Expanded: rich desktop with more space and polish */
@@ -302,6 +310,7 @@
 .waka-block-expanded button,
 .waka-block-expanded [role="button"] {
   @apply transition-all duration-200;
+  min-height: 40px;
 }
 .waka-block-expanded button:hover,
 .waka-block-expanded [role="button"]:hover {
@@ -311,7 +320,7 @@
 
 /* Zero-rated: ultra-light for low-data environments */
 .waka-block-zero {
-  @apply text-xs;
+  @apply text-xs leading-snug;
   box-shadow: none !important;
   border-radius: 4px !important;
 }
@@ -333,6 +342,7 @@
 .waka-block-zero [role="button"] {
   min-height: 36px;
   border-radius: 4px !important;
+  @apply text-xs font-medium;
 }
 
 /* ── Phone Anchor Glow ── */
