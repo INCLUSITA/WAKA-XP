@@ -11,10 +11,12 @@ import { useSpatialExperience } from "../hooks/useSpatialExperience";
 import { resolveSpatialDecision } from "../adapters/spatialPresentationAdapter";
 import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWakaPlayerAI } from "@/hooks/useWakaPlayerAI";
 import { PlayerContextProvider } from "@/contexts/PlayerContextProvider";
 import { PlayerMemoryProvider } from "@/contexts/PlayerMemoryProvider";
 import { motion } from "framer-motion";
+import { Monitor } from "lucide-react";
 
 const WELCOME_MESSAGES: PlayerMessage[] = [
   {
