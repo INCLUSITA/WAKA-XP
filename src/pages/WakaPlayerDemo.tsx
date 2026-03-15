@@ -68,7 +68,7 @@ export default function WakaPlayerDemo() {
   const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
-  const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
+  const { sendToAI, isThinking, setFlowContext, resetHistory } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
   const { saveFlow, loadFlowFull, updateFlowConversation } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
@@ -110,27 +110,27 @@ export default function WakaPlayerDemo() {
         return;
       }
 
-      setMessages(full.conversationSnapshot.length > 0 ? full.conversationSnapshot : WELCOME_MESSAGES);
+      // Always start fresh — don't restore previous conversation
+      setMessages([...WELCOME_MESSAGES]);
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
       setActiveScenarioConfig(full.scenarioConfig || {});
-      toast.success(`Flujo "${full.name}" cargado`);
+      // Reset AI conversation history so it doesn't retain context from previous sessions
+      resetHistory();
+      startNewConversation();
+      toast.success(`Flujo "${full.name}" iniciado desde cero`);
     });
   }, [flowIdParam, loadFlowFull]);
 
-  // Load generic conversation history only when NOT loading a saved flow
+  // When NOT loading a saved flow, always start fresh
   useEffect(() => {
     if (historyLoaded.current || !conversationId || flowIdParam) return;
     historyLoaded.current = true;
 
-    loadHistory().then((history) => {
-      if (history.length > 0) {
-        setMessages(history);
-      } else {
-        WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
-      }
-    });
-  }, [conversationId, loadHistory, saveMessage, flowIdParam]);
+    // Start fresh — save welcome messages as the beginning of a new conversation
+    resetHistory();
+    WELCOME_MESSAGES.forEach((msg) => saveMessage(msg));
+  }, [conversationId, saveMessage, flowIdParam, resetHistory]);
 
   const status = isThinking ? "typing" : "online";
 
