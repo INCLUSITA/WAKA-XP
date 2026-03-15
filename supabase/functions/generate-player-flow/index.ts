@@ -321,7 +321,7 @@ Genera el flujo conversacional completo en formato JSON.`;
       if (!msg.id) msg.id = `gen-${i + 1}`;
     });
 
-    return { conversation, config };
+    return sanitizeGeneratedPayload({ conversation, config });
   } catch (parseErr) {
     console.error("Failed to parse AI output:", parseErr, "Content:", content.substring(0, 500));
 
