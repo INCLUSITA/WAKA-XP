@@ -92,13 +92,23 @@ function extractOptionsFromText(text: string): string[] {
 }
 
 export default function WakaPlayerDemo() {
+  const { tenantId } = useWorkspace();
+  const [dataMode, setDataMode] = useState<DataMode>("libre");
+
+  return (
+    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
+      <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} />
+    </ExperienceRuntimeProvider>
+  );
+}
+
+function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>> }) {
   const navigate = useNavigate();
   const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
 
   // ── Core State ──
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
-  const [dataMode, setDataMode] = useState<DataMode>("libre");
   const [experienceMode, setExperienceMode] = useState<ExperienceMode>("expanded");
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
@@ -238,7 +248,7 @@ export default function WakaPlayerDemo() {
   const status = isThinking ? "typing" : "online";
 
   return (
-    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
+    <>
       <ExperienceCanvas
         mode={experienceMode}
         avatarEnabled={false}
@@ -434,6 +444,6 @@ export default function WakaPlayerDemo() {
           onRedo={authoring.handleRedo}
         />
       )}
-    </ExperienceRuntimeProvider>
+    </>
   );
 }
