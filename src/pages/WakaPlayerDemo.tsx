@@ -20,6 +20,9 @@ import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
 import { PlayerWorkbench } from "@/components/player/PlayerWorkbench";
 import { PlayerBuilderToolbar } from "@/components/player/PlayerBuilderToolbar";
+import { ExperienceRuntimeProvider, useExperienceRuntime } from "@/contexts/ExperienceRuntimeContext";
+import { ExperienceCanvas } from "@/components/player/ExperienceCanvas";
+import { ExpandedBlockRenderer } from "@/components/player/ExpandedBlockRenderer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { VoiceCallOverlay } from "@/components/player/VoiceCallOverlay";
@@ -741,154 +744,192 @@ export default function WakaPlayerDemo() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  return (
-    <div className="flex h-full bg-background">
-      {/* ─── Left: Phone Simulator ─── */}
-      <div className="flex flex-1 flex-col">
-        {/* Minimal page header */}
-        <div className="flex items-center gap-3 border-b border-border px-6 py-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-bold text-foreground">Waka Sovereign Player</h1>
-          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
-            <Bot className="h-3 w-3" />
-            AI-POWERED
-          </Badge>
-          <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
-            {MODE_LABELS[dataMode]}
-          </Badge>
-          {activeFlowTitle && (
-            <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
-              {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
-            </Badge>
-          )}
-          {isThinking && (
-            <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
-              <Zap className="h-2.5 w-2.5" />
-              Thinking…
-            </Badge>
-          )}
-          {activeFlowId && versionCount > 0 && (
-            <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
-              v{versionCount} guardado
-            </Badge>
-          )}
-        </div>
+  // Get the last message that has expandable blocks for the side panel renderer
+  const expandedBlockForRenderer = (() => {
+    // Find the most recent message with an expandable sovereign block
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.direction !== "outbound") continue;
+      if (msg.catalog) return { blockType: "catalog", data: { catalog: msg.catalog } };
+      if (msg.payment) return { blockType: "payment", data: { payment: msg.payment } };
+      if (msg.paymentConfirmation) return { blockType: "paymentConfirmation", data: { paymentConfirmation: msg.paymentConfirmation } };
+      if (msg.creditSimulation) return { blockType: "creditSimulation", data: { creditSimulation: msg.creditSimulation } };
+      if (msg.creditContract) return { blockType: "creditContract", data: { creditContract: msg.creditContract } };
+      if (msg.clientStatus) return { blockType: "clientStatus", data: { clientStatus: msg.clientStatus } };
+      if (msg.momoAccount) return { blockType: "momoAccount", data: { momoAccount: msg.momoAccount } };
+      if (msg.servicePlans) return { blockType: "servicePlans", data: { servicePlans: msg.servicePlans } };
+      if (msg.inlineForm) return { blockType: "inlineForm", data: { inlineForm: msg.inlineForm } };
+      if (msg.training) return { blockType: "training", data: { training: msg.training } };
+      if (msg.mediaCarousel) return { blockType: "mediaCarousel", data: { mediaCarousel: msg.mediaCarousel } };
+      if (msg.location) return { blockType: "location", data: { location: msg.location } };
+      if (msg.certificate) return { blockType: "certificate", data: { certificate: msg.certificate } };
+    }
+    return null;
+  })();
 
-        {/* Body — iPhone frame */}
-        <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
-          <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
-            <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
-            <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
-              <div
-                className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
-                style={{
-                  background:
-                    dataMode === "zero-rated"
-                      ? "hsl(270,35%,35%)"
-                      : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
-                }}
-              >
-                <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
-                <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[100px] h-[28px] bg-black rounded-full z-30" />
-                <div className="flex items-center gap-1.5">
-                  <Signal className="h-3 w-3 text-white/70" />
-                  <Wifi className="h-3 w-3 text-white/70" />
-                  <BatteryFull className="h-3.5 w-3.5 text-white/70" />
+  return (
+    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
+      <ExperienceCanvas
+        header={
+          <div className="flex items-center gap-3 border-b border-border px-6 py-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/player")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-bold text-foreground">Waka XP Runtime</h1>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary gap-1">
+              <Bot className="h-3 w-3" />
+              ADAPTIVE
+            </Badge>
+            <Badge className={cn("text-[9px] border-0 font-bold", MODE_COLORS[dataMode])}>
+              {MODE_LABELS[dataMode]}
+            </Badge>
+            {activeFlowTitle && (
+              <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">
+                {activeFlowTitle.length > 28 ? `${activeFlowTitle.slice(0, 28)}…` : activeFlowTitle}
+              </Badge>
+            )}
+            {isThinking && (
+              <Badge variant="outline" className="text-[9px] border-[hsl(270,40%,55%)]/30 text-[hsl(270,40%,48%)] animate-pulse gap-1">
+                <Zap className="h-2.5 w-2.5" />
+                Thinking…
+              </Badge>
+            )}
+            {activeFlowId && versionCount > 0 && (
+              <Badge variant="outline" className="text-[9px] border-[hsl(160,50%,40%)]/30 text-[hsl(160,50%,35%)] gap-1">
+                v{versionCount} guardado
+              </Badge>
+            )}
+          </div>
+        }
+        phone={
+          <div className="flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
+            <div className="relative w-[375px] h-[812px] max-h-[calc(100vh-80px)]">
+              <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[hsl(220,8%,80%)] to-[hsl(220,8%,68%)] shadow-[0_0_50px_rgba(0,0,0,0.12)]" />
+              <div className="absolute inset-[3px] rounded-[2.8rem] bg-black overflow-hidden flex flex-col">
+                <div
+                  className="relative flex items-center justify-between px-7 pt-3 pb-1 z-20"
+                  style={{
+                    background:
+                      dataMode === "zero-rated"
+                        ? "hsl(270,35%,35%)"
+                        : "linear-gradient(135deg, hsl(270,40%,38%) 0%, hsl(280,45%,42%) 50%, hsl(290,40%,45%) 100%)",
+                  }}
+                >
+                  <span className="text-[12px] font-semibold text-white/90">{timeStr}</span>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[100px] h-[28px] bg-black rounded-full z-30" />
+                  <div className="flex items-center gap-1.5">
+                    <Signal className="h-3 w-3 text-white/70" />
+                    <Wifi className="h-3 w-3 text-white/70" />
+                    <BatteryFull className="h-3.5 w-3.5 text-white/70" />
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <WakaSovereignPlayer
+                    messages={messages}
+                    botName="WAKA XP 🇧🇫"
+                    status={status}
+                    statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
+                    dataMode={dataMode}
+                    onDataModeChange={handleDataModeChange}
+                    onSend={handleSend}
+                    onSendImage={handleSendImage}
+                    onSendLocation={handleSendLocation}
+                    onSendDocument={handleSendDocument}
+                    onQuickReply={handleQuickReply}
+                    onVoiceToggle={handleVoiceToggle}
+                    onMenuSelect={handleMenuSelect}
+                    onCardAction={handleCardAction}
+                    onAddToCart={handleAddToCart}
+                    onFormSubmit={handleFormSubmit}
+                    onPayment={handlePayment}
+                    onRate={handleRate}
+                    onModuleClick={handleModuleClick}
+                    onSlideAction={handleSlideAction}
+                    onCreditAction={handleCreditAction}
+                    onMomoAction={handleMomoAction}
+                    onSelectPlan={handleSelectPlan}
+                    onPaymentConfirmAction={handlePaymentConfirmAction}
+                    onCreditContractAction={handleCreditContractAction}
+                    onDeviceLockConsent={handleDeviceLockConsent}
+                    onVoiceCall={() => setShowVoiceCall(true)}
+                    onAvatarCall={() => setShowAvatar(true)}
+                    onContextMenu={(x, y) => setContextMenuPos({ x, y })}
+                    onMessageEdit={handleMessageEdit}
+                  />
+                </div>
+
+                {/* Voice Call Overlay */}
+                <VoiceCallOverlay
+                  open={showVoiceCall}
+                  onClose={handleVoiceCallEnd}
+                  agentName="WAKA VOICE"
+                  voiceUrl={voiceUrl}
+                />
+
+                {/* Avatar Overlay */}
+                <AvatarOverlay
+                  open={showAvatar}
+                  onClose={handleAvatarClose}
+                  avatarUrl={avatarUrl}
+                  agentName="WAKA Avatar"
+                />
+
+                <div className="flex justify-center py-2 bg-white">
+                  <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
                 </div>
               </div>
-              <div className="flex-1 flex flex-col min-h-0">
-                <WakaSovereignPlayer
-                  messages={messages}
-                  botName="WAKA XP 🇧🇫"
-                  status={status}
-                  statusBar={{ label: "Solde Moov Money", value: "8.750 FCFA", accent: true }}
-                  dataMode={dataMode}
-                  onDataModeChange={handleDataModeChange}
-                  onSend={handleSend}
-                  onSendImage={handleSendImage}
-                  onSendLocation={handleSendLocation}
-                  onSendDocument={handleSendDocument}
-                  onQuickReply={handleQuickReply}
-                  onVoiceToggle={handleVoiceToggle}
-                  onMenuSelect={handleMenuSelect}
-                  onCardAction={handleCardAction}
-                  onAddToCart={handleAddToCart}
-                  onFormSubmit={handleFormSubmit}
-                  onPayment={handlePayment}
-                  onRate={handleRate}
-                  onModuleClick={handleModuleClick}
-                  onSlideAction={handleSlideAction}
-                  onCreditAction={handleCreditAction}
-                  onMomoAction={handleMomoAction}
-                  onSelectPlan={handleSelectPlan}
-                  onPaymentConfirmAction={handlePaymentConfirmAction}
-                  onCreditContractAction={handleCreditContractAction}
-                  onDeviceLockConsent={handleDeviceLockConsent}
-                  onVoiceCall={() => setShowVoiceCall(true)}
-                  onAvatarCall={() => setShowAvatar(true)}
-                  onContextMenu={(x, y) => setContextMenuPos({ x, y })}
-                  onMessageEdit={handleMessageEdit}
-                />
-              </div>
-
-              {/* Voice Call Overlay — takes over phone screen */}
-              <VoiceCallOverlay
-                open={showVoiceCall}
-                onClose={handleVoiceCallEnd}
-                agentName="WAKA VOICE"
-                voiceUrl={voiceUrl}
-              />
-
-              {/* Avatar Overlay — takes over phone screen */}
-              <AvatarOverlay
-                open={showAvatar}
-                onClose={handleAvatarClose}
-                avatarUrl={avatarUrl}
-                agentName="WAKA Avatar"
-              />
-
-              <div className="flex justify-center py-2 bg-white">
-                <div className="h-[5px] w-[130px] rounded-full bg-black/15" />
-              </div>
+              <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,8%,72%)]" />
+              <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
+              <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
+              <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
             </div>
-            <div className="absolute left-[-2px] top-[130px] w-[3px] h-[30px] rounded-l bg-[hsl(220,8%,72%)]" />
-            <div className="absolute left-[-2px] top-[175px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
-            <div className="absolute left-[-2px] top-[240px] w-[3px] h-[55px] rounded-l bg-[hsl(220,8%,72%)]" />
-            <div className="absolute right-[-2px] top-[190px] w-[3px] h-[70px] rounded-r bg-[hsl(220,8%,72%)]" />
           </div>
-        </div>
-      </div>
-
-      {/* ─── Center: Builder Toolbar ─── */}
-      <PlayerBuilderToolbar
-        versionCount={versionCount}
-        versions={versionEntries}
-        onInsertBlock={handleInsertBlock}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onRestart={handleNewConversation}
-        onSave={() => setShowSaveDialog(true)}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        activeFlowId={activeFlowId}
+        }
+        sidePanelContent={
+          <ExpandedBlockRenderer
+            blockType={expandedBlockForRenderer?.blockType || ""}
+            data={expandedBlockForRenderer?.data || {}}
+            onAction={handleCardAction}
+            onAddToCart={handleAddToCart}
+            onFormSubmit={handleFormSubmit}
+            onPayment={handlePayment}
+            onRate={handleRate}
+            onModuleClick={handleModuleClick}
+            onSlideAction={handleSlideAction}
+            onSelectPlan={handleSelectPlan}
+            onDeviceLockConsent={handleDeviceLockConsent}
+          />
+        }
+        toolbar={
+          <PlayerBuilderToolbar
+            versionCount={versionCount}
+            versions={versionEntries}
+            onInsertBlock={handleInsertBlock}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onRestart={handleNewConversation}
+            onSave={() => setShowSaveDialog(true)}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            activeFlowId={activeFlowId}
+          />
+        }
+        workbench={
+          <div className="w-[360px] border-l border-border bg-card flex flex-col shrink-0">
+            <PlayerWorkbench
+              flowId={activeFlowId}
+              flowTitle={activeFlowTitle}
+              scenarioConfig={activeScenarioConfig}
+              messageCount={messageCount}
+              tenantId={tenantId || ""}
+              onInstructionsSent={handleWorkbenchResult}
+              onNewConversation={handleNewConversation}
+              onSave={() => setShowSaveDialog(true)}
+              onOpenFlows={() => setShowFlowsPanel(true)}
+            />
+          </div>
+        }
       />
-
-      {/* ─── Right: Player Workbench ─── */}
-      <div className="w-[360px] border-l border-border bg-card flex flex-col shrink-0">
-        <PlayerWorkbench
-          flowId={activeFlowId}
-          flowTitle={activeFlowTitle}
-          scenarioConfig={activeScenarioConfig}
-          messageCount={messageCount}
-          tenantId={tenantId || ""}
-          onInstructionsSent={handleWorkbenchResult}
-          onNewConversation={handleNewConversation}
-          onSave={() => setShowSaveDialog(true)}
-          onOpenFlows={() => setShowFlowsPanel(true)}
-        />
-      </div>
 
       {/* Save Flow Dialog */}
       <SaveFlowDialog
@@ -917,7 +958,7 @@ export default function WakaPlayerDemo() {
         activeFlowName={activeFlowContextName}
       />
 
-      {/* Right-click context menu for inserting blocks */}
+      {/* Right-click context menu */}
       {contextMenuPos && (
         <PlayerContextMenu
           x={contextMenuPos.x}
@@ -926,6 +967,6 @@ export default function WakaPlayerDemo() {
           onClose={() => setContextMenuPos(null)}
         />
       )}
-    </div>
+    </ExperienceRuntimeProvider>
   );
 }
