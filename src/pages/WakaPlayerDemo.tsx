@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Globe } from "lucide-react";
+import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Globe, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { usePlayerActions } from "@/hooks/usePlayerActions";
 import { usePlayerAuthoring } from "@/hooks/usePlayerAuthoring";
 import { useBlockExpansion, findLastExpandableBlock } from "@/hooks/useBlockExpansion";
 import { SaveFlowDialog } from "@/components/player/SaveFlowDialog";
+import { QuickShareDialog } from "@/components/player/QuickShareDialog";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { SavedFlowsPanel } from "@/components/player/SavedFlowsPanel";
 import { FlowContextSelector } from "@/components/player/FlowContextSelector";
@@ -117,6 +118,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [showFlowsPanel, setShowFlowsPanel] = useState(false);
   const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
   const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
@@ -376,6 +378,15 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowShareDialog(true)}
+                  className="h-7 text-[10px] gap-1 border-accent/20 text-accent/70 hover:text-accent hover:border-accent/40"
+                >
+                  <Share2 className="h-3 w-3" />
+                  Compartir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => navigate("/spatial")}
                   className="h-7 text-[10px] gap-1 border-primary/20 text-primary/70 hover:text-primary hover:border-primary/40"
                 >
@@ -531,6 +542,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       />
 
       <SaveFlowDialog open={showSaveDialog} onClose={() => setShowSaveDialog(false)} onSave={handleSaveFlow} isSaving={isSaving} />
+      <QuickShareDialog open={showShareDialog} onClose={() => setShowShareDialog(false)} flowTitle={activeFlowTitle} currentUrl={window.location.href} />
 
       <Sheet open={showFlowsPanel} onOpenChange={setShowFlowsPanel}>
         <SheetContent side="right" className="w-[400px] p-0">
