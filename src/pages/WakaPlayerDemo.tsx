@@ -553,6 +553,50 @@ export default function WakaPlayerDemo() {
     };
   }, []);
 
+  // ── Undo / Redo ──
+  const pushUndo = useCallback(() => {
+    undoStack.current.push([...messages]);
+    if (undoStack.current.length > 50) undoStack.current.shift();
+    redoStack.current = [];
+    setCanUndo(true);
+    setCanRedo(false);
+  }, [messages]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.current.length === 0) return;
+    redoStack.current.push([...messages]);
+    const prev = undoStack.current.pop()!;
+    setMessages(prev);
+    setCanUndo(undoStack.current.length > 0);
+    setCanRedo(true);
+    triggerAutoSave();
+  }, [messages, triggerAutoSave]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.current.length === 0) return;
+    undoStack.current.push([...messages]);
+    const next = redoStack.current.pop()!;
+    setMessages(next);
+    setCanUndo(true);
+    setCanRedo(redoStack.current.length > 0);
+    triggerAutoSave();
+  }, [messages, triggerAutoSave]);
+
+  // ── Message editing (double-click) ──
+  const handleMessageEdit = useCallback((msgId: string, newText: string) => {
+    pushUndo();
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, text: newText } : m))
+    );
+    triggerAutoSave();
+    // Add version entry
+    setVersionEntries((prev) => [
+      { id: `ve-${Date.now()}`, label: `Editado: "${newText.substring(0, 30)}…"`, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), messageCount: messages.length },
+      ...prev,
+    ]);
+    toast.success("Mensaje editado");
+  }, [pushUndo, triggerAutoSave, messages.length]);
+
   // ── Block insertion from context menu ──
   const handleInsertBlock = useCallback((type: InsertableBlockType) => {
     setContextMenuPos(null);
