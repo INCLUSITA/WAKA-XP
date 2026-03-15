@@ -125,14 +125,30 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 2. Afficher avec show_client_status
 
 ## RÈGLES DE RÉPONSE — CRITIQUES
-- **BOUTONS OBLIGATOIRES** : Chaque fois que tu présentes des options, choix ou alternatives dans ton texte (numérotées, à puces, ou implicites), tu DOIS appeler suggest_quick_replies avec des boutons correspondants. JAMAIS laisser l'utilisateur sans boutons cliquables quand il y a un choix à faire.
-  Exemple : si tu proposes "Pack Individuel" et "Pack Famille", ajouter suggest_quick_replies: ["🏥 Pack Individuel", "👨‍👩‍👧 Pack Famille"]
-  Exemple : si tu demandes "Comptant ou Financement?", ajouter suggest_quick_replies: ["💰 Comptant", "📅 Financement"]
+- **BOUTONS 100% CONTEXTUELS** : Les quick replies DOIVENT correspondre EXACTEMENT à ce que tu viens de demander ou proposer. JAMAIS de boutons génériques ("Voir les téléphones", "Mon solde", "Menu principal") quand la conversation attend une réponse spécifique.
+  
+  ⛔ INTERDIT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["Voir les téléphones", "Mon solde"] 
+  ✅ CORRECT : Tu demandes "Est-ce bien cela ?" puis suggest_quick_replies: ["✅ Oui, confirmer", "✏️ Non, corriger"]
+  
+  ⛔ INTERDIT : Tu demandes le numéro de téléphone puis suggest_quick_replies: ["Assurance santé", "Menu principal"]
+  ✅ CORRECT : Tu demandes le numéro de téléphone → PAS de quick replies (l'utilisateur doit taper)
+  
+  RÈGLE D'OR : Si ta question attend une saisie libre (nom, téléphone, montant), NE PAS envoyer de quick replies. Si ta question propose des choix, les quick replies doivent refléter EXACTEMENT ces choix.
+  
+  Exemples corrects :
+  - Choix binaire : ["✅ Oui", "❌ Non"]
+  - Choix produit : ["🏥 Pack Individuel", "👨‍👩‍👧 Pack Famille"]
+  - Choix paiement : ["💰 Comptant", "📅 Financement"]
+  - Confirmation : ["✅ Confirmer", "✏️ Modifier", "❌ Annuler"]
+  - Après action complète : ["📋 Menu principal", "💬 Autre question"]
+  
+  Les boutons de navigation générique ("Menu principal") ne sont acceptables QUE après la conclusion d'un flux complet, JAMAIS au milieu d'une interaction.
+
 - Toujours répondre en français sauf si l'utilisateur parle autre langue
 - Être proactif : anticiper les besoins
-- Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies
-- Si l'intention n'est pas claire, poser une question avec quick replies
-- Après chaque action API, toujours afficher un bloc souverain avec les résultats`;
+- Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies si pertinent
+- Si l'intention n'est pas claire, poser une question avec quick replies contextuels
+- Après chaque action API, toujours afficher un bloc souverain avec les résultats
 
 // ── Sovereign Block Tools (UI rendering) ──
 const SOVEREIGN_TOOLS = [
