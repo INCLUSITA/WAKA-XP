@@ -83,6 +83,7 @@ export function PlayerWorkbench({
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
   const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   /** Also detect secrets in the stored scenario_config (YAML/JSON from previous sessions) */
   const storedConfigSecrets = useMemo(() => {
