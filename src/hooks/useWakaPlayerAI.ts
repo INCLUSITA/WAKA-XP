@@ -2,6 +2,8 @@
  * Hook: useWakaPlayerAI
  * Calls the sovereign AI intent engine and maps tool-call responses
  * to PlayerMessage sovereign blocks. Supports multimodal (text + image).
+ *
+ * Reads persona/tools/knowledge from PlayerContextProvider when available.
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -9,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import type { DataMode } from "@/components/player/dataMode";
 import { toast } from "@/hooks/use-toast";
+import { usePlayerContext } from "@/contexts/PlayerContextProvider";
 
 interface ConversationMessage {
   role: "user" | "assistant";
