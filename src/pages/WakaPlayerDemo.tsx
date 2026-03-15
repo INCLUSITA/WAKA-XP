@@ -217,7 +217,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
       const extracted = extractOptionsFromText(partial.text);
       if (extracted.length >= 2) quickReplies = extracted;
     }
-    if (!quickReplies?.length && !hasInteraction) quickReplies = FALLBACK_REPLIES;
+    // No fallback: trust the AI to provide contextual replies or none at all
     const botMsg: PlayerMessage = { id: `bot-${Date.now()}`, text: "", direction: "outbound", timestamp: new Date(), ...partial, quickReplies };
     setMessages((prev) => [...prev, botMsg]);
     saveMessage(botMsg, extra);

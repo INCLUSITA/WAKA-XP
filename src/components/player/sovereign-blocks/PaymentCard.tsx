@@ -79,7 +79,7 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
           <span>Total</span>
           <span>{payment.total}</span>
         </div>
-        <button onClick={handlePay}>Payer</button>
+        <button onClick={handlePay} className="mt-1.5 w-full py-1.5 text-[11px] font-bold text-primary underline underline-offset-2 text-left">→ Payer {payment.total} {payment.currency || "FCFA"}</button>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export function PaymentCard({ payment, onPay }: PaymentCardProps) {
           <span className="text-[12px] font-bold text-white">{payment.total}</span>
         </div>
         <div className="px-3 py-2">
-          <button onClick={handlePay}>
+          <button onClick={handlePay} className="w-full py-2.5 rounded-lg bg-[hsl(160,55%,38%)] text-white text-[12px] font-bold active:scale-[0.97] transition-all">
             Payer {payment.total} {payment.currency || "FCFA"}
           </button>
         </div>
