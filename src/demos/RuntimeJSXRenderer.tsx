@@ -42,8 +42,13 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       // Transpile JSX → JS
       // Strip import/export before transpiling to avoid module issues
       let preProcessed = jsxSource;
-      preProcessed = preProcessed.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
+      // Strip all import statements (single-line and multi-line)
+      preProcessed = preProcessed.replace(/^import\s+[\s\S]*?from\s+['"].*?['"];?\s*$/gm, "");
       preProcessed = preProcessed.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
+      // Strip multi-line imports that span across lines (e.g. import {\n  Foo,\n  Bar\n} from "x")
+      preProcessed = preProcessed.replace(/import\s*\{[^}]*\}\s*from\s*['"][^'"]*['"];?/g, "");
+      // Strip remaining import type statements
+      preProcessed = preProcessed.replace(/import\s+type\s+[\s\S]*?from\s+['"].*?['"];?/g, "");
 
       // Capture the default export component name BEFORE stripping
       let componentName = "App";
