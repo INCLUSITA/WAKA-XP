@@ -44,7 +44,7 @@ export function QuickShareDialog({ open, onClose, flowTitle, currentUrl }: Quick
         .insert({
           title,
           demo_url: demoUrl,
-          demo_type: "redirect",
+          demo_type: "iframe",
           expires_at: expiresAt,
           created_by: user?.id || null,
           tenant_id: tenant?.id || null,
