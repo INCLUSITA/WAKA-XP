@@ -52,11 +52,14 @@ export function useWakaPlayerAI() {
 
     setIsThinking(true);
     try {
+      // Build enriched context from PlayerContextProvider
+      const enrichedContext = buildEnrichedContext(playerContext, flowContextRef.current);
+
       const { data, error } = await supabase.functions.invoke("waka-player-ai", {
         body: {
           messages: historyRef.current,
           dataMode,
-          flowContext: flowContextRef.current || undefined,
+          flowContext: enrichedContext || undefined,
         },
       });
 
