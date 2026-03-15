@@ -106,7 +106,7 @@ export default function WakaPlayerDemo() {
   );
 }
 
-function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>> }) {
+function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScenarioConfigProp, setScenarioConfig: setActiveScenarioConfigProp }: { dataMode: DataMode; setDataMode: React.Dispatch<React.SetStateAction<DataMode>>; scenarioConfig: Record<string, any>; setScenarioConfig: React.Dispatch<React.SetStateAction<Record<string, any>>> }) {
   const navigate = useNavigate();
   const { tenantId } = useWorkspace();
   const [searchParams] = useSearchParams();
