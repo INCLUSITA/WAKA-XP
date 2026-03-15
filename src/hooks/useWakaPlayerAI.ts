@@ -2,6 +2,8 @@
  * Hook: useWakaPlayerAI
  * Calls the sovereign AI intent engine and maps tool-call responses
  * to PlayerMessage sovereign blocks. Supports multimodal (text + image).
+ *
+ * Reads persona/tools/knowledge from PlayerContextProvider when available.
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -9,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import type { DataMode } from "@/components/player/dataMode";
 import { toast } from "@/hooks/use-toast";
+import { usePlayerContext } from "@/contexts/PlayerContextProvider";
 
 interface ConversationMessage {
   role: "user" | "assistant";
@@ -19,6 +22,9 @@ export function useWakaPlayerAI() {
   const [isThinking, setIsThinking] = useState(false);
   const historyRef = useRef<ConversationMessage[]>([]);
   const flowContextRef = useRef<string | null>(null);
+
+  // Read context from PlayerContextProvider (graceful fallback)
+  const playerContext = usePlayerContext();
 
   const setFlowContext = useCallback((ctx: string | null) => {
     flowContextRef.current = ctx;
@@ -46,11 +52,14 @@ export function useWakaPlayerAI() {
 
     setIsThinking(true);
     try {
+      // Build enriched context from PlayerContextProvider
+      const enrichedContext = buildEnrichedContext(playerContext, flowContextRef.current);
+
       const { data, error } = await supabase.functions.invoke("waka-player-ai", {
         body: {
           messages: historyRef.current,
           dataMode,
-          flowContext: flowContextRef.current || undefined,
+          flowContext: enrichedContext || undefined,
         },
       });
 
@@ -210,9 +219,60 @@ export function useWakaPlayerAI() {
     } finally {
       setIsThinking(false);
     }
-  }, []);
+  }, [playerContext]);
 
   const resetHistory = useCallback(() => { historyRef.current = []; }, []);
 
   return { sendToAI, isThinking, resetHistory, setFlowContext, flowContext: flowContextRef.current };
+}
+
+/**
+ * Build enriched flowContext string from PlayerContextProvider data.
+ * Merges explicit flowContext with persona/tools/knowledge/policies.
+ */
+function buildEnrichedContext(
+  ctx: ReturnType<typeof usePlayerContext>,
+  explicitFlowContext: string | null,
+): string | null {
+  const parts: string[] = [];
+
+  // Explicit flow context always takes priority
+  if (explicitFlowContext) {
+    parts.push(explicitFlowContext);
+  }
+
+  // System prompt from provider
+  if (ctx.systemPrompt && ctx.systemPrompt !== explicitFlowContext) {
+    parts.push(ctx.systemPrompt);
+  }
+
+  // Persona info
+  if (ctx.persona && ctx.persona.name !== "WAKA XP") {
+    parts.push(`[Persona] Nom: ${ctx.persona.name}, Rôle: ${ctx.persona.role}, Langue: ${ctx.persona.language}${ctx.persona.greeting ? `, Salutation: ${ctx.persona.greeting}` : ""}`);
+  }
+
+  // Tools
+  if (ctx.tools.length > 0) {
+    const toolNames = ctx.tools.map(t => `${t.name}: ${t.description}`).join("; ");
+    parts.push(`[Outils disponibles] ${toolNames}`);
+  }
+
+  // Knowledge
+  if (ctx.knowledge.length > 0) {
+    const knowledgeLabels = ctx.knowledge.map(k => k.label).join(", ");
+    parts.push(`[Base de connaissances] ${knowledgeLabels}`);
+  }
+
+  // Policies
+  if (ctx.policies.length > 0) {
+    const rules = ctx.policies.map(p => p.rule).join("; ");
+    parts.push(`[Règles] ${rules}`);
+  }
+
+  // Intents
+  if (ctx.intents.length > 0) {
+    parts.push(`[Intents reconnus] ${ctx.intents.join(", ")}`);
+  }
+
+  return parts.length > 0 ? parts.join("\n\n") : null;
 }

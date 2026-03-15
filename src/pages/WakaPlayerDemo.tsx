@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -226,6 +227,24 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
 
   // ── Auto-expand blocks ──
   useBlockExpansion(messages, experienceMode);
+
+  // ── Keyboard Shortcuts ──
+  useKeyboardShortcuts({
+    onUndo: authoring.handleUndo,
+    onRedo: authoring.handleRedo,
+    onEscape: useCallback(() => {
+      if (contextMenuPos) setContextMenuPos(null);
+      else if (showSaveDialog) setShowSaveDialog(false);
+      else if (showFlowsPanel) setShowFlowsPanel(false);
+      else if (showVoiceCall) setShowVoiceCall(false);
+      else if (showAvatar) setShowAvatar(false);
+    }, [contextMenuPos, showSaveDialog, showFlowsPanel, showVoiceCall, showAvatar]),
+    onInsert: useCallback(() => {
+      // Open context menu centered for insert
+      setContextTarget({ type: "canvas" });
+      setContextMenuPos({ x: window.innerWidth / 2 - 140, y: window.innerHeight / 2 - 200 });
+    }, []),
+  });
 
   // ── Handlers ──
   const handleInsertBlock = useCallback((type: any) => {
