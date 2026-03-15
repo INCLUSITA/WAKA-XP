@@ -26,6 +26,7 @@ export function useWakaPlayerAI() {
 
   // Read context from PlayerContextProvider (graceful fallback)
   const playerContext = usePlayerContext();
+  const { memory } = usePlayerMemory();
 
   const setFlowContext = useCallback((ctx: string | null) => {
     flowContextRef.current = ctx;
