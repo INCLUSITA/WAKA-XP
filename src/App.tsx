@@ -38,6 +38,7 @@ import ContextBoardPage from "./pages/ContextBoardPage";
 import SimulatorShell from "./pages/SimulatorShell";
 import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 import PlayerFlowsPage from "./pages/PlayerFlowsPage";
+import SpatialPage from "./pages/SpatialPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -68,6 +69,7 @@ const App = () => {
               <Route path="/simulator-shell" element={<SimulatorShell />} />
               <Route path="/player" element={<PlayerFlowsPage />} />
               <Route path="/player/live" element={<WakaPlayerDemo />} />
+              <Route path="/spatial" element={<SpatialPage />} />
               <Route path="/editor" element={<Index />} />
               <Route path="/production" element={<ProductionPage />} />
               <Route path="/runs" element={<RunsPage />} />
