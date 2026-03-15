@@ -327,12 +327,12 @@ Genera el flujo conversacional completo en formato JSON.`;
 
     // Fallback: create a basic flow from the raw AI text
     const now = new Date().toISOString();
-    return {
+    return sanitizeGeneratedPayload({
       conversation: [
         { id: "sys-1", text: "⚡ WAKA NEXUS · Canal souverain — IA activada", direction: "outbound", timestamp: now, isSystemEvent: true },
         { id: "gen-1", text: content.substring(0, 1000) || "Flujo generado. Comenzar interacción.", direction: "outbound", timestamp: now, source: "WAKA NEXUS · IA", quickReplies: ["▶️ Comenzar", "🏠 Menu"] },
       ],
       config: { systemPrompt: content, intents: [], tags: [] },
-    };
+    });
   }
 }
