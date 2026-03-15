@@ -12,6 +12,7 @@ import type { PlayerMessage } from "@/components/player/WakaSovereignPlayer";
 import type { DataMode } from "@/components/player/dataMode";
 import { toast } from "@/hooks/use-toast";
 import { usePlayerContext } from "@/contexts/PlayerContextProvider";
+import { usePlayerMemory } from "@/contexts/PlayerMemoryProvider";
 
 interface ConversationMessage {
   role: "user" | "assistant";
