@@ -335,22 +335,22 @@ export function PlayerWorkbench({
           </div>
 
           {/* ── API Key / Secret Warning ── */}
-          {detectedSecrets.length > 0 && (
+          {requiredSecretRefs.length > 0 && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[11px] font-semibold text-foreground">
-                    Claves API detectadas
+                    API key obligatoria detectada
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Introduce las claves aquí para que los endpoints funcionen, o continúa en modo demo.
+                    Este flujo requiere credenciales para funcionar. No se puede continuar sin completar los campos.
                   </p>
                 </div>
               </div>
 
               {/* Inline secret inputs */}
-              {detectedSecrets.flatMap(s => s.refs).filter((v, i, a) => a.indexOf(v) === i).map((refName) => (
+              {requiredSecretRefs.map((refName) => (
                 <div key={refName} className="pl-6 space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                     <Key className="h-3 w-3" />
@@ -363,7 +363,7 @@ export function PlayerWorkbench({
                       value={secretValues[refName] || ""}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setSecretValues(prev => ({ ...prev, [refName]: val }));
+                        setSecretValues((prev) => ({ ...prev, [refName]: val }));
                       }}
                       className="h-7 text-[11px] font-mono flex-1"
                       autoComplete="off"
@@ -378,26 +378,9 @@ export function PlayerWorkbench({
                 </div>
               ))}
 
-              {!allSecretsProvided && !secretsAcknowledged && (
-                <div className="pl-6 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-[10px]"
-                    onClick={() => setSecretsAcknowledged(true)}
-                  >
-                    Continuar sin claves (demo)
-                  </Button>
-                </div>
-              )}
               {allSecretsProvided && (
                 <p className="text-[9px] text-primary pl-6 italic font-medium">
                   ✓ Claves configuradas — listas para usar.
-                </p>
-              )}
-              {secretsAcknowledged && !allSecretsProvided && (
-                <p className="text-[9px] text-muted-foreground pl-6 italic">
-                  ✓ Modo demo — los endpoints con autenticación no funcionarán.
                 </p>
               )}
             </div>
@@ -406,7 +389,7 @@ export function PlayerWorkbench({
           {/* ── Submit ── */}
           <Button
             onClick={handleSubmit}
-            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasUnacknowledgedSecrets}
+            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasMissingSecrets}
             className="w-full gap-2"
           >
             {isProcessing ? (
