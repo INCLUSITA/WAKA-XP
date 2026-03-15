@@ -324,12 +324,13 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else toast.error("Error al guardar el flujo");
   }, [saveFlow, messages, dataMode]);
 
-  const handleLoadFlow = useCallback((flowId: string) => {
-    // Keep router state in sync (critical for useSearchParams flow loading)
-    navigate(`/player/live?flow=${flowId}`, { replace: true });
-    // Close panel; flow will load via URL-driven effect
+  const handleLoadFlow = useCallback(async (flowId: string) => {
     setShowFlowsPanel(false);
-  }, [navigate]);
+    // Call loader directly — avoids navigate → useEffect race condition
+    await loadFlowByIdRef.current(flowId);
+    // Update URL silently so bookmarking/refresh works (don't use navigate to avoid re-render loops)
+    window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
+  }, []);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
     if (result.conversation.length > 0) setMessages(result.conversation);
