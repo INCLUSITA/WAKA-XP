@@ -321,13 +321,12 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   }, [saveFlow, messages, dataMode]);
 
   const handleLoadFlow = useCallback((flowId: string) => {
-    setShowFlowsPanel(false);
+    // Load flow immediately BEFORE closing panel to avoid Sheet unmount interference
     loadedFlowIdRef.current = null;
-    // Escape Sheet portal context with setTimeout — navigate() fails inside portals
-    setTimeout(() => {
-      window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
-      loadFlowByIdRef.current(flowId);
-    }, 60);
+    window.history.replaceState(null, "", `/player/live?flow=${flowId}`);
+    loadFlowByIdRef.current(flowId);
+    // Close panel after load is initiated
+    setShowFlowsPanel(false);
   }, []);
 
   const handleWorkbenchResult = useCallback((result: { conversation: any[]; config: Record<string, any> }) => {
