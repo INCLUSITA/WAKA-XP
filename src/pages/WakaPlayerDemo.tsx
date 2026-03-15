@@ -829,6 +829,7 @@ export default function WakaPlayerDemo() {
                   onVoiceCall={() => setShowVoiceCall(true)}
                   onAvatarCall={() => setShowAvatar(true)}
                   onContextMenu={(x, y) => setContextMenuPos({ x, y })}
+                  onMessageEdit={handleMessageEdit}
                 />
               </div>
 
