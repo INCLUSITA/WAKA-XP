@@ -191,6 +191,11 @@ export function PlayerWorkbench({
         sourceData.mergeMode = true;
       }
 
+      // Include user-provided secret values
+      if (Object.keys(secretValues).some(k => secretValues[k]?.trim())) {
+        sourceData.secretValues = secretValues;
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-player-flow", {
         body: {
           name: flowTitle || "Flujo iterado",
