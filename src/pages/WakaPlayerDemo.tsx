@@ -121,7 +121,8 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
   const [showFlowContextSelector, setShowFlowContextSelector] = useState(false);
   const [activeFlowContextName, setActiveFlowContextName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeScenarioConfig, setActiveScenarioConfig] = useState<Record<string, any>>({});
+  const activeScenarioConfig = activeScenarioConfigProp;
+  const setActiveScenarioConfig = setActiveScenarioConfigProp;
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [contextTarget, setContextTarget] = useState<ContextTarget>({ type: "canvas" });
   const historyLoaded = useRef(false);
