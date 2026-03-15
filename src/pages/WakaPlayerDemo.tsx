@@ -149,13 +149,24 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     setActiveFlowId(flowIdParam);
     loadFlowFull(flowIdParam).then((full) => {
       if (!full) { toast.error("No se pudo cargar el flujo seleccionado"); return; }
-      setMessages([...WELCOME_MESSAGES]);
+      // Use the saved conversation_snapshot if it has content; otherwise fall back to welcome
+      const savedConversation = full.conversationSnapshot;
+      if (savedConversation && savedConversation.length > 0) {
+        // Rehydrate timestamps (they come as strings from JSON)
+        const rehydrated = savedConversation.map((msg: any) => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+        }));
+        setMessages(rehydrated);
+      } else {
+        setMessages([...WELCOME_MESSAGES]);
+      }
       setDataMode(full.dataMode);
       setActiveFlowTitle(full.name);
       setActiveScenarioConfig(full.scenarioConfig || {});
       resetHistory();
       startNewConversation();
-      toast.success(`Flujo "${full.name}" iniciado desde cero`);
+      toast.success(`Flujo "${full.name}" cargado`);
     });
   }, [flowIdParam, loadFlowFull, resetHistory, startNewConversation]);
 

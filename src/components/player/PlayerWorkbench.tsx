@@ -6,12 +6,13 @@
  * - AI Engine selector (WAKA AI, Azure, BYOM)
  * - Merge additional sources into the current flow
  * - Flow lifecycle controls (save, status, new conversation)
+ * - API key detection for YAML/JSON endpoints
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   Send, Upload, FileJson, FileText, Image as ImageIcon, RotateCcw,
-  Save, Sparkles, Loader2, FolderOpen, Pencil,
+  Save, Sparkles, Loader2, FolderOpen, Pencil, AlertTriangle, Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,30 @@ import { cn } from "@/lib/utils";
 import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEngineSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+/** Patterns indicating API keys / secrets in YAML/JSON content */
+const SECRET_PATTERNS = [
+  /api[_-]?key/i,
+  /authorization:\s*bearer/i,
+  /secret[_-]?key/i,
+  /access[_-]?token/i,
+  /private[_-]?key/i,
+  /password/i,
+  /\btoken\b.*:\s*["'][A-Za-z0-9]/i,
+  /x-api-key/i,
+];
+
+/** Detect secrets/API keys referenced in file content */
+function detectSecretReferences(content: string): string[] {
+  const found: string[] = [];
+  for (const pattern of SECRET_PATTERNS) {
+    if (pattern.test(content)) {
+      const match = content.match(pattern);
+      if (match) found.push(match[0]);
+    }
+  }
+  return [...new Set(found)];
+}
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
@@ -56,7 +81,22 @@ export function PlayerWorkbench({
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [engine, setEngine] = useState<EngineSelection>({ engineId: "waka-ai" });
+  const [secretsAcknowledged, setSecretsAcknowledged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /** Detect API key references in uploaded assets */
+  const detectedSecrets = useMemo(() => {
+    const allSecrets: { file: string; refs: string[] }[] = [];
+    for (const asset of assets) {
+      if (asset.content) {
+        const refs = detectSecretReferences(asset.content);
+        if (refs.length > 0) allSecrets.push({ file: asset.name, refs });
+      }
+    }
+    return allSecrets;
+  }, [assets]);
+
+  const hasUnacknowledgedSecrets = detectedSecrets.length > 0 && !secretsAcknowledged;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -88,6 +128,7 @@ export function PlayerWorkbench({
 
   const removeAsset = useCallback((index: number) => {
     setAssets((prev) => prev.filter((_, i) => i !== index));
+    setSecretsAcknowledged(false);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -265,10 +306,61 @@ export function PlayerWorkbench({
             )}
           </div>
 
+          {/* ── API Key / Secret Warning ── */}
+          {detectedSecrets.length > 0 && (
+            <div className="rounded-lg border border-[hsl(var(--glow-warn))]/30 bg-[hsl(var(--glow-warn))]/5 p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-[hsl(var(--glow-warn))] shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground">
+                    Claves API detectadas
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Este archivo contiene referencias a credenciales que necesitan ser configuradas para que los endpoints funcionen en producción.
+                  </p>
+                </div>
+              </div>
+              {detectedSecrets.map((s, i) => (
+                <div key={i} className="flex items-center gap-1.5 pl-6">
+                  <Key className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{s.file}:</span>
+                  <span className="text-[10px] font-mono text-foreground">{s.refs.join(", ")}</span>
+                </div>
+              ))}
+              {!secretsAcknowledged ? (
+                <div className="flex gap-2 pl-6 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px]"
+                    onClick={() => setSecretsAcknowledged(true)}
+                  >
+                    Continuar sin claves (demo)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px] gap-1"
+                    onClick={() => {
+                      toast.info("Para configurar secretos, ve a Settings → Lovable Cloud → Secrets");
+                    }}
+                  >
+                    <Key className="h-3 w-3" />
+                    Configurar secretos
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[9px] text-muted-foreground pl-6 italic">
+                  ✓ Continuando en modo demo — los endpoints con autenticación no funcionarán hasta configurar las claves.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* ── Submit ── */}
           <Button
             onClick={handleSubmit}
-            disabled={isProcessing || (!instructions.trim() && assets.length === 0)}
+            disabled={isProcessing || (!instructions.trim() && assets.length === 0) || hasUnacknowledgedSecrets}
             className="w-full gap-2"
           >
             {isProcessing ? (
