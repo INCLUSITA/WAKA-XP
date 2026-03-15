@@ -93,7 +93,7 @@ export function ExperienceCanvas({
   sidePanelContent, overlayContent, modalContent, fullscreenContent,
   header, mode = "expanded", avatarEnabled = false, className,
 }: ExperienceCanvasProps) {
-  const { isDesktop, isMobile, expandedBlock, collapseBlock } = useExperienceRuntime();
+  const { isDesktop, isMobile, expandedBlock, collapseBlock, dataPolicy } = useExperienceRuntime();
   const effectiveMode = isMobile ? "framed" : mode;
 
   const surfacePlan = useMemo(
