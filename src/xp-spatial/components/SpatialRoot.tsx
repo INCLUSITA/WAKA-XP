@@ -79,21 +79,10 @@ export function SpatialRoot() {
       };
       setMessages(prev => [...prev, botMsg]);
 
-      // Resolve spatial decision
+      // Resolve spatial decision (includes payload extraction)
       const decision = resolveSpatialDecision(botMsg);
       if (decision.surfaceType !== "none") {
-        // Enrich surface payload from message data
-        const payload: any = {};
-        if (botMsg.catalog) {
-          payload.title = botMsg.catalog.title;
-          payload.items = botMsg.catalog.products;
-        }
-        if (botMsg.payment) payload.raw = botMsg.payment;
-        if (botMsg.creditSimulation) payload.raw = botMsg.creditSimulation;
-
-        spatial.applySpatialDecision({
-          ...decision,
-        });
+        spatial.applySpatialDecision(decision);
       } else {
         spatial.setHud({ visible: false, text: "", mode: "idle" });
       }

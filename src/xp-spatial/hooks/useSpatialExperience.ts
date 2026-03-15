@@ -39,6 +39,7 @@ export function useSpatialExperience() {
         ? {
             id: `surface-${Date.now()}`,
             type: decision.surfaceType,
+            payload: decision.payload,
             closable: true,
             priority: 1,
           }
