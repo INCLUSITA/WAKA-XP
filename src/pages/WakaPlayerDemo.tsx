@@ -98,7 +98,9 @@ export default function WakaPlayerDemo() {
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
       <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
-        <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+        <PlayerMemoryProvider tenantId={tenantId || undefined}>
+          <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+        </PlayerMemoryProvider>
       </PlayerContextProvider>
     </ExperienceRuntimeProvider>
   );
