@@ -604,6 +604,58 @@ export default function WakaPlayerDemo() {
     toast.success("Mensaje editado");
   }, [pushUndo, triggerAutoSave, messages.length]);
 
+  // ── Message manipulation for context menu ──
+  const handleDuplicateMessage = useCallback((msgId: string) => {
+    pushUndo();
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === msgId);
+      if (idx === -1) return prev;
+      const clone = { ...prev[idx], id: `dup-${Date.now()}`, timestamp: new Date() };
+      const next = [...prev];
+      next.splice(idx + 1, 0, clone);
+      return next;
+    });
+    triggerAutoSave();
+    toast.success("Mensaje duplicado");
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleDeleteMessage = useCallback((msgId: string) => {
+    pushUndo();
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    triggerAutoSave();
+    toast.success("Mensaje eliminado");
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleMoveMessage = useCallback((msgId: string, dir: "up" | "down") => {
+    pushUndo();
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === msgId);
+      if (idx === -1) return prev;
+      const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+      return next;
+    });
+    triggerAutoSave();
+  }, [pushUndo, triggerAutoSave]);
+
+  const handleAIImprove = useCallback(async (msgId: string) => {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg?.text) return;
+    toast.info("Mejorando con IA…");
+    const response = await sendToAI(
+      `Améliore ce message pour qu'il soit plus clair, professionnel et engageant. Garde le même sens. Message original: "${msg.text}"`,
+      dataMode
+    );
+    if (response?.text) {
+      pushUndo();
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, text: response.text } : m));
+      triggerAutoSave();
+      toast.success("Mensaje mejorado con IA");
+    }
+  }, [messages, sendToAI, dataMode, pushUndo, triggerAutoSave]);
+
   // ── Block insertion from context menu ──
   const handleInsertBlock = useCallback((type: InsertableBlockType) => {
     setContextMenuPos(null);
