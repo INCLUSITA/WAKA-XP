@@ -21,8 +21,8 @@ const EXPANDABLE_BLOCK_KEYS: Array<keyof PlayerMessage> = [
   "inlineForm", "training", "mediaCarousel", "location", "certificate",
 ];
 
-/** Blocks that should NOT auto-expand (too small / disruptive) */
-const NEVER_AUTO_EXPAND: string[] = ["rating", "location"];
+/** Blocks that should NOT auto-expand (too small / quick interaction / disruptive) */
+const NEVER_AUTO_EXPAND: string[] = ["rating", "location", "deviceLockConsent", "certificate"];
 
 /** Detect the first expandable block in a message */
 export function detectExpandableBlock(msg: PlayerMessage): { blockType: string; data: Record<string, any> } | null {
