@@ -68,7 +68,7 @@ export default function WakaPlayerDemo() {
   const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
   const [dataMode, setDataMode] = useState<DataMode>("libre");
-  const { sendToAI, isThinking, setFlowContext } = useWakaPlayerAI();
+  const { sendToAI, isThinking, setFlowContext, resetHistory } = useWakaPlayerAI();
   const { saveMessage, loadHistory, updateDataMode, startNewConversation, messageCount, conversationId } = usePlayerConversation();
   const { saveFlow, loadFlowFull, updateFlowConversation } = useSavedPlayerFlows();
   const historyLoaded = useRef(false);
