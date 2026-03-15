@@ -95,11 +95,12 @@ function extractOptionsFromText(text: string): string[] {
 export default function WakaPlayerDemo() {
   const { tenantId } = useWorkspace();
   const [dataMode, setDataMode] = useState<DataMode>("libre");
+  const [scenarioConfig, setScenarioConfig] = useState<Record<string, any>>({});
 
   return (
     <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
-      <PlayerContextProvider scenarioConfig={{}} systemPrompt={null}>
-        <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} />
+      <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
+        <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
       </PlayerContextProvider>
     </ExperienceRuntimeProvider>
   );
