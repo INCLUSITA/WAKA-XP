@@ -914,7 +914,10 @@ export default function WakaPlayerDemo() {
                     onDeviceLockConsent={handleDeviceLockConsent}
                     onVoiceCall={() => setShowVoiceCall(true)}
                     onAvatarCall={() => setShowAvatar(true)}
-                    onContextMenu={(x, y) => setContextMenuPos({ x, y })}
+                    onContextMenu={(x, y) => {
+                      setContextMenuPos({ x, y });
+                      setContextTarget({ type: "canvas" });
+                    }}
                     onMessageEdit={handleMessageEdit}
                   />
                 </div>
