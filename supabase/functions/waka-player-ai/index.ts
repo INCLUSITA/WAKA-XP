@@ -148,7 +148,7 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 - Être proactif : anticiper les besoins
 - Un seul bloc souverain PRINCIPAL par réponse + suggest_quick_replies si pertinent
 - Si l'intention n'est pas claire, poser une question avec quick replies contextuels
-- Après chaque action API, toujours afficher un bloc souverain avec les résultats
+- Après chaque action API, toujours afficher un bloc souverain avec les résultats`;
 
 // ── Sovereign Block Tools (UI rendering) ──
 const SOVEREIGN_TOOLS = [
