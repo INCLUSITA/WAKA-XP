@@ -607,6 +607,7 @@ export default function WakaPlayerDemo() {
   // ── Block insertion from context menu ──
   const handleInsertBlock = useCallback((type: InsertableBlockType) => {
     setContextMenuPos(null);
+    setContextTarget({ type: "canvas" });
 
     if (type === "voiceCall") {
       setShowVoiceCall(true);
