@@ -109,8 +109,6 @@ function WakaPlayerDemoInner({ dataMode, setDataMode }: { dataMode: DataMode; se
 
   // ── Core State ──
   const [messages, setMessages] = useState<PlayerMessage[]>(WELCOME_MESSAGES);
-  const [dataMode, setDataMode] = useState<DataMode>("libre");
-  const [experienceMode, setExperienceMode] = useState<ExperienceMode>("expanded");
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
