@@ -227,7 +227,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
               onClick={() => handleProductClick(product)}
               className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-muted/40 active:bg-muted/60 transition-colors text-left"
             >
-              <span className="text-2xl shrink-0">{product.emoji || "📦"}</span>
+              <span className="shrink-0"><ProductImage product={product} sizeClass="text-2xl" imgClass="w-8 h-8 object-cover rounded" /></span>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-semibold text-foreground truncate">{product.name}</p>
                 {product.rating != null && (
