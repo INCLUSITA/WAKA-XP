@@ -799,21 +799,21 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
                   <Plus className="mr-1 h-3 w-3" /> Add
                 </Button>
               </div>
-              {Object.entries(data.headers || {}).map(([key, value], i) => (
-                <div key={i} className="flex gap-1">
+              {webhookHeaderDrafts.map((header) => (
+                <div key={header.id} className="flex gap-1">
                   <Input
-                    value={key}
-                    onChange={(e) => updateHeader(key, e.target.value, value as string)}
+                    value={header.key}
+                    onChange={(e) => updateHeader(header.id, "key", e.target.value)}
                     placeholder="Header name"
                     className="w-1/2 text-xs"
                   />
                   <Input
-                    value={value as string}
-                    onChange={(e) => updateHeader(key, key, e.target.value)}
+                    value={header.value}
+                    onChange={(e) => updateHeader(header.id, "value", e.target.value)}
                     placeholder="Value"
                     className="w-1/2 text-xs"
                   />
-                  <Button variant="ghost" size="icon" onClick={() => removeHeader(key)} className="flex-shrink-0">
+                  <Button variant="ghost" size="icon" onClick={() => removeHeader(header.id)} className="flex-shrink-0">
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                 </div>
@@ -822,8 +822,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">Request Body (JSON)</Label>
               <ExpressionInput
-                value={data.body || ""}
-                onChange={(v) => update("body", v)}
+                value={webhookBodyDraft}
+                onChange={setWebhookBodyDraft}
                 placeholder='{"key": "@results.value"}'
                 className="min-h-[100px]"
                 multiline
@@ -832,8 +832,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">Save as Result</Label>
               <Input
-                value={data.resultName || ""}
-                onChange={(e) => update("resultName", e.target.value)}
+                value={webhookResultNameDraft}
+                onChange={(e) => setWebhookResultNameDraft(e.target.value)}
                 placeholder="webhook_result"
               />
             </div>
