@@ -227,7 +227,7 @@ export function CreditSimulationCard({ data, onAction }: Props) {
         )}
       </div>
 
-      {data.actions && data.actions.length > 0 && (
+      {Array.isArray(data.actions) && data.actions.length > 0 && (
         <div className="divide-y divide-[hsl(220,15%,93%)] border-t border-[hsl(220,15%,92%)]">
           {data.actions.map((action, i) => (
             <button
