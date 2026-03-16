@@ -354,7 +354,7 @@ export function PlayerWorkbench({
                       placeholder={`Pega tu ${refName} aquí...`}
                       value={secretValues[refName] || ""}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = normalizeSecretValue(e.target.value);
                         setSecretValues((prev) => ({ ...prev, [refName]: val }));
                       }}
                       className="h-7 text-[11px] font-mono flex-1"

@@ -261,7 +261,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     } finally {
       setIsGenerating(false);
     }
-  }, [name, description, engineId, tenantId, jsonContent, yamlContent, onCreated]);
+  }, [name, description, engineId, tenantId, jsonContent, yamlContent, onCreated, secretValues]);
 
   const hasSource = !!(textInstructions.trim() || jsonContent || yamlContent);
 
