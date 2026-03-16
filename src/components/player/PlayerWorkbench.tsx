@@ -95,9 +95,12 @@ export function PlayerWorkbench({
     [detectedSecrets]
   );
 
-  const allSecretsProvided = requiredSecretRefs.length === 0 ||
-    requiredSecretRefs.every((ref) => secretValues[ref]?.trim());
-  const hasMissingSecrets = requiredSecretRefs.length > 0 && !allSecretsProvided;
+  const missingSecretRefs = useMemo(
+    () => getMissingSecretRefs(requiredSecretRefs, secretValues),
+    [requiredSecretRefs, secretValues]
+  );
+  const allSecretsProvided = missingSecretRefs.length === 0;
+  const hasMissingSecrets = requiredSecretRefs.length > 0 && missingSecretRefs.length > 0;
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
