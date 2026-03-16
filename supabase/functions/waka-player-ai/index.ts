@@ -796,6 +796,72 @@ const SOVEREIGN_BLOCK_NAMES = new Set([
   "show_device_lock_consent",
 ]);
 
+function sanitizeApiKey(value: string): string {
+  return value.replace(/[^\x20-\x7E]/g, "").trim();
+}
+
+function extractWakaApiKeyFromText(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = value.match(/\bwaka_[A-Za-z0-9_-]{16,}\b/);
+  return match ? sanitizeApiKey(match[0]) : null;
+}
+
+function findWakaApiKeyInValue(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return extractWakaApiKeyFromText(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const match = findWakaApiKeyInValue(item);
+      if (match) return match;
+    }
+    return null;
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const priorityKeys = ["x-api-key", "x_api_key", "apiKey", "api_key", "WAKA_CORE_API_KEY"];
+
+    for (const key of priorityKeys) {
+      const direct = obj[key];
+      if (typeof direct === "string") {
+        const match = extractWakaApiKeyFromText(direct) || (direct.startsWith("waka_") ? sanitizeApiKey(direct) : null);
+        if (match) return match;
+      }
+    }
+
+    for (const nestedValue of Object.values(obj)) {
+      const match = findWakaApiKeyInValue(nestedValue);
+      if (match) return match;
+    }
+  }
+  return null;
+}
+
+function resolveWakaApiKey(
+  scenarioConfig: Record<string, unknown> | undefined,
+  flowContext: string | undefined,
+  fallbackApiKey: string,
+): { apiKey: string; source: string } {
+  const sources: Array<{ source: string; value: unknown }> = [
+    { source: "scenarioConfig.sourceData.secretValues", value: scenarioConfig?.sourceData && (scenarioConfig.sourceData as Record<string, unknown>).secretValues },
+    { source: "scenarioConfig.endpoints", value: scenarioConfig?.endpoints },
+    { source: "scenarioConfig.sourceData", value: scenarioConfig?.sourceData },
+    { source: "scenarioConfig", value: scenarioConfig },
+    { source: "flowContext", value: flowContext },
+  ];
+
+  for (const candidate of sources) {
+    const apiKey = findWakaApiKeyInValue(candidate.value);
+    if (apiKey) return { apiKey, source: candidate.source };
+  }
+
+  const envApiKey = sanitizeApiKey(fallbackApiKey);
+  if (envApiKey.startsWith("waka_")) {
+    return { apiKey: envApiKey, source: "env.WAKA_CORE_API_KEY" };
+  }
+
+  throw new Error("No valid WAKA API key found in scenario context or backend secret");
+}
+
 async function executeWakaCoreCall(
   toolName: string,
   args: Record<string, unknown>,
@@ -808,9 +874,8 @@ async function executeWakaCoreCall(
 
   try {
     let url = `${WAKA_CORE_BASE}${endpoint.path}`;
-    // Sanitize API key: strip any non-ASCII / control characters that break ByteString
-    const safeKey = apiKey.replace(/[^\x20-\x7E]/g, "").trim();
-    console.log(`WAKA CORE [${toolName}] key length=${safeKey.length}, first4=${safeKey.slice(0,4)}`);
+    const safeKey = sanitizeApiKey(apiKey);
+    console.log(`WAKA CORE [${toolName}] key length=${safeKey.length}, first4=${safeKey.slice(0, 4)}`);
     const headers = new Headers();
     headers.set("x-api-key", safeKey);
     headers.set("Content-Type", "application/json");
@@ -849,12 +914,17 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dataMode, flowContext, memoryContext } = await req.json();
+    const { messages, dataMode, flowContext, memoryContext, scenarioConfig } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const WAKA_API_KEY = (Deno.env.get("WAKA_CORE_API_KEY") || "").trim();
-    if (!WAKA_API_KEY) throw new Error("WAKA_CORE_API_KEY is not configured");
+    const resolvedApiKey = resolveWakaApiKey(
+      scenarioConfig,
+      typeof flowContext === "string" ? flowContext : undefined,
+      Deno.env.get("WAKA_CORE_API_KEY") || "",
+    );
+    const WAKA_API_KEY = resolvedApiKey.apiKey;
+    console.log(`Resolved WAKA API key from ${resolvedApiKey.source}, length=${WAKA_API_KEY.length}, first4=${WAKA_API_KEY.slice(0, 4)}`);
 
     const modeContext = dataMode === "zero-rated"
       ? "\n\nIMPORTANT: L'utilisateur est en mode ZERO-RATED. Sois ultra-concis. Pas d'emojis décoratifs. Réponses courtes."
