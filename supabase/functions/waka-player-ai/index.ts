@@ -866,24 +866,145 @@ function resolveWakaApiKey(
   return { apiKey: "", source: "none" };
 }
 
-// ── x-waka-xp-display: Auto-block generation from CORE API responses ──
+// ── x-waka-xp-display v1: Template-driven auto-block engine ──
 
 interface CoreCallResult {
   data: Record<string, unknown>;
-  displayHint?: string; // from x-waka-xp-display response header
+  displayHint?: string;
 }
 
-/** Map CORE endpoint responses to sovereign blocks when AI forgets */
+/** Resolve a dotted path like "client.name" from an object */
+function resolvePath(obj: any, path: string): any {
+  if (!obj || !path) return undefined;
+  return path.split(".").reduce((cur, key) => cur?.[key], obj);
+}
+
+/** Interpolate "{field}" and "{nested.field}" templates against data */
+function interpolate(template: string, data: any): string {
+  return template.replace(/\{([^}]+)\}/g, (_, path) => {
+    const val = resolvePath(data, path.trim());
+    return val !== undefined && val !== null ? String(val) : "";
+  });
+}
+
+/** Apply a template object (card_template / item_template / payload) to data */
+function applyTemplate(template: Record<string, any>, data: any): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(template)) {
+    if (typeof value === "string") {
+      result[key] = interpolate(value, data);
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      result[key] = applyTemplate(value, data);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/** Spec type → sovereign block name mapping */
+const SPEC_TYPE_TO_BLOCK: Record<string, string> = {
+  product_carousel: "show_catalog",
+  menu: "show_menu",
+  decision_tree: "show_menu",
+  status_card: "show_client_status",
+  credit_simulation: "show_credit_simulation",
+  payment_card: "show_payment",
+  confirmation_card: "show_payment_confirmation",
+  service_plans: "show_service_plans",
+  kyc_card: "show_form",
+  location_card: "show_location",
+  training_progress: "show_training",
+  media_carousel: "show_catalog",
+  device_lock_consent: "show_device_lock_consent",
+  momo_card: "show_momo_card",
+  credit_contract: "show_credit_contract",
+};
+
+/** Build sovereign block args from x-waka-xp-display spec + CORE response */
+function buildBlockFromSpec(
+  spec: Record<string, any>,
+  responseData: any,
+): { blockName: string; args: Record<string, any> } | null {
+  const specType = spec.type || spec.block;
+  if (!specType) return null;
+
+  const blockName = SPEC_TYPE_TO_BLOCK[specType] || `show_${specType}`;
+  const args: Record<string, any> = {};
+
+  // Title
+  if (spec.title) args.title = interpolate(spec.title, responseData);
+
+  // items_from: extract array + apply card_template/item_template
+  const itemsPath = spec.items_from || spec.dataPath;
+  if (itemsPath) {
+    const items = resolvePath(responseData, itemsPath);
+    if (Array.isArray(items)) {
+      const template = spec.card_template || spec.item_template;
+      if (template) {
+        const mapped = items.map((item: any) => applyTemplate(template, item));
+        // Route to correct field based on block type
+        if (specType === "product_carousel") {
+          args.products = mapped.map((m: any) => ({
+            id: m.id || m.title || "",
+            name: m.title || m.name || m.label || "",
+            price: m.price || "",
+            description: m.subtitle || m.description || "",
+            badge: m.badge || "",
+            image_url: m.image || m.image_url || "",
+          }));
+        } else if (specType === "service_plans") {
+          args.plans = mapped.map((m: any) => ({
+            sku: m.sku || m.id || "",
+            name: m.label || m.name || "",
+            price: m.price || "",
+            description: m.description || "",
+          }));
+          args.category = "general";
+        } else if (specType === "menu" || specType === "decision_tree") {
+          args.options = mapped.map((m: any) => ({
+            label: m.label || "",
+            icon: m.icon || "",
+            description: m.description || "",
+          }));
+        } else if (specType === "media_carousel") {
+          args.products = mapped; // reuse catalog surface
+        } else {
+          args.items = mapped;
+        }
+      } else {
+        // No template — pass raw items
+        if (specType === "product_carousel") args.products = items;
+        else if (specType === "service_plans") { args.plans = items; args.category = "general"; }
+        else args.items = items;
+      }
+    }
+  }
+
+  // payload: direct field interpolation from response root
+  if (spec.payload && typeof spec.payload === "object") {
+    const resolved = applyTemplate(spec.payload, responseData);
+    Object.assign(args, resolved);
+  }
+
+  return { blockName, args };
+}
+
+/** Map CORE endpoint responses to sovereign blocks using spec + fallbacks */
 function autoBlockFromCoreResponse(
   toolName: string,
   responseData: Record<string, unknown>,
-  displayHint?: string,
+  _displayHint?: string,
   scenarioDisplayHints?: Record<string, any>,
 ): Record<string, any> | null {
-  // Priority: explicit display hint > scenario config > built-in mapping
-  const hint = displayHint || scenarioDisplayHints?.[toolName]?.block;
+  // Priority 1: x-waka-xp-display spec from scenario displayMap
+  const spec = scenarioDisplayHints?.[toolName];
+  if (spec?.type || spec?.block) {
+    const result = buildBlockFromSpec(spec, responseData);
+    if (result) return result;
+  }
 
-  // Built-in auto-mapping by endpoint + response shape
+  // Priority 2: Built-in fallback mappings (backwards compatible)
   if (toolName === "get_bnpl_catalog" && responseData.products) {
     return {
       blockName: "show_catalog",
@@ -900,13 +1021,9 @@ function autoBlockFromCoreResponse(
       args: {
         title: `Plans ${(responseData as any).product || "disponibles"}`,
         category: (responseData as any).product_key || "general",
-        plans: (responseData as any).available_variants?.map((v: any) => ({
-          sku: v.sku,
-          name: v.name,
-          price: String(v.price),
-          description: v.description || "",
-        })) || [],
-        message: (responseData as any).message || "",
+        plans: ((responseData as any).available_variants || []).map((v: any) => ({
+          sku: v.sku, name: v.name, price: String(v.price), description: v.description || "",
+        })),
       },
     };
   }
@@ -917,10 +1034,8 @@ function autoBlockFromCoreResponse(
       return {
         blockName: "show_client_status",
         args: {
-          client_name: d.client.full_name || "",
-          voice_id: d.client.voice_id || "",
-          phone: d.client.phone || "",
-          active_credits: d.credits_count || 0,
+          client_name: d.client.full_name || "", voice_id: d.client.voice_id || "",
+          phone: d.client.phone || "", active_credits: d.credits_count || 0,
           total_balance: String(d.total_balance || 0),
           next_payment_date: d.next_payment_date || "",
           next_payment_amount: d.next_payment_amount ? String(d.next_payment_amount) : "",
@@ -934,14 +1049,10 @@ function autoBlockFromCoreResponse(
     return {
       blockName: "show_credit_simulation",
       args: {
-        title: "Simulation de crédit",
-        product_name: s.product_name || "",
-        amount: String(s.amount || ""),
-        term: s.term || "",
-        frequency: s.frequency || "",
+        title: "Simulation de crédit", product_name: s.product_name || "",
+        amount: String(s.amount || ""), term: s.term || "", frequency: s.frequency || "",
         monthly_payment: String(s.installment_amount || s.monthly_payment || ""),
-        total_cost: String(s.total_cost || ""),
-        interest_rate: String(s.interest_rate || ""),
+        total_cost: String(s.total_cost || ""), interest_rate: String(s.interest_rate || ""),
       },
     };
   }
@@ -951,12 +1062,9 @@ function autoBlockFromCoreResponse(
     return {
       blockName: "show_credit_contract",
       args: {
-        title: "Contrat de crédit",
-        credit_voice_id: c.voice_id || c.credit_voice_id || "",
-        credit_type: c.credit_type || "",
-        amount: String(c.amount || ""),
-        status: c.status || "approved",
-        product_name: c.product_name || "",
+        title: "Contrat de crédit", credit_voice_id: c.voice_id || c.credit_voice_id || "",
+        credit_type: c.credit_type || "", amount: String(c.amount || ""),
+        status: c.status || "approved", product_name: c.product_name || "",
       },
     };
   }
@@ -965,8 +1073,7 @@ function autoBlockFromCoreResponse(
     return {
       blockName: "show_payment_confirmation",
       args: {
-        title: "Paiement confirmé",
-        status: "success",
+        title: "Paiement confirmé", status: "success",
         amount_paid: String((responseData as any).amount_paid || (responseData as any).amount || ""),
         remaining_balance: String((responseData as any).remaining_balance || ""),
         message: (responseData as any).message || "",
@@ -985,14 +1092,6 @@ function autoBlockFromCoreResponse(
         message: (responseData as any).message || "",
       },
     };
-  }
-
-  // Hint-driven fallback from scenario YAML
-  if (hint === "catalog" && responseData.products) {
-    return { blockName: "show_catalog", args: { title: "Catalogue", products: (responseData as any).products } };
-  }
-  if (hint === "service_plans" && (responseData as any).available_variants) {
-    return { blockName: "show_service_plans", args: { title: "Plans", category: "general", plans: (responseData as any).available_variants } };
   }
 
   return null;
