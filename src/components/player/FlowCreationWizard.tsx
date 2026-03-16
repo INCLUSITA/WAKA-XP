@@ -71,16 +71,31 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
   const [yamlContent, setYamlContent] = useState("");
   const [yamlFileName, setYamlFileName] = useState("");
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
 
+  const requiredSecretRefs = useMemo(
+    () => Array.from(new Set([
+      ...detectSecretReferences(textInstructions),
+      ...detectSecretReferences(jsonContent),
+      ...detectSecretReferences(yamlContent),
+    ])),
+    [textInstructions, jsonContent, yamlContent]
+  );
+  const missingSecretRefs = useMemo(
+    () => getMissingSecretRefs(requiredSecretRefs, secretValues),
+    [requiredSecretRefs, secretValues]
+  );
+  const hasMissingSecrets = requiredSecretRefs.length > 0 && missingSecretRefs.length > 0;
+
   const reset = () => {
     setName(""); setDescription(""); setTextInstructions("");
     setJsonContent(""); setJsonFileName("");
     setYamlContent(""); setYamlFileName("");
-    setAssets([]); setTab("text"); setEngineId("waka-ai");
+    setAssets([]); setTab("text"); setEngineId("waka-ai"); setSecretValues({});
   };
 
   const handleClose = () => { reset(); onClose(); };
