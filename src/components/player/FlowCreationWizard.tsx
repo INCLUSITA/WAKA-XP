@@ -516,7 +516,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
                     type="password"
                     placeholder={`Pega tu ${refName} aquí...`}
                     value={secretValues[refName] || ""}
-                    onChange={(e) => setSecretValues((prev) => ({ ...prev, [refName]: e.target.value }))}
+                    onChange={(e) => setSecretValues((prev) => ({ ...prev, [refName]: normalizeSecretValue(e.target.value) }))}
                     className="h-8 text-[11px] font-mono flex-1"
                     autoComplete="off"
                     spellCheck={false}
