@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Node } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
