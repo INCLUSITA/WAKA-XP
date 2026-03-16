@@ -866,17 +866,161 @@ function resolveWakaApiKey(
   return { apiKey: "", source: "none" };
 }
 
+// ── x-waka-xp-display: Auto-block generation from CORE API responses ──
+
+interface CoreCallResult {
+  data: Record<string, unknown>;
+  displayHint?: string; // from x-waka-xp-display response header
+}
+
+/** Map CORE endpoint responses to sovereign blocks when AI forgets */
+function autoBlockFromCoreResponse(
+  toolName: string,
+  responseData: Record<string, unknown>,
+  displayHint?: string,
+  scenarioDisplayHints?: Record<string, any>,
+): Record<string, any> | null {
+  // Priority: explicit display hint > scenario config > built-in mapping
+  const hint = displayHint || scenarioDisplayHints?.[toolName]?.block;
+
+  // Built-in auto-mapping by endpoint + response shape
+  if (toolName === "get_bnpl_catalog" && responseData.products) {
+    return {
+      blockName: "show_catalog",
+      args: {
+        title: (responseData as any).title || "Catalogue BNPL",
+        products: (responseData as any).products,
+      },
+    };
+  }
+
+  if (toolName === "acquire_service" && responseData.available_variants) {
+    return {
+      blockName: "show_service_plans",
+      args: {
+        title: `Plans ${(responseData as any).product || "disponibles"}`,
+        category: (responseData as any).product_key || "general",
+        plans: (responseData as any).available_variants?.map((v: any) => ({
+          sku: v.sku,
+          name: v.name,
+          price: String(v.price),
+          description: v.description || "",
+        })) || [],
+        message: (responseData as any).message || "",
+      },
+    };
+  }
+
+  if (toolName === "quick_status" && responseData.data) {
+    const d = (responseData as any).data;
+    if (d?.client) {
+      return {
+        blockName: "show_client_status",
+        args: {
+          client_name: d.client.full_name || "",
+          voice_id: d.client.voice_id || "",
+          phone: d.client.phone || "",
+          active_credits: d.credits_count || 0,
+          total_balance: String(d.total_balance || 0),
+          next_payment_date: d.next_payment_date || "",
+          next_payment_amount: d.next_payment_amount ? String(d.next_payment_amount) : "",
+        },
+      };
+    }
+  }
+
+  if (toolName === "simulate_credit" && responseData.simulation) {
+    const s = (responseData as any).simulation;
+    return {
+      blockName: "show_credit_simulation",
+      args: {
+        title: "Simulation de crédit",
+        product_name: s.product_name || "",
+        amount: String(s.amount || ""),
+        term: s.term || "",
+        frequency: s.frequency || "",
+        monthly_payment: String(s.installment_amount || s.monthly_payment || ""),
+        total_cost: String(s.total_cost || ""),
+        interest_rate: String(s.interest_rate || ""),
+      },
+    };
+  }
+
+  if (toolName === "create_credit" && responseData.credit) {
+    const c = (responseData as any).credit || responseData;
+    return {
+      blockName: "show_credit_contract",
+      args: {
+        title: "Contrat de crédit",
+        credit_voice_id: c.voice_id || c.credit_voice_id || "",
+        credit_type: c.credit_type || "",
+        amount: String(c.amount || ""),
+        status: c.status || "approved",
+        product_name: c.product_name || "",
+      },
+    };
+  }
+
+  if ((toolName === "pay_by_client" || toolName === "register_payment") && responseData.success) {
+    return {
+      blockName: "show_payment_confirmation",
+      args: {
+        title: "Paiement confirmé",
+        status: "success",
+        amount_paid: String((responseData as any).amount_paid || (responseData as any).amount || ""),
+        remaining_balance: String((responseData as any).remaining_balance || ""),
+        message: (responseData as any).message || "",
+      },
+    };
+  }
+
+  if (toolName === "open_momo_account" && responseData.success) {
+    return {
+      blockName: "show_momo_card",
+      args: {
+        title: "Compte Mobile Money",
+        account_number: (responseData as any).account_number || "",
+        account_type: (responseData as any).account_type || "standard",
+        status: (responseData as any).status || "active",
+        message: (responseData as any).message || "",
+      },
+    };
+  }
+
+  // Hint-driven fallback from scenario YAML
+  if (hint === "catalog" && responseData.products) {
+    return { blockName: "show_catalog", args: { title: "Catalogue", products: (responseData as any).products } };
+  }
+  if (hint === "service_plans" && (responseData as any).available_variants) {
+    return { blockName: "show_service_plans", args: { title: "Plans", category: "general", plans: (responseData as any).available_variants } };
+  }
+
+  return null;
+}
+
+/** Extract display hints from scenario config endpoints */
+function extractScenarioDisplayHints(scenarioConfig?: Record<string, unknown>): Record<string, any> {
+  const hints: Record<string, any> = {};
+  const endpoints = (scenarioConfig?.endpoints as any[]) || [];
+  for (const ep of endpoints) {
+    if (ep?.["x-waka-xp-display"]) {
+      hints[ep.name] = ep["x-waka-xp-display"];
+    }
+  }
+  return hints;
+}
+
 async function executeWakaCoreCall(
   toolName: string,
   args: Record<string, unknown>,
   apiKey: string
-): Promise<Record<string, unknown>> {
+): Promise<CoreCallResult> {
   if (!apiKey) {
-    return { error: "No WAKA API key configured for this tenant/flow. Please add x-api-key in the scenario config." };
+    return { data: { error: "No WAKA API key configured for this tenant/flow. Please add x-api-key in the scenario config." } };
   }
   const endpoint = TOOL_ENDPOINTS[toolName];
   if (!endpoint) {
-    return { error: `Unknown tool: ${toolName}` };
+    return { data: { error: `Unknown tool: ${toolName}` } };
   }
 
   try {
@@ -907,11 +1051,15 @@ async function executeWakaCoreCall(
     }
 
     const data = await response.json();
+    const displayHint = response.headers.get("x-waka-xp-display") || undefined;
     console.log(`WAKA CORE [${toolName}] ${response.status}:`, JSON.stringify(data).slice(0, 500));
-    return data;
+    if (displayHint) {
+      console.log(`WAKA CORE [${toolName}] x-waka-xp-display: ${displayHint}`);
+    }
+    return { data, displayHint };
   } catch (e) {
     console.error(`WAKA CORE call failed [${toolName}]:`, e);
-    return { error: `API call failed: ${e instanceof Error ? e.message : "Unknown error"}` };
+    return { data: { error: `API call failed: ${e instanceof Error ? e.message : "Unknown error"}` } };
   }
 }
 
@@ -1018,6 +1166,12 @@ serve(async (req) => {
 
     const result: Record<string, any> = { text: "", blocks: {} };
 
+    // Extract x-waka-xp-display hints from scenario config endpoints
+    const scenarioDisplayHints = extractScenarioDisplayHints(scenarioConfig);
+
+    // Track auto-generated blocks from CORE responses (render guarantee)
+    const autoGeneratedBlocks: Record<string, any> = {};
+
     // Multi-pass loop: keep executing CORE tool calls until AI produces a final response
     const MAX_PASSES = 5;
     let conversationMessages = [
@@ -1057,12 +1211,24 @@ serve(async (req) => {
       for (const tc of coreToolCalls) {
         let args: Record<string, unknown> = {};
         try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
-        const apiResult = await executeWakaCoreCall(tc.function.name, args, WAKA_API_KEY);
+        const coreResult = await executeWakaCoreCall(tc.function.name, args, WAKA_API_KEY);
         toolResults.push({
           role: "tool",
           tool_call_id: tc.id,
-          content: JSON.stringify(apiResult),
+          content: JSON.stringify(coreResult.data),
         });
+
+        // x-waka-xp-display: Auto-generate block from CORE response
+        const autoBlock = autoBlockFromCoreResponse(
+          tc.function.name,
+          coreResult.data,
+          coreResult.displayHint,
+          scenarioDisplayHints,
+        );
+        if (autoBlock) {
+          autoGeneratedBlocks[autoBlock.blockName] = autoBlock.args;
+          console.log(`x-waka-xp-display: Auto-generated ${autoBlock.blockName} from ${tc.function.name}`);
+        }
       }
 
       // Also acknowledge UI tool calls so the model doesn't complain
@@ -1122,6 +1288,15 @@ serve(async (req) => {
         result.blocks[tc.function.name] = args;
       } catch {
         console.error("Failed to parse tool call args:", tc.function.arguments);
+      }
+    }
+
+    // x-waka-xp-display RENDER GUARANTEE:
+    // Merge auto-generated blocks from CORE responses, but AI-generated blocks take priority
+    for (const [blockName, blockArgs] of Object.entries(autoGeneratedBlocks)) {
+      if (!result.blocks[blockName]) {
+        result.blocks[blockName] = blockArgs;
+        console.log(`x-waka-xp-display: Injected auto-block ${blockName} (AI did not produce it)`);
       }
     }
 
