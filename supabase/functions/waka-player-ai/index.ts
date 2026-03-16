@@ -103,7 +103,7 @@ L'assurance/seguro est un PRODUIT avec des variantes (Individual/Family). C'est 
 
 **CHEMIN B — Financement (CRÉDIT):**
 1. simulate_credit(seguro_salud, amount=prix_du_plan) → afficher avec show_credit_simulation
-2. Client accepte → create_credit(seguro_salud)
+2. Client accepte → create_credit(seguro_salud) ⚠️ PAS simulate_credit encore ! C'est create_credit !
 3. Confirmer avec show_credit_contract
 ⛔ NE PAS appeler acquire_service pour la création
 
