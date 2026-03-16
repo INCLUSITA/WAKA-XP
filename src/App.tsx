@@ -43,7 +43,7 @@ import PublicPlayerPage from "./pages/PublicPlayerPage";
 
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient(); // rebuild-2026-03-16T3
 
 const App = () => {
   return (
