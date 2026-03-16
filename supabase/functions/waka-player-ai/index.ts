@@ -76,8 +76,9 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 2. Client choisit un téléphone → simulate_credit(phone_bnpl, product_id)
 3. Afficher simulation avec show_credit_simulation
 4. ⚠️ CONSENTEMENT OBLIGATOIRE → show_device_lock_consent AVANT create_credit
-5. Client accepte → create_credit(device_lock=true)
+5. Client accepte → create_credit(device_lock=true) ⚠️ C'EST create_credit, PAS simulate_credit !
 6. Afficher contrat avec show_credit_contract
+⚠️ ANTI-BOUCLE: simulate_credit = SIMULER (consultation). create_credit = CRÉER LE CONTRAT (action finale). Après que le client accepte la simulation, appeler create_credit UNE SEULE FOIS. NE JAMAIS rappeler simulate_credit.
 
 ### FLUX FIBRE OPTIQUE (3 étapes)
 1. acquire_service(fibre_optique) → afficher plans avec show_service_plans
