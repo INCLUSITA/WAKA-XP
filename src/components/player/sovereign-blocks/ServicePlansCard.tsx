@@ -133,11 +133,11 @@ export function ServicePlansCard({ data, onSelectPlan }: Props) {
             <p className="waka-block-title text-white">{data.title}</p>
             {data.message && <p className="text-[10px] text-white/70 mt-0.5">{data.message}</p>}
           </div>
-          <span className="text-[10px] text-white/50 font-medium">{data.plans.length} plans</span>
+          <span className="text-[10px] text-white/50 font-medium">{(data.plans || []).length} plans</span>
         </div>
 
         <div className="p-4 space-y-3">
-          {data.plans.map((plan, i) => (
+          {(data.plans || []).map((plan, i) => (
             <motion.button
               key={plan.sku}
               onClick={() => onSelectPlan?.(plan.sku, plan.name)}
