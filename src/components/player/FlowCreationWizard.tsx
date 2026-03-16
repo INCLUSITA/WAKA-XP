@@ -4,7 +4,7 @@
  * Includes AI Engine selector (WAKA AI, Azure, BYOM).
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -16,11 +16,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FileJson, FileText, MessageSquare, Image, Upload, Cpu, Cloud, Server,
-  Lock, Check, Sparkles, X, Loader2, AlertTriangle,
+  Lock, Check, Sparkles, X, Loader2, AlertTriangle, Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
 
 /* ── AI Engine types ── */
 export type EngineId = "waka-ai" | "azure-openai" | "byom";
@@ -70,16 +71,31 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
   const [yamlContent, setYamlContent] = useState("");
   const [yamlFileName, setYamlFileName] = useState("");
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
 
+  const requiredSecretRefs = useMemo<RequiredSecretRef[]>(
+    () => Array.from(new Set<RequiredSecretRef>([
+      ...detectSecretReferences(textInstructions),
+      ...detectSecretReferences(jsonContent),
+      ...detectSecretReferences(yamlContent),
+    ])),
+    [textInstructions, jsonContent, yamlContent]
+  );
+  const missingSecretRefs = useMemo(
+    () => getMissingSecretRefs(requiredSecretRefs, secretValues),
+    [requiredSecretRefs, secretValues]
+  );
+  const hasMissingSecrets = requiredSecretRefs.length > 0 && missingSecretRefs.length > 0;
+
   const reset = () => {
     setName(""); setDescription(""); setTextInstructions("");
     setJsonContent(""); setJsonFileName("");
     setYamlContent(""); setYamlFileName("");
-    setAssets([]); setTab("text"); setEngineId("waka-ai");
+    setAssets([]); setTab("text"); setEngineId("waka-ai"); setSecretValues({});
   };
 
   const handleClose = () => { reset(); onClose(); };
@@ -154,6 +170,9 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     if (jsonContent) sourceData.json = jsonContent;
     if (yamlContent) sourceData.yaml = yamlContent;
     if (assets.length > 0) sourceData.assets = assets.map((a) => ({ name: a.name, type: a.type, dataUrl: a.dataUrl }));
+    if (Object.keys(secretValues).some((key) => secretValues[key]?.trim())) {
+      sourceData.secretValues = secretValues;
+    }
 
     if (!sourceData.instructions && !sourceData.json && !sourceData.yaml) {
       toast.error("Proporciona al menos una fuente: texto, JSON o YAML");
@@ -180,6 +199,17 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
       onCreated(data.flowId);
     } catch (err: any) {
       console.error("Generate flow error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al generar el flujo");
     } finally {
       setIsGenerating(false);
@@ -201,6 +231,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
           sourceData: {
             ...(jsonContent ? { json: jsonContent } : {}),
             ...(yamlContent ? { yaml: yamlContent } : {}),
+            ...(Object.keys(secretValues).some((key) => secretValues[key]?.trim()) ? { secretValues } : {}),
           },
           mode: "import", // Skip AI generation, just parse and save
         },
@@ -214,6 +245,17 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
       onCreated(data.flowId);
     } catch (err: any) {
       console.error("Import flow error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al importar el flujo");
     } finally {
       setIsGenerating(false);
@@ -448,6 +490,47 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
           </div>
         )}
 
+        {requiredSecretRefs.length > 0 && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-semibold text-foreground">
+                  API key obligatoria detectada
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  El YAML/JSON incluye placeholders de credenciales. Completa las claves antes de crear el flujo.
+                </p>
+              </div>
+            </div>
+
+            {requiredSecretRefs.map((refName) => (
+              <div key={refName} className="pl-6 space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                  <Key className="h-3 w-3" />
+                  {refName}
+                </label>
+                <div className="flex gap-1.5">
+                  <Input
+                    type="password"
+                    placeholder={`Pega tu ${refName} aquí...`}
+                    value={secretValues[refName] || ""}
+                    onChange={(e) => setSecretValues((prev) => ({ ...prev, [refName]: e.target.value }))}
+                    className="h-8 text-[11px] font-mono flex-1"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  {secretValues[refName]?.trim() && (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <DialogFooter className="flex-row gap-2">
           <Button variant="outline" size="sm" onClick={handleClose} disabled={isGenerating}>
             Cancelar
@@ -459,7 +542,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
               variant="secondary"
               size="sm"
               onClick={handleDirectImport}
-              disabled={isGenerating || !name.trim()}
+              disabled={isGenerating || !name.trim() || hasMissingSecrets}
               className="gap-1.5 text-xs"
             >
               <Upload className="h-3 w-3" />
@@ -470,7 +553,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
           <Button
             size="sm"
             onClick={handleGenerate}
-            disabled={isGenerating || !name.trim() || !hasSource || engineId !== "waka-ai"}
+            disabled={isGenerating || !name.trim() || !hasSource || engineId !== "waka-ai" || hasMissingSecrets}
             className="gap-1.5 text-xs"
           >
             {isGenerating ? (
