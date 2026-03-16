@@ -84,7 +84,7 @@ function ProductDetail({
             background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
           }}
         >
-          <span className="text-7xl">{product.emoji || "📦"}</span>
+          <ProductImage product={product} sizeClass="text-7xl" imgClass="w-full h-full object-cover" />
         </div>
 
         <div className="px-4 py-3 space-y-3">
