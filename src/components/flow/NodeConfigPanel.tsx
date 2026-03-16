@@ -773,8 +773,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">URL</Label>
               <Input
-                value={data.url || ""}
-                onChange={(e) => update("url", e.target.value)}
+                value={webhookUrlDraft}
+                onChange={(e) => setWebhookUrlDraft(e.target.value)}
                 placeholder="https://api.example.com/endpoint"
                 className="font-mono text-sm"
               />

@@ -583,6 +583,7 @@ function FlowEditorInner() {
 
   // ── Copy/Paste ──
   const clipboardRef = useRef<Node | null>(null);
+  const shortcutScopeRef = useRef<"canvas" | "form" | null>(null);
 
   useEffect(() => {
     const isTypingTarget = (element: EventTarget | null) => {
@@ -606,13 +607,28 @@ function FlowEditorInner() {
       );
     };
 
+    const updateShortcutScope = (element: EventTarget | null) => {
+      const target = element instanceof HTMLElement ? element : null;
+
+      if (!target) {
+        shortcutScopeRef.current = null;
+        return;
+      }
+
+      if (isTypingTarget(target)) {
+        shortcutScopeRef.current = "form";
+        return;
+      }
+
+      shortcutScopeRef.current = target.closest(".react-flow") ? "canvas" : null;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const isModifier = e.metaKey || e.ctrlKey;
 
-      // Never intercept shortcuts while a form field or dialog is active
       if (isTypingTarget(e.target)) return;
+      if (shortcutScopeRef.current !== "canvas") return;
 
-      // Ctrl+K / Cmd+K — node search
       if (isModifier && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setShowNodeSearch((v) => !v);
@@ -643,7 +659,14 @@ function FlowEditorInner() {
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", (e) => updateShortcutScope(e.target), true);
+    document.addEventListener("focusin", (e) => updateShortcutScope(e.target), true);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", (e) => updateShortcutScope(e.target), true);
+      document.removeEventListener("focusin", (e) => updateShortcutScope(e.target), true);
+    };
   }, [selectedNode, setNodes]);
 
   // ── Auto edge cleanup when split cases / wait categories change ──
