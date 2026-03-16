@@ -1,8 +1,10 @@
 # WAKA XP Player — Documento Completo para Codex
 
-> **Fecha:** 13 de marzo de 2026  
+> **Fecha:** 16 de marzo de 2026 (actualizado desde 13 de marzo)  
 > **Propósito:** Documento de referencia exhaustivo para Codex y cualquier agente de IA que necesite comprender, mantener o evolucionar el Waka XP Player.  
-> **Relación con el proyecto:** El Player es una **capa troncal** de Waka XP, documentada en `docs/waka-xp-strategic-foundation.md` §19b y referenciada en `docs/WAKA_XP_STATUS_REPORT_2026-03-13.md` como Fase 1b.
+> **Relación con el proyecto:** El Player es una **capa troncal** de Waka XP, documentada en `docs/waka-xp-strategic-foundation.md` §19b y referenciada en `docs/WAKA_XP_STATUS_REPORT_2026-03-13.md` como Fase 1b.  
+> **Documentos relacionados:**
+> - [`docs/WAKA_XP_RENDER_GUARANTEE.md`](./WAKA_XP_RENDER_GUARANTEE.md) — Spec `x-waka-xp-display` v1 y Render Guarantee
 
 ---
 
@@ -258,53 +260,89 @@ const message: PlayerMessage = {
 
 ### 5.1. Edge Function
 
-**Archivo:** `supabase/functions/waka-player-ai/index.ts` (993 líneas)
+**Archivo:** `supabase/functions/waka-player-ai/index.ts` (~1423 líneas)
 
 ### 5.2. Arquitectura
 
-La edge function actúa como un **intent engine** que:
+La edge function actúa como un **intent engine + render guarantee engine** que:
 
-1. Recibe el mensaje del usuario + historial de conversación
-2. Lo envía al modelo IA (Gemini via Lovable AI gateway)
-3. Interpreta la respuesta para extraer:
+1. Recibe el mensaje del usuario + historial de conversación + `scenarioConfig`
+2. Resuelve la API key de WAKA CORE (resolución jerárquica)
+3. Lo envía al modelo IA (Gemini via Lovable AI gateway)
+4. Interpreta la respuesta para extraer:
    - Texto de respuesta natural
    - Tool calls (bloques soberanos a renderizar)
+   - Tool calls de WAKA CORE (14 herramientas backend)
    - Quick replies sugeridos
-4. Opcionalmente ejecuta llamadas a WAKA CORE API (14 herramientas)
-5. Devuelve un `PlayerMessage` parcial al frontend
+5. **Pass 1**: Ejecuta tool calls de CORE (API real)
+6. **Pass 2**: Inyecta resultados de CORE y obtiene respuesta final de la IA
+7. **Render Guarantee**: Si la IA no generó un bloque pero el displayMap lo define → auto-genera el bloque via template engine
+8. Devuelve un `PlayerMessage` parcial al frontend
 
 ### 5.3. System Prompt
 
 El prompt define al bot como **WAKA NEXUS**, con:
 
-- Idiomas: francés, mooré, inglés
+- Idiomas: francés, mooré, inglés, dioula, fulfuldé
 - 16 bloques soberanos disponibles como funciones
 - 14 herramientas WAKA CORE API:
   1. `get_product_rules` — Productos activos y restricciones
-  2. `get_bnpl_catalog` — Catálogo BNPL
+  2. `get_bnpl_catalog` — Catálogo BNPL (téléphones)
   3. `create_client` — Crear/buscar cliente
   4. `update_client` — Modificar datos
-  5. `lookup_entity` — Búsqueda universal
+  5. `lookup_entity` — Búsqueda universal (phone, CNI, voice_id)
   6. `upload_kyc_media` — Upload CNI con OCR
   7. `simulate_credit` — Simulación de crédito
   8. `create_credit` — Crear contrato de crédito
-  9. `create_payment` — Crear pago
-  10. `confirm_payment` — Confirmar pago
-  11. `get_client_status` — Estado completo del cliente
-  12. `get_momo_status` — Estado cuenta MoMo
-  13. `get_service_plans` — Planes disponibles
-  14. `device_lock_consent` — Consentimiento device lock
+  9. `pay_by_client` — Pago simplifié auto-détection
+  10. `register_payment` — Pago a crédito específico
+  11. `acquire_service` — Servicio comptant (fibre, assurance)
+  12. `update_client_location` — GPS para instalación fibre
+  13. `open_momo_account` — Ouverture compte MoMo
+  14. `quick_status` — Résumé rapide solde et paiements
 
-### 5.4. Flujo de datos
+### 5.4. Render Guarantee Engine
+
+> **Doc completa:** [`docs/WAKA_XP_RENDER_GUARANTEE.md`](./WAKA_XP_RENDER_GUARANTEE.md)
+
+El Render Guarantee asegura que siempre se renderice UI rica cuando CORE devuelve datos:
+
+```
+CORE responde datos
+       ↓
+¿IA ya generó bloque? → SÍ: usar bloque IA
+                       → NO: buscar en displayMap
+                              ↓
+                       ¿Existe spec? → SÍ: template engine → generar bloque
+                                     → NO: heurística legacy (fallback)
+```
+
+**displayMap** en `scenario_config`:
+```json
+{
+  "displayMap": {
+    "get_bnpl_catalog": {
+      "type": "product_carousel",
+      "title": "Catalogue BNPL",
+      "items_from": "products",
+      "card_template": { "title": "{name}", "price": "{price} {currency}" }
+    }
+  }
+}
+```
+
+### 5.5. Flujo de datos
 
 ```
 Usuario → WakaPlayerDemo → useWakaPlayerAI → Edge Function (waka-player-ai)
                                                    ↓
                                               Gemini IA (Lovable AI)
                                                    ↓
-                                              Tool calls → WAKA CORE API (opcional)
+                                              Tool calls → WAKA CORE API (14 tools)
                                                    ↓
-                                              PlayerMessage parcial
+                                              Render Guarantee Engine
+                                                   ↓
+                                              PlayerMessage parcial (texto + bloques)
                                                    ↓
 WakaSovereignPlayer ← useWakaPlayerAI ← WakaPlayerDemo
 ```
@@ -613,6 +651,20 @@ Sandbox ←→ Stable ←→ Production
 | BYOM funcional (§19b.6) | ❌ | Routing de modelos propios del usuario |
 | Azure OpenAI (§19b.6) | ❌ | Configuración de claves Azure |
 | Previsualización pre-guardado | ❌ | Mostrar mensajes generados antes de persistir |
+| `x-waka-xp-footer` (footer persistente) | ⚠️ Spec definida | Implementar en template engine |
+
+### 10.3. Conceptos materializados recientemente (16 marzo 2026)
+
+| Concepto | Materialización |
+|---|---|
+| Render Guarantee (nuevo) | Motor de plantillas `x-waka-xp-display` que asegura bloques soberanos sin intervención IA |
+| WAKA CORE Integration (§7, Fase 7) | 14 herramientas API reales operativas en waka-player-ai |
+| displayMap declarativo (nuevo) | Mapeo tool→bloque en scenario_config, parseado desde YAML |
+| Template engine (nuevo) | Resolución de rutas + interpolación de campos para generar bloques |
+| XP Spatial (nuevo) | Capa de presentación 3D con superficies soberanas |
+| Block Variants (§16.1) | Variantes compact/standard/expanded/zero-rated por bloque |
+| PlayerContextProvider (§16.1) | Contexto enriquecido con persona, tools, knowledge, policies |
+| PlayerMemoryProvider (nuevo) | Memoria de sesión con journey tracking |
 
 ---
 
