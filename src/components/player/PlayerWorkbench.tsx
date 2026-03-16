@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEngineSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { detectSecretReferences, getMissingSecretRefs } from "@/lib/flowSecretDetection";
+import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
