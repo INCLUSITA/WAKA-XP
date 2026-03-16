@@ -399,7 +399,21 @@ Genera el flujo conversacional completo en formato JSON.`;
       if (!msg.id) msg.id = `gen-${i + 1}`;
     });
 
-    return sanitizeGeneratedPayload({ conversation, config });
+    const sanitized = sanitizeGeneratedPayload({ conversation, config });
+    if (persistedSecretValues && Object.keys(persistedSecretValues).length > 0) {
+      sanitized.config = {
+        ...sanitized.config,
+        sourceData: {
+          ...((sanitized.config.sourceData && typeof sanitized.config.sourceData === "object") ? sanitized.config.sourceData : {}),
+          secretValues: persistedSecretValues,
+          ...(sourceData.yaml ? { yaml: sourceData.yaml } : {}),
+          ...(sourceData.json ? { json: sourceData.json } : {}),
+          ...(sourceData.instructions ? { instructions: sourceData.instructions } : {}),
+        },
+      };
+    }
+
+    return sanitized;
   } catch (parseErr) {
     console.error("Failed to parse AI output:", parseErr, "Content:", content.substring(0, 500));
 
