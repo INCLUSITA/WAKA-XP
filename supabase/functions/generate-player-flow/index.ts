@@ -239,6 +239,7 @@ function sanitizeGeneratedPayload(payload: GeneratedPayload): GeneratedPayload {
 
   const config = {
     ...(payload.config || {}),
+    sourceData: payload.config?.sourceData,
     systemPrompt: typeof payload.config?.systemPrompt === "string"
       ? redactSensitiveTokens(payload.config.systemPrompt)
       : payload.config?.systemPrompt,
