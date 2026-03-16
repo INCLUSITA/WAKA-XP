@@ -22,6 +22,7 @@ export interface CatalogProduct {
   name: string;
   price: string;
   image?: string;
+  image_url?: string;
   emoji?: string;
   rating?: number;
   badge?: string;
@@ -30,6 +31,14 @@ export interface CatalogProduct {
   features?: string[];
   stock?: string;
   category?: string;
+}
+
+function ProductImage({ product, sizeClass = "text-4xl", imgClass = "w-full h-full object-cover" }: { product: CatalogProduct; sizeClass?: string; imgClass?: string }) {
+  const src = product.image || product.image_url;
+  if (src) {
+    return <img src={src} alt={product.name} className={cn(imgClass, "rounded")} loading="lazy" />;
+  }
+  return <span className={sizeClass}>{product.emoji || "📦"}</span>;
 }
 
 /* ── Product Detail Overlay ── */
@@ -75,7 +84,7 @@ function ProductDetail({
             background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
           }}
         >
-          <span className="text-7xl">{product.emoji || "📦"}</span>
+          <ProductImage product={product} sizeClass="text-7xl" imgClass="w-full h-full object-cover" />
         </div>
 
         <div className="px-4 py-3 space-y-3">
@@ -218,7 +227,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
               onClick={() => handleProductClick(product)}
               className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-muted/40 active:bg-muted/60 transition-colors text-left"
             >
-              <span className="text-2xl shrink-0">{product.emoji || "📦"}</span>
+              <span className="shrink-0"><ProductImage product={product} sizeClass="text-2xl" imgClass="w-8 h-8 object-cover rounded" /></span>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-semibold text-foreground truncate">{product.name}</p>
                 {product.rating != null && (
@@ -285,7 +294,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                   background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
                 }}
               >
-                <span className="text-5xl group-hover:scale-110 transition-transform">{product.emoji || "📦"}</span>
+                <span className="group-hover:scale-110 transition-transform"><ProductImage product={product} sizeClass="text-5xl" imgClass="w-full h-full object-cover" /></span>
                 {product.badge && (
                   <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                     {product.badge}
@@ -387,7 +396,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                     background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
                   }}
                 >
-                  <span className="text-4xl">{product.emoji || "📦"}</span>
+                  <ProductImage product={product} sizeClass="text-4xl" imgClass="w-full h-full object-cover" />
                   {product.badge && (
                     <span className="absolute top-1.5 right-1.5 bg-destructive text-destructive-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                       {product.badge}

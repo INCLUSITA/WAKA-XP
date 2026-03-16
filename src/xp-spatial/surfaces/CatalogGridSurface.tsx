@@ -15,6 +15,7 @@ interface CatalogProduct {
   description?: string;
   badge?: string;
   rating?: number;
+  image?: string;
   image_url?: string;
   category?: string;
 }
@@ -64,9 +65,13 @@ export function CatalogGridSurface({ payload }: { payload?: SpatialSurfacePayloa
               </span>
             )}
 
-            <div className="flex items-center justify-center h-20 text-4xl
+            <div className="flex items-center justify-center h-20 text-4xl overflow-hidden
                           bg-gradient-to-b from-[hsl(228,14%,14%)] to-[hsl(228,14%,11%)]">
-              {p.emoji || "📱"}
+              {(p.image || p.image_url) ? (
+                <img src={p.image || p.image_url} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                p.emoji || "📱"
+              )}
             </div>
 
             <div className="p-3">
