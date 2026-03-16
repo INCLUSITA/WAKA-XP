@@ -311,6 +311,48 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     </div>
   );
 }
+
+interface HeaderDraft {
+  id: string;
+  key: string;
+  value: string;
+}
+
+const createHeaderDraftId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+function normalizeHeaders(headers?: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers || {})
+      .filter(([key]) => key.trim().length > 0)
+      .map(([key, value]) => [key, String(value ?? "")])
+  );
+}
+
+function mapHeadersToDrafts(headers?: Record<string, unknown>): HeaderDraft[] {
+  return Object.entries(normalizeHeaders(headers)).map(([key, value]) => ({
+    id: createHeaderDraftId(),
+    key,
+    value,
+  }));
+}
+
+function mapDraftsToHeaders(drafts: HeaderDraft[]): Record<string, string> {
+  return Object.fromEntries(
+    drafts
+      .map(({ key, value }) => [key.trim(), value] as const)
+      .filter(([key]) => key.length > 0)
+  );
+}
+
+function areHeaderMapsEqual(a: Record<string, string>, b: Record<string, string>) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every((key) => a[key] === b[key]);
+}
+
 export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, isPinnedStart, onPinAsStart, onUnpinStart, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
 
