@@ -25,6 +25,7 @@ import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEng
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
+import { normalizeSecretValue } from "@/lib/secretInput";
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
@@ -353,7 +354,7 @@ export function PlayerWorkbench({
                       placeholder={`Pega tu ${refName} aquí...`}
                       value={secretValues[refName] || ""}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = normalizeSecretValue(e.target.value);
                         setSecretValues((prev) => ({ ...prev, [refName]: val }));
                       }}
                       className="h-7 text-[11px] font-mono flex-1"

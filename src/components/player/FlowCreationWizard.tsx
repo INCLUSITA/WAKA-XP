@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
+import { normalizeSecretValue } from "@/lib/secretInput";
 
 /* ── AI Engine types ── */
 export type EngineId = "waka-ai" | "azure-openai" | "byom";
@@ -214,7 +215,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     } finally {
       setIsGenerating(false);
     }
-  }, [name, description, engineId, tenantId, textInstructions, jsonContent, yamlContent, assets, onCreated]);
+  }, [name, description, engineId, tenantId, textInstructions, jsonContent, yamlContent, assets, onCreated, secretValues]);
 
   /* ── Direct import (JSON/YAML without AI) ── */
   const handleDirectImport = useCallback(async () => {
@@ -260,7 +261,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     } finally {
       setIsGenerating(false);
     }
-  }, [name, description, engineId, tenantId, jsonContent, yamlContent, onCreated]);
+  }, [name, description, engineId, tenantId, jsonContent, yamlContent, onCreated, secretValues]);
 
   const hasSource = !!(textInstructions.trim() || jsonContent || yamlContent);
 
@@ -515,7 +516,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
                     type="password"
                     placeholder={`Pega tu ${refName} aquí...`}
                     value={secretValues[refName] || ""}
-                    onChange={(e) => setSecretValues((prev) => ({ ...prev, [refName]: e.target.value }))}
+                    onChange={(e) => setSecretValues((prev) => ({ ...prev, [refName]: normalizeSecretValue(e.target.value) }))}
                     className="h-8 text-[11px] font-mono flex-1"
                     autoComplete="off"
                     spellCheck={false}

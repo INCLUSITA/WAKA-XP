@@ -144,6 +144,19 @@ function parseSourceDirectly(sourceData: any): { conversation: any[]; config: Re
   const conversation: any[] = [];
   const now = new Date().toISOString();
 
+  // Preserve sanitized source metadata for runtime resolution
+  if (sourceData?.yaml) config.sourceData = { ...(config.sourceData || {}), yaml: sourceData.yaml };
+  if (sourceData?.json) config.sourceData = { ...(config.sourceData || {}), json: sourceData.json };
+  if (sourceData?.instructions) config.sourceData = { ...(config.sourceData || {}), instructions: sourceData.instructions };
+  if (sourceData?.secretValues && typeof sourceData.secretValues === "object") {
+    const sanitizedSecretValues = Object.fromEntries(
+      Object.entries(sourceData.secretValues).filter(([, value]) => typeof value === "string" && value.trim().length > 0),
+    );
+    if (Object.keys(sanitizedSecretValues).length > 0) {
+      config.sourceData = { ...(config.sourceData || {}), secretValues: sanitizedSecretValues };
+    }
+  }
+
   // Welcome message
   conversation.push({
     id: "sys-1",
@@ -226,6 +239,7 @@ function sanitizeGeneratedPayload(payload: GeneratedPayload): GeneratedPayload {
 
   const config = {
     ...(payload.config || {}),
+    sourceData: payload.config?.sourceData,
     systemPrompt: typeof payload.config?.systemPrompt === "string"
       ? redactSensitiveTokens(payload.config.systemPrompt)
       : payload.config?.systemPrompt,
@@ -278,6 +292,12 @@ async function generateWithAI(
       contextParts.push(`## Credenciales disponibles\nEl usuario configuró: ${configured.join(", ")}.\nNo reveles ni repitas valores de credenciales.`);
     }
   }
+
+  const persistedSecretValues = sourceData.secretValues && typeof sourceData.secretValues === "object"
+    ? Object.fromEntries(
+        Object.entries(sourceData.secretValues).filter(([, value]) => typeof value === "string" && value.trim().length > 0),
+      )
+    : undefined;
 
   const systemPrompt = `Eres un generador de flujos conversacionales para WAKA XP.
 
@@ -379,18 +399,47 @@ Genera el flujo conversacional completo en formato JSON.`;
       if (!msg.id) msg.id = `gen-${i + 1}`;
     });
 
-    return sanitizeGeneratedPayload({ conversation, config });
+    const sanitized = sanitizeGeneratedPayload({ conversation, config });
+    if (persistedSecretValues && Object.keys(persistedSecretValues).length > 0) {
+      sanitized.config = {
+        ...sanitized.config,
+        sourceData: {
+          ...((sanitized.config.sourceData && typeof sanitized.config.sourceData === "object") ? sanitized.config.sourceData : {}),
+          secretValues: persistedSecretValues,
+          ...(sourceData.yaml ? { yaml: sourceData.yaml } : {}),
+          ...(sourceData.json ? { json: sourceData.json } : {}),
+          ...(sourceData.instructions ? { instructions: sourceData.instructions } : {}),
+        },
+      };
+    }
+
+    return sanitized;
   } catch (parseErr) {
     console.error("Failed to parse AI output:", parseErr, "Content:", content.substring(0, 500));
 
     // Fallback: create a basic flow from the raw AI text
     const now = new Date().toISOString();
-    return sanitizeGeneratedPayload({
+    const fallbackPayload = sanitizeGeneratedPayload({
       conversation: [
         { id: "sys-1", text: "⚡ WAKA NEXUS · Canal souverain — IA activada", direction: "outbound", timestamp: now, isSystemEvent: true },
         { id: "gen-1", text: content.substring(0, 1000) || "Flujo generado. Comenzar interacción.", direction: "outbound", timestamp: now, source: "WAKA NEXUS · IA", quickReplies: ["▶️ Comenzar", "🏠 Menu"] },
       ],
       config: { systemPrompt: content, intents: [], tags: [] },
     });
+
+    if (persistedSecretValues && Object.keys(persistedSecretValues).length > 0) {
+      fallbackPayload.config = {
+        ...fallbackPayload.config,
+        sourceData: {
+          ...((fallbackPayload.config.sourceData && typeof fallbackPayload.config.sourceData === "object") ? fallbackPayload.config.sourceData : {}),
+          secretValues: persistedSecretValues,
+          ...(sourceData.yaml ? { yaml: sourceData.yaml } : {}),
+          ...(sourceData.json ? { json: sourceData.json } : {}),
+          ...(sourceData.instructions ? { instructions: sourceData.instructions } : {}),
+        },
+      };
+    }
+
+    return fallbackPayload;
   }
 }
