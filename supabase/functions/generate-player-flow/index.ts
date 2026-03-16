@@ -144,6 +144,19 @@ function parseSourceDirectly(sourceData: any): { conversation: any[]; config: Re
   const conversation: any[] = [];
   const now = new Date().toISOString();
 
+  // Preserve sanitized source metadata for runtime resolution
+  if (sourceData?.yaml) config.sourceData = { ...(config.sourceData || {}), yaml: sourceData.yaml };
+  if (sourceData?.json) config.sourceData = { ...(config.sourceData || {}), json: sourceData.json };
+  if (sourceData?.instructions) config.sourceData = { ...(config.sourceData || {}), instructions: sourceData.instructions };
+  if (sourceData?.secretValues && typeof sourceData.secretValues === "object") {
+    const sanitizedSecretValues = Object.fromEntries(
+      Object.entries(sourceData.secretValues).filter(([, value]) => typeof value === "string" && value.trim().length > 0),
+    );
+    if (Object.keys(sanitizedSecretValues).length > 0) {
+      config.sourceData = { ...(config.sourceData || {}), secretValues: sanitizedSecretValues };
+    }
+  }
+
   // Welcome message
   conversation.push({
     id: "sys-1",
