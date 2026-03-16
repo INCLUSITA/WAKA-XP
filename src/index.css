@@ -341,8 +341,8 @@
 .waka-block-standard > div {
   @apply space-y-2;
 }
-.waka-block-standard button,
-.waka-block-standard [role="button"] {
+.waka-block-standard button:not(.waka-cart-btn),
+.waka-block-standard [role="button"]:not(.waka-cart-btn) {
   min-height: 36px;
   border-radius: 8px;
   @apply text-sm font-medium;
