@@ -204,6 +204,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
     else setFlowContext(null);
 
+    setFlowLoadKey((prev) => prev + 1);
     await startNewConversation();
     toast.success(`Flujo "${full.name}" cargado`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
