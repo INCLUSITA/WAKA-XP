@@ -1125,6 +1125,21 @@ function extractScenarioDisplayHints(scenarioConfig?: Record<string, unknown>): 
   return hints;
 }
 
+// Product key aliases — normalize before calling CORE
+const PRODUCT_KEY_ALIASES: Record<string, string> = {
+  fiber_optic: "fibre_optique",
+  fiber: "fibre_optique",
+  fibra_optica: "fibre_optique",
+  fibre: "fibre_optique",
+  assurance_sante: "microseguro_salud",
+  assurance: "microseguro_salud",
+  seguro_salud: "microseguro_salud",
+  seguro: "microseguro_salud",
+  insurance: "microseguro_salud",
+  health_insurance: "microseguro_salud",
+  micro_assurance: "microseguro_salud",
+};
+
 async function executeWakaCoreCall(
   toolName: string,
   args: Record<string, unknown>,
@@ -1136,6 +1151,15 @@ async function executeWakaCoreCall(
   const endpoint = TOOL_ENDPOINTS[toolName];
   if (!endpoint) {
     return { data: { error: `Unknown tool: ${toolName}` } };
+  }
+
+  // Normalize product_catalog_key aliases
+  if (args.product_catalog_key && typeof args.product_catalog_key === "string") {
+    const normalized = PRODUCT_KEY_ALIASES[args.product_catalog_key.toLowerCase()];
+    if (normalized) {
+      console.log(`Normalized product key: "${args.product_catalog_key}" → "${normalized}"`);
+      args.product_catalog_key = normalized;
+    }
   }
 
   try {
