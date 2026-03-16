@@ -808,10 +808,12 @@ async function executeWakaCoreCall(
 
   try {
     let url = `${WAKA_CORE_BASE}${endpoint.path}`;
-    const headers: Record<string, string> = {
-      "x-api-key": apiKey,
-      "Content-Type": "application/json",
-    };
+    // Sanitize API key: strip any non-ASCII / control characters that break ByteString
+    const safeKey = apiKey.replace(/[^\x20-\x7E]/g, "").trim();
+    console.log(`WAKA CORE [${toolName}] key length=${safeKey.length}, first4=${safeKey.slice(0,4)}`);
+    const headers = new Headers();
+    headers.set("x-api-key", safeKey);
+    headers.set("Content-Type", "application/json");
 
     let response: Response;
     if (endpoint.method === "GET") {
