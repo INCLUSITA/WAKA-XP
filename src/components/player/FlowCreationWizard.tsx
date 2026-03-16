@@ -231,6 +231,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
           sourceData: {
             ...(jsonContent ? { json: jsonContent } : {}),
             ...(yamlContent ? { yaml: yamlContent } : {}),
+            ...(Object.keys(secretValues).some((key) => secretValues[key]?.trim()) ? { secretValues } : {}),
           },
           mode: "import", // Skip AI generation, just parse and save
         },
@@ -244,6 +245,17 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
       onCreated(data.flowId);
     } catch (err: any) {
       console.error("Import flow error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al importar el flujo");
     } finally {
       setIsGenerating(false);
