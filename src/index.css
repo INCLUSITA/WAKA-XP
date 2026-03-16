@@ -407,8 +407,8 @@
   border-radius: 10px;
   background: hsl(var(--muted) / 0.5);
 }
-.waka-block-expanded button,
-.waka-block-expanded [role="button"] {
+.waka-block-expanded button:not(.waka-cart-btn),
+.waka-block-expanded [role="button"]:not(.waka-cart-btn) {
   min-height: 44px;
   border-radius: 12px;
   @apply text-sm font-semibold px-6;
