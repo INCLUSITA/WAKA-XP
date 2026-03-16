@@ -1,7 +1,7 @@
 /**
  * Waka Sovereign Player — Demo page (Refactored)
  * Uses extracted hooks: usePlayerActions, usePlayerAuthoring, useBlockExpansion
- * build: 2026-03-16T1
+ * build: 2026-03-16T2-force
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
