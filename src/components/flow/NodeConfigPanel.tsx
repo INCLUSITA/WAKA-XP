@@ -423,21 +423,17 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
   };
 
   const addHeader = () => {
-    const headers = { ...(data.headers || {}), "": "" };
-    update("headers", headers);
+    setWebhookHeaderDrafts((prev) => [...prev, { id: createHeaderDraftId(), key: "", value: "" }]);
   };
 
-  const updateHeader = (oldKey: string, newKey: string, value: string) => {
-    const headers = { ...(data.headers || {}) };
-    if (oldKey !== newKey) delete headers[oldKey];
-    headers[newKey] = value;
-    update("headers", headers);
+  const updateHeader = (id: string, field: "key" | "value", value: string) => {
+    setWebhookHeaderDrafts((prev) =>
+      prev.map((header) => (header.id === id ? { ...header, [field]: value } : header))
+    );
   };
 
-  const removeHeader = (key: string) => {
-    const headers = { ...(data.headers || {}) };
-    delete headers[key];
-    update("headers", headers);
+  const removeHeader = (id: string) => {
+    setWebhookHeaderDrafts((prev) => prev.filter((header) => header.id !== id));
   };
 
   const renderListEditor = (key: string, label: string, placeholder: string) => (
