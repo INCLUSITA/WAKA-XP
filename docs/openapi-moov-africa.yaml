@@ -1,0 +1,1446 @@
+openapi: 3.0.3
+info:
+  title: WAKA MOOV AFRICA AGENT (Azure AI)
+  version: 2.0.0
+  x-azure-agent-config:
+    voice_optimization: true
+    max_description_tokens: 150
+    cache_voice_id: true
+    language: fr
+    tenant: MOOV_AFRICA
+  description: |
+    # WAKY — ASSISTANT MOOV AFRICA
+    
+    Tu es Waky, l'assistant vocal officiel de Moov Africa.
+    Tu aides les clients à financer des téléphones (BNPL), souscrire la fibre optique,
+    souscrire une assurance santé, ouvrir un compte Mobile Money, et gérer leurs crédits.
+    
+    **16 tools** optimisés pour Azure AI (~30 tool limit).
+    
+    ---
+    
+    ## 🌍 IDENTITÉ CULTURELLE
+    
+    Waky parle français avec une chaleur et une hospitalité typiquement burkinabè/ouest-africaine.
+    Il utilise occasionnellement (UNE expression par message maximum) des mots des langues locales:
+    
+    ### Expressions Mooré (langue majoritaire)
+    - "Né y beogo!" (Bonjour!/Bonsoir!)
+    - "Barka" (Merci)
+    - "Laafi bala?" (Ça va? / Tu vas bien?)
+    - "Laafi" (Ça va / Je vais bien)
+    - "Wend na kõ" (Que Dieu te bénisse)
+    - "Y wẽnd-n-taare" (Au revoir, que Dieu nous garde)
+    
+    ### Expressions Dioula (langue commerciale)
+    - "I ni ce!" (Salut!)
+    - "I ni baaraji" (Merci pour ton travail)
+    - "Aw bissimila" (Bienvenue)
+    - "Allah ka i sara" (Que Dieu te récompense)
+    
+    ### Expressions Fulfuldé (langue peule)
+    - "A jaaraama" (Merci beaucoup)
+    - "Jam waali?" (As-tu passé une bonne nuit?)
+    
+    ### Style de communication
+    - Chaleureux et patient
+    - Explique clairement les montants en francs CFA (XOF)
+    - Rassure le client sur la simplicité du processus
+    - Ne jamais presser le client
+    
+    ---
+    
+    ## ⚠️ AUTHENTIFICATION
+    
+    **TOUJOURS UTILISER**: Header `x-api-key: waka_xxx` (clé MOOV_AFRICA)
+    
+    **NE PAS UTILISER**: JWT / Authorization Bearer
+    
+    La clé API détermine automatiquement:
+    - Tenant: MOOV_AFRICA
+    - Permissions (scopes)
+    - Rate limiting (100 req/min)
+    
+    ---
+    
+    ## 🎯 Découverte Dynamique des Produits
+    
+    **CE YAML N'EST PAS LA SOURCE DE VÉRITÉ.**
+    
+    L'agent DOIT:
+    1. Appeler `get_product_rules` pour découvrir les produits actifs et leurs contraintes
+    2. Appeler `get_bnpl_catalog` pour le catalogue de téléphones et prix actuels
+    
+    **INTERDIT**: Coder en dur des noms de produits, montants, modèles ou prix.
+    
+    ---
+    
+    ## 🚫 PAS D'IVA / PAS DE CODE POSTAL
+    
+    Ce YAML est exclusivement pour le marché XOF (Burkina Faso, Côte d'Ivoire, etc.)
+    - **JAMAIS** demander de code postal
+    - **JAMAIS** mentionner d'impôts ou de TVA
+    - **JAMAIS** appeler get_iva_zone (cet outil N'EXISTE PAS ici)
+    - Tous les montants sont en **francs CFA (XOF)**, arrondis à l'entier
+    
+    ---
+    
+    ## 🆔 Onboarding Intelligent (Document-First)
+    
+    Le flux d'onboarding accepte le document d'identité EN PREMIER:
+    
+    **CHEMIN A — Le client envoie directement une photo de CNI/passeport:**
+    1. ACCEPTER l'image immédiatement
+    2. `upload_kyc_media(subject_id=phone_or_temp, image, "doc_front")` → OCR automatique
+    3. L'OCR extrait: nom complet, date de naissance, numéro de document
+    4. Confirmer les données au client
+    5. Demander UNIQUEMENT le numéro de téléphone
+    6. `create_client(full_name=OCR_name, phone=user_phone, document_number=OCR_doc)`
+    
+    **CHEMIN B — Le client ne commence pas par un document:**
+    1. Demander nom et téléphone uniquement
+    2. `create_client(phone, full_name)` → client créé
+    3. [OPTIONNEL] Proposer l'envoi de la CNI
+    
+    **RÈGLE**: Le téléphone est la SEULE information à demander manuellement.
+    document_number et postal_code NE SONT PAS requis pour créer un client.
+    
+    ---
+    
+    ## System Prompt
+    
+    ```
+    Tu es Waky, assistant vocal officiel de Moov Africa. Tu parles français avec des touches locales.
+    
+    RÈGLES CRITIQUES:
+    
+    1. **DÉCOUVERTE PRODUITS** (Obligatoire)
+       - AVANT de mentionner un produit, appeler get_product_rules SANS paramètres
+       - Cela retourne TOUS les produits actifs du tenant
+       - JAMAIS supposer les produits depuis le YAML
+    
+    2. **CATALOGUE BNPL** (Obligatoire)
+       - Appeler get_bnpl_catalog pour montrer les téléphones disponibles
+       - JAMAIS lister de téléphones codés en dur
+    
+    3. **CACHE VOICE_ID**
+       - Mémoriser le voice_id après create_client
+       - NE PAS rappeler create_client pour le même client dans la session
+    
+    4. **FLUX CRÉDIT BNPL**
+       - get_bnpl_catalog → choisir téléphone
+       - simulate_credit(phone_bnpl, product_id) → voir les termes
+       - ⚠️ CONSENTEMENT device_lock OBLIGATOIRE:
+         "Pour sécuriser votre crédit, le téléphone sera verrouillé en cas de non-paiement. Acceptez-vous?"
+       - create_credit(device_lock=true) → UNE SEULE FOIS
+    
+    5. **FLUX FIBRE OPTIQUE**
+       - acquire_service(fibre_optique) → voir les plans
+       - L'utilisateur choisit un plan (SKU)
+       - update_client_location(lat, lng) → capturer GPS
+       - acquire_service(fibre_optique, sku, accept=true) → créer le deal
+    
+    6. **FLUX ASSURANCE — DEUX CHEMINS DISTINCTS**
+       
+       **CHEMIN A — Achat direct (DEAL, pas de crédit):**
+       - Outil: `acquire_service` avec product_catalog_key="microseguro_salud"
+       - Résultat: Crée un DEAL. Le client paie comptant.
+       
+       **CHEMIN B — Financement en plusieurs fois (CRÉDIT):**
+       - Outils: `simulate_credit` puis `create_credit` avec credit_type="seguro_salud"
+       - Résultat: Crée un CRÉDIT avec tableau d'amortissement.
+       
+       **RÈGLE D'OR**: Demander TOUJOURS "Comptant ou en plusieurs fois?" AVANT de choisir le chemin.
+    
+    7. **FLUX MOMO**
+       - open_momo_account(client_id) → ouvrir compte Mobile Money
+       - Types: "standard" (particulier) ou "merchant" (commerçant)
+    
+    8. **PAIEMENTS (FLUX COMPLET)**
+       - **1 crédit actif**: pay_by_client directement
+       - **N crédits actifs**: 
+         1. quick_status ou client_credits(status_filter="active") → lister
+         2. Présenter la liste avec voice_id et solde
+         3. DEMANDER: "Sur quel crédit souhaitez-vous payer?"
+         4. get_payment_options(credit_id=voice_id) → montants suggérés
+         5. register_payment(credit_id=voice_id, amount=...)
+       - ⚠️ NE JAMAIS s'arrêter après avoir listé les crédits. Continuer jusqu'au paiement.
+    
+    9. **MONNAIE XOF**
+       - Tous les montants en "francs CFA"
+       - Arrondir à l'entier (pas de décimales)
+       - JAMAIS mentionner d'impôts, TVA, ou code postal
+    
+    10. **IDENTIFIANTS**
+        - Ne jamais inventer d'IDs
+        - Utiliser uniquement les valeurs retournées par l'API
+    
+    11. **MODE DÉMONSTRATION**
+        - Approbation immédiate pour tous les crédits
+        - Les changements de configuration ne nécessitent pas de redéploiement
+    ```
+    
+    ---
+    
+    ## 🧭 Arbre de Décision (Routage Dynamique)
+    
+    | Intention | Premier Appel | Deuxième Appel |
+    |-----------|---------------|----------------|
+    | "Quels produits avez-vous?" | get_product_rules (sans params) | — |
+    | "Montrez-moi les téléphones" | get_bnpl_catalog | — |
+    | "Je veux un crédit téléphone" | get_bnpl_catalog + choisir | simulate_credit → create_credit |
+    | "Mon solde?" | quick_status | Si >1 crédit: présenter liste |
+    | "Mes crédits?" | client_credits(status_filter=active) | — |
+    | "Je veux payer" (1 crédit) | pay_by_client | — |
+    | "Je veux payer" (N crédits) | quick_status → liste → DEMANDER lequel | get_payment_options → register_payment |
+    | "Combien je dois?" | client_credits(active) → get_payment_options | — |
+    | "Je veux la fibre" | acquire_service(fibre_optique) | update_client_location + accept |
+    | "Je veux une assurance" | ❓ "Comptant ou en plusieurs fois?" | — |
+    | "Assurance comptant" | acquire_service(microseguro_salud) → DEAL | — |
+    | "Financer mon assurance" | simulate_credit(seguro_salud) → CRÉDIT | create_credit |
+    | "Ouvrir un compte MoMo" | open_momo_account | — |
+    | "Envoyer ma CNI" | upload_kyc_media → OCR → create_client | — |
+    
+    ---
+    
+    ## 16 Tools
+    
+    | # | Tool | Endpoint | Note |
+    |---|------|----------|------|
+    | 1 | `get_product_rules` | GET /bots/product-rules | Produits actifs et contraintes |
+    | 2 | `get_bnpl_catalog` | GET /bots/bnpl-catalog | Catalogue téléphones BNPL |
+    | 3 | `create_client` | POST /bots/client-onboarding | Onboarding léger (nom + téléphone) |
+    | 4 | `update_client` | POST /bots/client-update | Modifier données client |
+    | 5 | `lookup_entity` | POST /bots/entity-lookup | Recherche universelle |
+    | 6 | `upload_kyc_media` | POST /media/upload | Upload frontal CNI (optionnel) |
+    | 7 | `client_credits` | POST /bots/client-credits | Lister crédits du client |
+    | 8 | `simulate_credit` | POST /bots/create-credit-template | Simulation crédit |
+    | 9 | `create_credit` | POST /credits | Création formelle de crédit |
+    | 10 | `pay_by_client` | POST /bots/pay-by-client | Paiement simplifié |
+    | 11 | `register_payment` | POST /bots/register-payment | Paiement à crédit spécifique |
+    | 12 | `get_payment_options` | POST /bots/credit-payment-options | Options montant (min/courant/liquidation) |
+    | 13 | `acquire_service` | POST /bots/acquire-service | Services (fibre, assurance directe) |
+    | 14 | `update_client_location` | POST /bots/client-location | Capture GPS pour fibre |
+    | 15 | `open_momo_account` | POST /bots/open-momo-account | Ouverture compte Mobile Money |
+    | 16 | `quick_status` | POST /bots/quick-status | Solde rapide |
+
+servers:
+  - url: https://atcyynxxrbkydsilvrol.supabase.co/functions/v1/waka-core-api
+    description: WAKA Moov Africa Environment
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Information
+    description: Règles produits et catalogue BNPL
+  - name: Clients
+    description: Onboarding, mise à jour, recherche et KYC
+  - name: Credits
+    description: Simulation, création et consultation de crédits
+  - name: Payments
+    description: Paiement simplifié, paiement ciblé, options de montant
+  - name: Services
+    description: Acquisition de services (fibre, assurance) et géolocalisation
+  - name: MoMo
+    description: Ouverture de compte Mobile Money
+  - name: VoiceOptimized
+    description: Endpoints optimisés pour agents vocaux
+
+paths:
+  # ============================================================
+  # PRODUCT INFORMATION
+  # ============================================================
+  /bots/product-rules:
+    get:
+      operationId: get_product_rules
+      tags: [Information]
+      summary: Découvrir les produits actifs et leurs contraintes (OBLIGATOIRE)
+      description: |
+        **PREMIER APPEL OBLIGATOIRE** au début de l'interaction.
+        
+        - Sans credit_type: retourne TOUS les produits actifs
+        - Avec credit_type: retourne les règles spécifiques
+        
+        **INTERDIT**: Mentionner des produits non retournés par cet endpoint.
+      parameters:
+        - name: credit_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Optionnel. Exemples: phone_bnpl, seguro_salud"
+      responses:
+        '200':
+          description: Produits actifs et leurs règles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRulesResponse'
+
+  /bots/bnpl-catalog:
+    get:
+      operationId: get_bnpl_catalog
+      tags: [Information]
+      summary: Catalogue des téléphones BNPL (prix et stock en temps réel)
+      description: |
+        **OBLIGATOIRE pour les demandes BNPL**. NE PAS lister de téléphones codés en dur.
+        Retourne tous les appareils avec prix en XOF et stock actuel.
+      responses:
+        '200':
+          description: Catalogue BNPL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BnplCatalogResponse'
+
+  # ============================================================
+  # CLIENT MANAGEMENT
+  # ============================================================
+  /bots/client-onboarding:
+    post:
+      operationId: create_client
+      tags: [Clients]
+      summary: Rechercher ou créer un client (onboarding léger)
+      description: |
+        Rechercher un client existant par téléphone ou créer un nouveau.
+        
+        **ONBOARDING LÉGER**: Seuls phone et full_name sont requis.
+        Pas de postal_code, pas de document obligatoire.
+        
+        **RÈGLE**: Mémoriser le voice_id. NE PAS rappeler pour le même client.
+        
+        Modes de réponse:
+        - found: Client existant
+        - missing_data: Demander les champs manquants
+        - created: Nouveau client créé
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotClientOnboardingRequest'
+            examples:
+              search:
+                summary: Rechercher client existant
+                value:
+                  phone: "70123456"
+              create:
+                summary: Créer nouveau client
+                value:
+                  phone: "70123456"
+                  full_name: "Ouédraogo Issa"
+                  document_number: "B1234567890123"
+      responses:
+        '200':
+          description: Client trouvé ou créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotClientOnboardingResponse'
+
+  /bots/client-update:
+    post:
+      operationId: update_client
+      tags: [Clients]
+      summary: Mettre à jour les informations du client
+      description: |
+        Modifier les données du client. Seuls les champs fournis sont modifiés.
+        
+        **Identification**: Fournir client_id (voice_id) OU phone.
+        **Champs modifiables**: full_name, phone, email, address, document_number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateRequest'
+      responses:
+        '200':
+          description: Client mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientUpdateResponse'
+
+  /bots/entity-lookup:
+    post:
+      operationId: lookup_entity
+      tags: [Clients]
+      summary: Recherche universelle (client, crédit ou paiement)
+      description: |
+        Recherche par n'importe quel identifiant:
+        - Téléphone, voice_id client (J573554), nom, numéro CNI
+        - Voice_id crédit (K-808136), UUID
+        
+        Si un credit_id est fourni, résout automatiquement le client associé.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotEntityLookupRequest'
+      responses:
+        '200':
+          description: Résultats de recherche
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotEntityLookupResponse'
+
+  # ============================================================
+  # KYC LÉGER
+  # ============================================================
+  /media/upload:
+    post:
+      operationId: upload_kyc_media
+      tags: [Clients]
+      summary: Upload frontal CNI (optionnel, auto-OCR)
+      description: |
+        Upload de la photo du recto de la CNI. **OPTIONNEL**.
+        
+        Le backend effectue automatiquement:
+        - Stockage sécurisé
+        - OCR automatique
+        - Mise à jour du profil client
+        
+        Accepte: base64, URL distante (attachment_url), ou fichier direct.
+        Type supporté: "doc_front" uniquement.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KycMediaUploadRequest'
+      responses:
+        '200':
+          description: Document uploadé et traité
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycMediaUploadResponse'
+
+  # ============================================================
+  # CREDIT OPERATIONS
+  # ============================================================
+  /bots/create-credit-template:
+    post:
+      operationId: simulate_credit
+      tags: [Credits]
+      summary: Simuler un CRÉDIT (paiement en PLUSIEURS FOIS uniquement)
+      description: |
+        ⚠️ **UNIQUEMENT pour le paiement EN PLUSIEURS FOIS.**
+        ⛔ **Si le client veut payer COMPTANT → utiliser acquire_service.**
+        
+        Simuler les termes, l'amortissement et les coûts.
+        
+        | Paramètres | Résultat |
+        |------------|----------|
+        | client_id | Confirme que le client existe |
+        | client_id, credit_type | Contraintes produit |
+        | client_id, credit_type, amount, term_months | Tableau d'amortissement |
+        | credit_type: phone_bnpl, product_id | Sélection d'appareil |
+        
+        product_id accepte: UUID, nom ("Samsung A15") ou modèle ("A15").
+        
+        **Tous les montants en XOF, arrondis à l'entier.**
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotCreditTemplateRequest'
+            examples:
+              catalog:
+                summary: Voir tous les produits
+                value:
+                  client_id: "J573554"
+              bnpl_simulate:
+                summary: Simuler BNPL Samsung A15
+                value:
+                  client_id: "J573554"
+                  credit_type: "phone_bnpl"
+                  product_id: "Samsung A15"
+                  term_months: 3
+              insurance_simulate:
+                summary: Simuler assurance financée
+                value:
+                  client_id: "J573554"
+                  credit_type: "seguro_salud"
+                  amount: 25000
+                  term_months: 6
+                  payment_frequency: "monthly"
+      responses:
+        '200':
+          description: Catalogue ou simulation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotCreditTemplateResponse'
+
+  /credits:
+    post:
+      operationId: create_credit
+      tags: [Credits]
+      summary: Créer un crédit formel (FINANCEMENT en plusieurs fois)
+      description: |
+        ⚠️ **Crée un CRÉDIT avec échéances. PAS un achat direct.**
+        ⛔ **Si COMPTANT → utiliser acquire_service.**
+        
+        **RÈGLE**: Appeler UNE SEULE FOIS par demande.
+        
+        **BNPL**: Auto-approuvé, device_lock=true OBLIGATOIRE.
+        **Assurance financée**: Auto-activé (pas de comité).
+        
+        Réponse inclut: voice_id, can_receive_payments, status_explanation, next_steps.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCreditRequest'
+      responses:
+        '201':
+          description: Crédit créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCreditResponse'
+        '409':
+          description: Crédit dupliqué (5 min)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicateCreditResponse'
+
+  /bots/client-credits:
+    post:
+      operationId: client_credits
+      tags: [Credits]
+      summary: Lister les crédits d'un client
+      description: |
+        Consulter tous les crédits d'un client avec filtres optionnels.
+        
+        Filtres:
+        - Sans status_filter: TOUS les crédits
+        - status_filter=active: uniquement actifs
+        - status_filter=completed: terminés
+        
+        Chaque crédit inclut: voice_id, type, montant, solde, prochain paiement, jours de retard.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreditsRequest'
+      responses:
+        '200':
+          description: Liste des crédits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientCreditsResponse'
+
+  # ============================================================
+  # PAYMENTS
+  # ============================================================
+  /bots/pay-by-client:
+    post:
+      operationId: pay_by_client
+      tags: [Payments]
+      summary: Paiement simplifié (auto-détection du crédit)
+      description: |
+        Paiement simplifié qui auto-détecte le crédit à appliquer.
+        
+        Modes:
+        - auto_applied: 1 seul crédit actif → paiement appliqué
+        - selection_required: Plusieurs crédits → lister les options
+        - no_credits: Pas de crédits actifs
+        
+        **Canaux**: moov_money, orange_money, cash, bank_transfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayByClientRequest'
+      responses:
+        '200':
+          description: Résultat du paiement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayByClientResponse'
+
+  /bots/register-payment:
+    post:
+      operationId: register_payment
+      tags: [Payments]
+      summary: Paiement à un crédit spécifique
+      description: |
+        Enregistrer un paiement pour un crédit spécifique (quand le client a plusieurs crédits).
+        credit_id accepte le voice_id (K-808136) ou UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterPaymentRequest'
+      responses:
+        '200':
+          description: Paiement enregistré
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+
+  /bots/credit-payment-options:
+    post:
+      operationId: get_payment_options
+      tags: [Payments]
+      summary: Montants de paiement suggérés pour un crédit
+      description: |
+        Retourne les options calculées:
+        - **minimum**: Montant minimum accepté
+        - **current**: Échéance en cours
+        - **payoff**: Montant pour liquider
+        
+        Exemple: "Vous pouvez payer le minimum de 5 000 XOF, l'échéance de 12 500 XOF, ou liquider avec 45 000 XOF."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditPaymentOptionsRequest'
+      responses:
+        '200':
+          description: Options de paiement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditPaymentOptionsResponse'
+
+  # ============================================================
+  # SERVICE ACQUISITION & GEOLOCATION
+  # ============================================================
+  /bots/acquire-service:
+    post:
+      operationId: acquire_service
+      tags: [Services]
+      summary: Acquérir un service COMPTANT (fibre, assurance — PAS de crédit)
+      description: |
+        ⚠️ **Crée un DEAL (achat direct). PAS de crédit.**
+        ⛔ **Si EN PLUSIEURS FOIS → utiliser simulate_credit + create_credit.**
+        
+        Flux multi-étapes:
+        - **Étape 1 — Catalogue**: product_catalog_key seul → variantes
+        - **Étape 2 — Sélection**: + product_variant_sku → détails
+        - **Étape 3 — Accepter**: + accept=true → crée le DEAL
+        
+        **Fibre** (3 appels):
+        1. acquire_service(fibre_optique) → catalogue
+        2. update_client_location(lat, lng)
+        3. acquire_service(fibre_optique, sku, accept=true)
+        
+        **Assurance COMPTANT**:
+        1. acquire_service(microseguro_salud) → plans
+        2. acquire_service(microseguro_salud, sku, accept=true) → DEAL
+        
+        ⚠️ Alias: fiber_optic → fibre_optique (normalisé par le backend)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcquireServiceRequest'
+      responses:
+        '200':
+          description: Résultat d'acquisition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquireServiceResponse'
+
+  /bots/client-location:
+    post:
+      operationId: update_client_location
+      tags: [Services]
+      summary: Capturer les coordonnées GPS du client
+      description: |
+        Sauvegarder les coordonnées GPS pour les produits nécessitant la géolocalisation (fibre).
+        Effectue un reverse geocoding via Nominatim (OpenStreetMap).
+        Accepte client_id comme UUID ou voice_id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientLocationRequest'
+      responses:
+        '200':
+          description: Localisation sauvegardée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientLocationResponse'
+
+  # ============================================================
+  # MOMO (Mobile Money)
+  # ============================================================
+  /bots/open-momo-account:
+    post:
+      operationId: open_momo_account
+      tags: [MoMo]
+      summary: Ouvrir un compte Mobile Money
+      description: |
+        Demander l'ouverture d'un compte MoMo pour un client.
+        
+        **Types**: standard (particulier) ou merchant (commerçant)
+        
+        **Prérequis**: Le client doit exister (create_client avant si nécessaire).
+        
+        Réponses: account_created, already_exists, pending_verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenMomoAccountRequest'
+      responses:
+        '200':
+          description: Résultat de la demande
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenMomoAccountResponse'
+
+  # ============================================================
+  # VOICE OPTIMIZED
+  # ============================================================
+  /bots/quick-status:
+    post:
+      operationId: quick_status
+      tags: [VoiceOptimized]
+      summary: Résumé rapide du solde et paiements
+      description: |
+        Requête rapide: recherche client + crédits actifs.
+        Idéal pour "Quel est mon solde?" ou "J'ai des paiements en attente?"
+        
+        Modes: found, no_credits, not_found
+        
+        Inclut voice_response pour réponse vocale directe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickStatusRequest'
+      responses:
+        '200':
+          description: Résumé rapide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickStatusResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Clé API MOOV_AFRICA
+
+  schemas:
+    # ============================================================
+    # Product Rules & BNPL Catalog
+    # ============================================================
+    ProductRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              credit_type:
+                type: string
+              amount:
+                type: object
+                properties:
+                  min:
+                    type: number
+                  max:
+                    type: number
+              term_months:
+                type: object
+                properties:
+                  min:
+                    type: integer
+                  max:
+                    type: integer
+              interest_rate:
+                type: number
+              payment_frequencies:
+                type: array
+                items:
+                  type: string
+
+    BnplCatalogResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        catalog:
+          type: array
+          items:
+            type: object
+            properties:
+              device_id:
+                type: string
+              device_name:
+                type: string
+              brand:
+                type: string
+              model:
+                type: string
+              price_xof:
+                type: number
+              storage:
+                type: string
+              stock_available:
+                type: integer
+              is_available:
+                type: boolean
+        message:
+          type: string
+
+    # ============================================================
+    # Client Onboarding (Léger — sans postal_code)
+    # ============================================================
+    BotClientOnboardingRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          description: "Numéro de téléphone (8 chiffres ou +226XXXXXXXX)"
+        full_name:
+          type: string
+          description: Nom complet du client (requis pour créer)
+        document_number:
+          type: string
+          description: "Numéro CNI (optionnel — peut être ajouté via OCR)"
+        document_type:
+          type: string
+          enum: ["CNIB", "Passeport"]
+          default: "CNIB"
+          description: "Type de document d'identité"
+        email:
+          type: string
+          description: "Adresse email (optionnel)"
+
+    BotClientOnboardingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        mode:
+          type: string
+          enum: [found, created, missing_data]
+        voice_id:
+          type: string
+          description: "Voice_id du client (ex: J573554)"
+        full_name:
+          type: string
+        phone:
+          type: string
+        missing_fields:
+          type: array
+          items:
+            type: string
+          description: "Si mode=missing_data, champs à demander"
+
+    # ============================================================
+    # Client Update
+    # ============================================================
+    ClientUpdateRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: "Voice ID du client (ex: O-789456)"
+        phone:
+          type: string
+          description: "Numéro actuel ou nouveau"
+        full_name:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        document_number:
+          type: string
+
+    ClientUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        client:
+          type: object
+          properties:
+            voice_id:
+              type: string
+            full_name:
+              type: string
+
+    # ============================================================
+    # Entity Lookup
+    # ============================================================
+    BotEntityLookupRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Identifiant: téléphone, CNI, voice_id, nom, credit_id"
+        client_id:
+          type: string
+          description: "Alias pour query"
+
+    BotEntityLookupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        entity_type:
+          type: string
+          enum: [client, credit, payment, credit_to_client]
+        client_summary:
+          type: object
+        credits_summary:
+          type: object
+        voice_response:
+          type: string
+
+    # ============================================================
+    # KYC Media Upload
+    # ============================================================
+    KycMediaUploadRequest:
+      type: object
+      required: [client_id, document_type]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client ou UUID"
+        subject_id:
+          type: string
+          description: "Alias pour client_id"
+        document_type:
+          type: string
+          enum: [doc_front]
+          description: "Type: doc_front uniquement (recto CNI)"
+        purpose:
+          type: string
+          description: "Alias pour document_type"
+        image:
+          type: string
+          description: "Image en base64 (data:image/jpeg;base64,...)"
+        attachment_url:
+          type: string
+          description: "URL distante de l'image (alternative au base64)"
+
+    KycMediaUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+          enum: [uploaded, duplicate, ocr_processed]
+        extracted_data:
+          type: object
+          properties:
+            full_name:
+              type: string
+            document_number:
+              type: string
+            date_of_birth:
+              type: string
+
+    # ============================================================
+    # Credit Simulation
+    # ============================================================
+    BotCreditTemplateRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client (J573554)"
+        credit_type:
+          type: string
+          enum: [phone_bnpl, bnpl, moov_phone_bnpl, seguro_salud]
+          description: "'bnpl' et 'phone_bnpl' sont interchangeables"
+        product_id:
+          type: string
+          description: "UUID, nom ou modèle du téléphone (phone_bnpl uniquement)"
+        amount:
+          type: number
+          description: "Montant du crédit en XOF"
+        term_months:
+          type: integer
+          description: "Durée en mois"
+        term_days:
+          type: integer
+          description: "Durée en jours (alternatif à term_months)"
+          example: 90
+        payment_frequency:
+          type: string
+          enum: [daily, weekly, biweekly, monthly]
+          description: "Fréquence de paiement"
+        frequency:
+          type: string
+          enum: [daily, weekly, biweekly, monthly]
+          description: "Alias pour payment_frequency"
+
+    BotCreditTemplateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        mode:
+          type: string
+          enum: [catalog, rules, simulation]
+        products:
+          type: array
+        template:
+          type: object
+          description: "Template prêt pour create_credit"
+
+    # ============================================================
+    # Create Credit
+    # ============================================================
+    CreateCreditRequest:
+      type: object
+      required: [client_id, credit_type, amount]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client"
+        credit_type:
+          type: string
+          enum: [phone_bnpl, bnpl, moov_phone_bnpl, seguro_salud]
+          description: "'bnpl' accepté comme alias de phone_bnpl"
+        amount:
+          type: number
+          description: "Montant en XOF (entier)"
+        term_months:
+          type: integer
+          description: "Durée en mois (alternatif à term_days)"
+        term_days:
+          type: integer
+          description: "Durée en jours (alternatif à term_months). Au moins un des deux requis."
+          example: 90
+        payment_frequency:
+          type: string
+          enum: [daily, weekly, biweekly, monthly]
+        frequency:
+          type: string
+          enum: [daily, weekly, biweekly, monthly]
+          description: "Alias pour payment_frequency"
+        product_id:
+          type: string
+          description: "Appareil financé (phone_bnpl uniquement)"
+        interest_rate:
+          type: number
+          description: "Taux d'intérêt (optionnel — backend auto-fill)"
+        device_lock:
+          type: boolean
+          description: "Verrouillage appareil (phone_bnpl — OBLIGATOIRE, doit être true)"
+        device_lock_accepted:
+          type: boolean
+          description: "Alias pour device_lock"
+
+    CreateCreditResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        voice_id:
+          type: string
+          description: "Référence du crédit (K-808136)"
+        status:
+          type: string
+        can_receive_payments:
+          type: boolean
+        status_explanation:
+          type: string
+        next_steps:
+          type: array
+          items:
+            type: string
+
+    DuplicateCreditResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        already_exists:
+          type: boolean
+        voice_id:
+          type: string
+        message:
+          type: string
+
+    # ============================================================
+    # Client Credits
+    # ============================================================
+    ClientCreditsRequest:
+      type: object
+      required: [client_id]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client (J573554) ou UUID"
+        status_filter:
+          type: string
+          enum: [active, completed, in_process, all]
+          description: "Filtrer par statut. Par défaut: tous"
+
+    ClientCreditsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        client_voice_id:
+          type: string
+        credits:
+          type: array
+          items:
+            type: object
+            properties:
+              voice_id:
+                type: string
+              credit_type:
+                type: string
+              status:
+                type: string
+              original_amount:
+                type: number
+              remaining_balance:
+                type: number
+              next_payment_date:
+                type: string
+              next_payment_amount:
+                type: number
+              days_overdue:
+                type: integer
+              payment_frequency:
+                type: string
+        total_active:
+          type: integer
+        total_balance:
+          type: number
+        voice_response:
+          type: string
+
+    # ============================================================
+    # Payments
+    # ============================================================
+    PayByClientRequest:
+      type: object
+      required: [client_id, amount]
+      properties:
+        client_id:
+          type: string
+          description: "Voice ID du client"
+        amount:
+          type: number
+          description: "Montant en XOF"
+        channel:
+          type: string
+          enum: [moov_money, orange_money, cash, bank_transfer]
+          default: moov_money
+          description: "Canal de paiement"
+        reference:
+          type: string
+          description: "Référence de transaction (optionnel)"
+
+    PayByClientResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        mode:
+          type: string
+          enum: [auto_applied, selection_required, no_credits]
+        credits:
+          type: array
+          description: "Si selection_required, liste des crédits"
+        payment_reference:
+          type: string
+        new_balance:
+          type: number
+
+    RegisterPaymentRequest:
+      type: object
+      required: [credit_id, amount]
+      properties:
+        credit_id:
+          type: string
+          description: "Voice_id du crédit (K-808136) ou UUID"
+        credit_query:
+          type: string
+          description: "Alias pour credit_id"
+        amount:
+          type: number
+          description: "Montant en XOF (entier)"
+        channel:
+          type: string
+          enum: [moov_money, orange_money, cash, bank_transfer]
+          default: moov_money
+        reference:
+          type: string
+
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        payment_reference:
+          type: string
+        new_balance:
+          type: number
+        next_payment_date:
+          type: string
+
+    CreditPaymentOptionsRequest:
+      type: object
+      required: [credit_id]
+      properties:
+        credit_id:
+          type: string
+          description: "Voice_id du crédit (K-808136) ou UUID"
+
+    CreditPaymentOptionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        credit_voice_id:
+          type: string
+        options:
+          type: object
+          properties:
+            minimum:
+              type: object
+              properties:
+                amount:
+                  type: number
+                label:
+                  type: string
+            current:
+              type: object
+              properties:
+                amount:
+                  type: number
+                label:
+                  type: string
+            payoff:
+              type: object
+              properties:
+                amount:
+                  type: number
+                label:
+                  type: string
+        remaining_balance:
+          type: number
+        days_overdue:
+          type: integer
+        voice_response:
+          type: string
+
+    # ============================================================
+    # Service Acquisition
+    # ============================================================
+    AcquireServiceRequest:
+      type: object
+      required: [client_id, product_catalog_key]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client (J573554) ou UUID"
+        product_catalog_key:
+          type: string
+          description: "Clé produit: fibre_optique, microseguro_salud. Alias: fiber_optic → fibre_optique"
+        product_variant_sku:
+          type: string
+          description: "SKU de la variante (ex: FO-50, FO-100, PLAN-IND, PLAN-FAM)"
+        product_primary_sku:
+          type: string
+          description: "Alias pour product_variant_sku"
+        channel:
+          type: string
+          enum: [whatsapp, voice, app, web]
+          description: "Canal d'acquisition"
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+        accept:
+          type: boolean
+          description: "true pour confirmer et créer le DEAL"
+
+    AcquireServiceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+          enum: [select_variant, confirm_offer, service_acquired, location_required, steps_pending, pending_review]
+        available_variants:
+          type: array
+          items:
+            type: object
+            properties:
+              sku:
+                type: string
+              name:
+                type: string
+              price:
+                type: number
+              currency:
+                type: string
+              specs:
+                type: object
+        deal:
+          type: object
+          properties:
+            id:
+              type: string
+            tracking_code:
+              type: string
+            status:
+              type: string
+            amount:
+              type: number
+            currency:
+              type: string
+        product_details:
+          type: object
+
+    # ============================================================
+    # Client Location
+    # ============================================================
+    ClientLocationRequest:
+      type: object
+      required: [client_id, lat, lng]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client ou UUID"
+        lat:
+          type: number
+          description: Latitude
+        lng:
+          type: number
+          description: Longitude
+        raw_text:
+          type: string
+          description: "Texte d'adresse optionnel"
+
+    ClientLocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        client_id:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+
+    # ============================================================
+    # MoMo Account
+    # ============================================================
+    OpenMomoAccountRequest:
+      type: object
+      required: [client_id]
+      properties:
+        client_id:
+          type: string
+          description: "Voice_id du client ou UUID"
+        account_type:
+          type: string
+          enum: [standard, merchant]
+          default: standard
+          description: "standard (particulier) ou merchant (commerçant)"
+        channel:
+          type: string
+          enum: [whatsapp, voice, app, web]
+
+    OpenMomoAccountResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+          enum: [account_created, already_exists, pending_verification]
+        account_number:
+          type: string
+        account_type:
+          type: string
+          enum: [standard, merchant]
+        message:
+          type: string
+
+    # ============================================================
+    # Quick Status
+    # ============================================================
+    QuickStatusRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Téléphone, CNI, voice_id ou nom"
+        client_id:
+          type: string
+          description: "Alias pour query"
+
+    QuickStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        mode:
+          type: string
+          enum: [found, no_credits, not_found]
+        client_summary:
+          type: object
+          properties:
+            voice_id:
+              type: string
+            full_name:
+              type: string
+            phone:
+              type: string
+        credits_summary:
+          type: object
+          properties:
+            active_count:
+              type: integer
+            total_balance:
+              type: number
+        voice_response:
+          type: string
+          description: "Réponse en langage naturel prête pour la voix"
