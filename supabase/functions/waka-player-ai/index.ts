@@ -643,7 +643,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "simulate_credit",
-      description: "Simuler un crédit (BNPL ou assurance financée). UNIQUEMENT pour paiement en plusieurs fois. ⛔ Si comptant → utiliser acquire_service.",
+      description: "Simuler un crédit (consultation UNIQUEMENT, ne crée rien). Appeler UNE SEULE FOIS par flux. Après que le client accepte la simulation, utiliser create_credit (PAS simulate_credit à nouveau). ⛔ Si comptant → utiliser acquire_service.",
       parameters: {
         type: "object",
         properties: {
