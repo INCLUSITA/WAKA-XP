@@ -63,7 +63,7 @@ export function PlayerWorkbench({
 
   /** Also detect secrets in the stored scenario_config (YAML/JSON from previous sessions) */
   const storedConfigSecrets = useMemo(() => {
-    const refs: { file: string; refs: string[] }[] = [];
+    const refs: { file: string; refs: RequiredSecretRef[] }[] = [];
     const yaml = scenarioConfig?.sourceData?.yaml;
     const json = scenarioConfig?.sourceData?.json;
     if (yaml) {
