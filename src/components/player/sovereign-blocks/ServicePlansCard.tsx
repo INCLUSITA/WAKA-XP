@@ -205,7 +205,7 @@ export function ServicePlansCard({ data, onSelectPlan }: Props) {
       </div>
 
       <div className="divide-y divide-[hsl(220,15%,93%)]">
-        {data.plans.map((plan, i) => (
+        {(data.plans || []).map((plan, i) => (
           <button
             key={plan.sku}
             onClick={() => onSelectPlan?.(plan.sku, plan.name)}
