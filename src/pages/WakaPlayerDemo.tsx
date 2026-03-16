@@ -93,14 +93,31 @@ function extractOptionsFromText(text: string): string[] {
 
 export default function WakaPlayerDemo() {
   const { tenantId } = useWorkspace();
+  const [searchParams] = useSearchParams();
+  const routeFlowId = searchParams.get("flow") || "free";
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const [scenarioConfig, setScenarioConfig] = useState<Record<string, any>>({});
 
+  useEffect(() => {
+    setDataMode("libre");
+    setScenarioConfig({});
+  }, [routeFlowId]);
+
   return (
-    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
-      <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
-        <PlayerMemoryProvider tenantId={tenantId || undefined}>
-          <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+    <ExperienceRuntimeProvider key={`runtime-${routeFlowId}`} tenantId={tenantId} dataPolicy={dataMode}>
+      <PlayerContextProvider
+        key={`context-${routeFlowId}`}
+        scenarioConfig={scenarioConfig}
+        systemPrompt={scenarioConfig.systemPrompt || null}
+      >
+        <PlayerMemoryProvider key={`memory-${routeFlowId}`} tenantId={tenantId || undefined}>
+          <WakaPlayerDemoInner
+            key={`inner-${routeFlowId}`}
+            dataMode={dataMode}
+            setDataMode={setDataMode}
+            scenarioConfig={scenarioConfig}
+            setScenarioConfig={setScenarioConfig}
+          />
         </PlayerMemoryProvider>
       </PlayerContextProvider>
     </ExperienceRuntimeProvider>
@@ -187,6 +204,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
     else if (cfg.sourceData?.instructions) setFlowContext(cfg.sourceData.instructions);
     else setFlowContext(null);
 
+    setFlowLoadKey((prev) => prev + 1);
     await startNewConversation();
     toast.success(`Flujo "${full.name}" cargado`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -458,6 +476,7 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                 </div>
                 <div className="flex-1 flex flex-col min-h-0">
                   <WakaSovereignPlayer
+                    key={`player-${activeFlowId || "free"}-${flowLoadKey}`}
                     messages={messages}
                     botName="WAKA XP 🇧🇫"
                     status={status}
