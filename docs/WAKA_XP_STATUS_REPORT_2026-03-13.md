@@ -1,7 +1,10 @@
 # WAKA XP — Informe Completo de Situación
-> **Fecha:** 13 de marzo de 2026  
+> **Fecha:** 16 de marzo de 2026 (actualizado desde 13 de marzo)  
 > **Propósito:** Documento de referencia para que Claude, Codex y cualquier agente de IA puedan entender el estado actual del proyecto, lo que está hecho, lo que falta y las oportunidades de mejora.  
-> **Documento estratégico base:** [`docs/waka-xp-strategic-foundation.md`](./waka-xp-strategic-foundation.md)
+> **Documento estratégico base:** [`docs/waka-xp-strategic-foundation.md`](./waka-xp-strategic-foundation.md)  
+> **Documentos relacionados:**
+> - [`docs/WAKA_XP_PLAYER_COMPLETE.md`](./WAKA_XP_PLAYER_COMPLETE.md) — Manual técnico del Player
+> - [`docs/WAKA_XP_RENDER_GUARANTEE.md`](./WAKA_XP_RENDER_GUARANTEE.md) — Spec `x-waka-xp-display` v1
 
 ---
 
@@ -24,6 +27,9 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | **Production Layer** | Ciclo de vida de candidatos a producción | `/production` |
 | **Simulation Engine** | Simulador WhatsApp con modo live | Integrado en Builder |
 | **Waka XP Player** | Simulador conversacional IA soberano con bloques nativos | `/player`, `/player/live` |
+| **Render Guarantee** | Motor de plantillas `x-waka-xp-display` para UI rica automática | Integrado en Player |
+| **WAKA CORE Integration** | 14 herramientas API backend reales (BNPL, fibre, MoMo, etc.) | Edge functions |
+| **XP Spatial** | Capa de presentación espacial 3D con superficies soberanas | `/spatial` |
 | **Runtime / Runs** | Ejecución de backend con trazabilidad de pasos | `/runs` |
 | **Governance** | Multi-tenant, roles, RLS, versionado transversal | Transversal |
 
@@ -53,7 +59,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Vista inicial inteligente (centrado en entry node) | ✅ |
 | **Gap:** Resolución de contexto cross-flow | ⚠️ Parcial |
 
-### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~95%)
+### Fase 1b — Waka XP Player (Simulador Conversacional IA Soberano) → ✅ COMPLETA (~98%)
 
 | Capacidad | Estado |
 |---|---|
@@ -75,11 +81,45 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | **PlayerWorkbench**: Panel de iteración IA con instrucciones, uploads y motor seleccionable | ✅ |
 | **WAKA VOICE**: Iframe real de waka.services integrado dentro del simulador de teléfono | ✅ |
 | **Avatar**: Iframe configurable de avatar integrado dentro del simulador de teléfono | ✅ |
-| **Botones de canal**: 📞 Voice y 👤 Avatar en la barra de entrada del chat | ✅ |
 | **Merge automático con IA**: Instrucciones + assets se combinan con el flujo existente | ✅ |
 | **Persistencia de instrucciones**: systemPrompt guardado en scenario_config | ✅ |
+| **PlayerContextProvider**: Contexto enriquecido con persona, tools, knowledge, policies | ✅ |
+| **PlayerMemoryProvider**: Memoria de sesión con journey tracking y perfil de usuario | ✅ |
+| **Block Variants**: Variantes compact/standard/expanded/zero-rated por bloque soberano | ✅ |
 | **Gap:** Integración real con Azure OpenAI | ❌ Pendiente de claves |
 | **Gap:** BYOM funcional (requiere configuración de usuario) | ❌ Pendiente |
+
+### Fase 1c — Render Guarantee & CORE Integration → ✅ COMPLETA (100%) — NUEVO
+
+| Capacidad | Estado |
+|---|---|
+| **`x-waka-xp-display` spec v1**: 15 tipos de bloque con template engine | ✅ |
+| **displayMap**: Mapeo tool→spec guardado en scenario_config | ✅ |
+| **Template engine**: Resolución de rutas + interpolación de campos `{field}` | ✅ |
+| **Render Guarantee**: Bloques soberanos generados automáticamente sin intervención IA | ✅ |
+| **14 herramientas WAKA CORE API**: BNPL, fibre, MoMo, crédito, pagos, KYC | ✅ |
+| **Resolución jerárquica de API key**: secretValues → endpoints → env | ✅ |
+| **Sanitización de claves**: Eliminación de caracteres invisibles, validación `waka_*` | ✅ |
+| **YAML parsing**: `generate-player-flow` parsea `x-waka-xp-display` del YAML | ✅ |
+| **Catálogo BNPL con imágenes reales**: Samsung A05, A15, ZTE A34, A75 | ✅ |
+| **ProductCatalog con vista de detalle**: Specs técnicas, imagen, precio, badge | ✅ |
+| **Prioridad IA > displayMap > heurística**: Cadena de fallback garantizada | ✅ |
+| **Zero-rated sin media**: Bloques auto-generados respetan política de datos | ✅ |
+| **Gap:** `x-waka-xp-footer` (footer persistente) | ⚠️ Spec definida, no implementada |
+
+### Fase 1d — XP Spatial Layer → 🟡 EN CURSO (~60%) — NUEVO
+
+| Capacidad | Estado |
+|---|---|
+| **SpatialRoot**: Escena 3D con R3F + Drei | ✅ |
+| **PhoneHub**: Teléfono 3D con poses animadas (idle, catalog_retreat, payment_pulse, etc.) | ✅ |
+| **FrontStage**: Contenedor de superficies soberanas | ✅ |
+| **PeripheralHUD**: HUD informativo en el espacio 3D | ✅ |
+| **spatialPresentationAdapter**: Intent resolution + surface routing | ✅ |
+| **5 superficies**: CatalogGrid, KYCScanner, Receipt, FloatingPanel, Confirmation | ✅ |
+| **Tipos espaciales**: RuntimeIntent, PhonePose, SpatialSurfaceType, SpatialBlockType | ✅ |
+| **Gap:** Superficie de formularios (form_surface) | ⚠️ Tipo definido, no implementada |
+| **Gap:** Superficie de media (media_surface) | ⚠️ Tipo definido, no implementada |
 
 ### Fase 2 — Experience Studio → 🟡 EN CURSO (~70%)
 
@@ -144,16 +184,20 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Tabla flow_runs con estados (waiting, active, completed, expired, errored) | ✅ |
 | Tabla flow_run_steps con trazas de ejecución | ✅ |
 | Vista de Runs con filtrado por canal y timeline | ✅ |
-| **Gap:** Runtime de ejecución completo en backend | ❌ |
+| **run-flow Edge Function**: Node Walker resiliente con pausa/reanudación | ✅ |
 | **Gap:** Binding con conectores reales en producción | ❌ |
 | **Gap:** Observabilidad avanzada (métricas, alertas) | ❌ |
 
-### Fase 7 — Integración profunda WAKA → 🔜 NO INICIADA (0%)
+### Fase 7 — Integración profunda WAKA → 🟡 EN CURSO (~40%) — ACTUALIZADO
 
 | Capacidad | Estado |
 |---|---|
-| Integración con WAKA NEXUS, AXIOM, VOICE, CORE, CRM | ❌ |
+| **WAKA CORE API operativa** (14 herramientas via edge function) | ✅ |
+| **waka-core-api**: Punto de entrada único multi-tenant con x-api-key | ✅ |
+| Integración con WAKA VOICE (iframe en Player) | ✅ |
+| Integración con Avatar (iframe en Player) | ✅ |
 | Home muestra WAKA Stack Status (mock) | ✅ (visual, no funcional) |
+| **Gap:** WAKA NEXUS / AXIOM / CRM conectores operativos | ❌ |
 
 ---
 
@@ -172,6 +216,8 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `flow_runs` | Ejecuciones de backend |
 | `flow_run_steps` | Trazas de pasos por ejecución |
 | `experiences` | Experiencias de negocio |
+| `experience_entities` | Entidades de contexto por experiencia |
+| `experience_context_values` | Valores de contexto por entidad y run |
 | `production_candidates` | Candidatos a producción |
 | `asset_versions` | Versionado transversal (4 tipos) |
 | `globals` | Variables globales clave-valor |
@@ -180,7 +226,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | `uploaded_demos` | Demos generadas/subidas |
 | `player_conversations` | Conversaciones del Player IA |
 | `player_messages` | Mensajes individuales del Player IA |
-| `player_saved_flows` | Flujos conversacionales guardados del Player |
+| `player_saved_flows` | Flujos conversacionales guardados del Player (incluye `scenario_config.displayMap`) |
 | `demo_shares` / `demo_share_views` | Compartición pública de demos |
 | `whatsapp_messages` | Mensajes WhatsApp reales |
 | `whatsapp_templates` | Plantillas HSM |
@@ -188,19 +234,19 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 ### Edge Functions (Backend)
 
-| Función | Estado |
-|---|---|
-| `waka-ai-apply` | ✅ Operativa — genera/reescribe JSX con Gemini |
-| `waka-ai-proposal` | ✅ Operativa — propuestas IA |
-| `whatsapp-send` | ✅ Operativa — envío 360dialog |
-| `whatsapp-webhook` | ✅ Operativa — recepción inbound |
-| `telegram-send` | ✅ Operativa |
-| `telegram-setup` | ✅ Operativa |
-| `telegram-webhook` | ✅ Operativa |
-| `connection-health-check` | ✅ Operativa |
-| `waka-player-ai` | ✅ Operativa — respuestas conversacionales IA del Player |
-| `generate-player-flow` | ✅ Operativa — generación de flujos desde texto/JSON/YAML/imágenes |
-| `run-flow` | ✅ Operativa — ejecución de flujos en backend |
+| Función | Estado | Descripción |
+|---|---|---|
+| `waka-player-ai` | ✅ Operativa | Motor IA + Render Guarantee + 14 tools CORE (~1423 líneas) |
+| `generate-player-flow` | ✅ Operativa | Generación de flujos + YAML parser + displayMap |
+| `waka-ai-apply` | ✅ Operativa | Genera/reescribe JSX con Gemini |
+| `waka-ai-proposal` | ✅ Operativa | Propuestas IA |
+| `run-flow` | ✅ Operativa | Node Walker para ejecución backend |
+| `whatsapp-send` | ✅ Operativa | Envío 360dialog |
+| `whatsapp-webhook` | ✅ Operativa | Recepción inbound |
+| `telegram-send` | ✅ Operativa | Envío Telegram |
+| `telegram-setup` | ✅ Operativa | Configuración bot |
+| `telegram-webhook` | ✅ Operativa | Recepción inbound |
+| `connection-health-check` | ✅ Operativa | Health check canales |
 
 ### Canales configurados
 
@@ -211,6 +257,8 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Azure Communication Services | ✅ Configurable |
 | Vonage SMS | ✅ Configurable |
 | Mailgun Email | ✅ Configurable |
+| WAKA VOICE | ✅ Iframe integrado en Player |
+| Avatar | ✅ Iframe integrado en Player |
 
 ### Seguridad
 
@@ -221,17 +269,19 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 | Roles por tabla separada | ✅ |
 | Función `has_role()` security definer | ✅ |
 | Función `get_user_tenant_id()` | ✅ |
+| Sanitización de API keys (caracteres invisibles) | ✅ |
 
 ---
 
-## 5. Navegación Completa (28+ rutas protegidas + 3 públicas)
+## 5. Navegación Completa (30+ rutas protegidas + 4 públicas)
 
 **Principal:** Home, Journeys, Experience Studio, Demo Builder, Builder, Simulator, Production, Runs  
-**Player:** Player Gallery (`/player`), Player Live (`/player/live`)  
+**Player:** Player Gallery (`/player`), Player Live (`/player/live`), Player Live con flujo (`/player/live?flow={id}`)  
+**Spatial:** XP Spatial (`/spatial`)  
 **Assets:** Library, Demos, Demo Viewer, Templates, Imports  
 **Infrastructure:** Integrations, WhatsApp Test, Tenants, Settings  
 **Advanced:** Flow Dashboard, Archived, Globals, Starts, Webhooks, Export, Validate  
-**Públicas:** /share/:id, /shared/:token, /login
+**Públicas:** /share/:id, /shared/:token, /login, /public-player
 
 ---
 
@@ -239,71 +289,63 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 | Componente | Estado actual | Qué existe hoy | Qué falta |
 |---|---|---|---|
-| **Simulator Shell** | ✅ Operativo | Waka XP Player como shell soberano con bloques nativos + WhatsApp Simulator en Builder | Variantes multi-canal del mismo shell |
-| **Scenario Editor** | 🟡 Parcial | FlowCreationWizard con multi-fuente (texto/JSON/YAML/imagen) + AI Engine Selector | Editor visual WYSIWYG de escenarios |
-| **AI Journey Generator** | ✅ Operativo | Player genera conversation_snapshot + scenario_config desde briefing via IA | Refinamiento iterativo post-generación |
+| **Simulator Shell** | ✅ Operativo | Waka XP Player como shell soberano con bloques nativos + Render Guarantee | Variantes multi-canal del mismo shell |
+| **Scenario Editor** | 🟡 Parcial | FlowCreationWizard con multi-fuente + displayMap en scenario_config | Editor visual WYSIWYG de escenarios |
+| **AI Journey Generator** | ✅ Operativo | Player genera conversation_snapshot + scenario_config + displayMap desde briefing/YAML | Refinamiento iterativo post-generación |
 | **Scenario-to-Flow Bridge** | 🟡 Parcial | WakaFlow Mapper + Player saved flows con promote to production | Compilación real de escenarios a nodos ejecutables |
 | **Blueprint Generator** | ❌ No iniciado | — | Generación de intenciones de integración, contratos, readiness |
 
 ---
 
-## 7. Gaps Críticos Priorizados
+## 7. Cambios Recientes (13 → 16 marzo 2026)
 
-### 🔴 Alta prioridad (bloquean el valor diferencial)
+### ✅ Implementado
 
-1. **Runtime de ejecución en backend** — Las tablas `flow_runs` y `flow_run_steps` existen, la UI de Runs existe, pero no hay un engine que realmente ejecute flujos en backend. Esto es el "Carril C" estratégico.
+| Fecha | Cambio | Impacto |
+|---|---|---|
+| 14 mar | **PlayerContextProvider** con persona, tools, knowledge, policies | Contexto enriquecido para IA |
+| 14 mar | **PlayerMemoryProvider** con journey tracking y perfil de usuario | Memoria de sesión persistente |
+| 14 mar | **Block Variants** (compact/standard/expanded/zero-rated) | Adaptación visual por runtime |
+| 15 mar | **14 herramientas WAKA CORE API** integradas en waka-player-ai | Operaciones backend reales |
+| 15 mar | **Resolución jerárquica de API key** con sanitización | Conexión fiable a CORE |
+| 15 mar | **ProductCatalog con vista de detalle** (specs, imagen, precio) | UX de catálogo profesional |
+| 16 mar | **`x-waka-xp-display` spec v1** — 15 tipos de bloque | Renderizado declarativo |
+| 16 mar | **Template engine** con resolución de rutas e interpolación | Motor de plantillas puro |
+| 16 mar | **Render Guarantee** — bloques soberanos sin intervención IA | UI rica garantizada |
+| 16 mar | **displayMap** en scenario_config (8 endpoints configurados) | Mapeo tool→bloque |
+| 16 mar | **XP Spatial layer** — escena 3D, PhoneHub, 5 superficies | Presentación espacial |
+| 16 mar | **Catálogo BNPL validado** con imágenes reales desde CORE | E2E verificado |
 
-2. **Context Board** — El Flow Context Panel define variables y entidades por flujo, pero no hay una superficie visual para gestionar contexto compartido entre flujos/experiencias. Es el salto de "flow-first" a "journey-first".
+### 📝 Documentación añadida
 
-3. **Auth enforcement real** — El sistema usa `DEMO_TENANT_ID` como fallback. En producción multi-tenant real, esto debe eliminarse.
-
-### 🟡 Media prioridad (aceleran el producto)
-
-4. **Simulator Shell reutilizable** — Hoy el simulador está acoplado al Builder. Debería ser un componente independiente que renderice experiencias en cualquier canal.
-
-5. **Scenario-to-Flow Bridge completo** — El WakaFlow Mapper es un primer paso, pero falta la compilación real de demos/escenarios a flujos ejecutables.
-
-6. **AI Journey Generator** — Ir más allá de generar JSX de demos: generar flows completos desde un briefing de negocio.
-
-7. **Blueprint Generator** — Para cada experiencia, generar automáticamente qué sistemas intervienen, qué datos hacen falta, qué está listo y qué no.
-
-### 🟢 Baja prioridad (enriquecen pero no bloquean)
-
-8. **Experience Trees & Forests** — Modelo conceptual potente pero aún no necesario operativamente.
-9. **Copy/paste semántico** — Muy útil para productividad avanzada.
-10. **Vistas alternativas** (Path, Exception, Data Flow) — Valor analítico pero no urgente.
-11. **Omnicanalidad real** — La visión es correcta, la implementación puede esperar a que el runtime funcione.
+| Documento | Contenido |
+|---|---|
+| `docs/WAKA_XP_RENDER_GUARANTEE.md` | Spec completa `x-waka-xp-display` v1 con ejemplos |
+| `docs/WAKA_XP_STATUS_REPORT_2026-03-13.md` | Actualizado a 16 de marzo |
 
 ---
 
-## 8. Oportunidades de Mejora Inmediatas
+## 8. Gaps Críticos Priorizados (Actualizado)
 
-### Arquitectura de código
+### 🔴 Alta prioridad
 
-| Área | Situación | Recomendación |
-|---|---|---|
-| `FlowEditor.tsx` | Componente muy grande (~700+ líneas) | Extraer lógica a hooks: `useFlowInit`, `useFlowViewport`, `useFlowNodeOperations` |
-| `IntegrationsPage.tsx` | 305 líneas, mezcla data + UI | Separar hook `useChannelConnections` del componente de presentación |
-| `channelProviders.ts` | 224 líneas, crecerá con cada canal | Ya está limpio pero considerar separar types vs data |
-| Páginas sin funcionalidad real | Algunas páginas son placeholders | Documentar cuáles son funcionales vs placeholder |
+1. **Context Board** — Superficie visual para gestionar contexto compartido entre flujos/experiencias.
+2. **Auth enforcement real** — Eliminar `DEMO_TENANT_ID` como fallback.
+3. **`x-waka-xp-footer`** — Footer persistente definido en spec pero no implementado.
 
-### UX y diseño
+### 🟡 Media prioridad
 
-| Área | Oportunidad |
-|---|---|
-| **Home page** | Actualmente muestra WAKA Stack Status estático. Podría mostrar métricas reales: flows activos, runs recientes, demos creadas. |
-| **Onboarding** | No hay guided tour para nuevos usuarios. El `GuidedTourOverlay` existe como componente pero no está integrado globalmente. |
-| **Mobile** | La app tiene `use-mobile.tsx` pero no está optimizada para mobile. Evaluar si es necesario. |
-| **Canvas UX** | Falta mini-map, fit-to-view button, y atajos de teclado documentados. |
+4. **Simulator Shell reutilizable** — Componente independiente multi-canal.
+5. **Scenario-to-Flow Bridge completo** — Compilación de demos/escenarios a flujos ejecutables.
+6. **XP Spatial superficies faltantes** — form_surface, media_surface.
+7. **Blueprint Generator** — Generar contratos de integración desde scenario_config.
 
-### Backend
+### 🟢 Baja prioridad
 
-| Área | Oportunidad |
-|---|---|
-| **Edge functions para flow runtime** | Es el gap más importante. Crear un engine que ejecute nodos secuencialmente y persista en `flow_runs` + `flow_run_steps`. |
-| **Realtime** | Las tablas de runs podrían usar Supabase Realtime para actualización en vivo. |
-| **Storage** | No se está usando Supabase Storage. Las demos con imágenes/media podrían beneficiarse. |
-| **Scheduled functions** | Para expiración automática de runs, limpieza de logs, etc. |
+8. **Experience Trees & Forests** — Modelo conceptual potente pero no urgente.
+9. **Copy/paste semántico** — Productividad avanzada.
+10. **Vistas alternativas** (Path, Exception, Data Flow) — Valor analítico.
+11. **Omnicanalidad real** — Esperar a que el runtime esté completo.
 
 ---
 
@@ -314,16 +356,18 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 - Auto-save, versionado, import/export JSON v13
 - Experience Studio con CRUD y vinculación de activos
 - Demo Builder con generación IA conversacional
-- **Waka XP Player** — Simulador conversacional IA soberano con 16+ bloques nativos, galería de flujos guardados, wizard de creación multi-fuente (texto/JSON/YAML/imagen), selector de motor IA (WAKA AI/Azure/BYOM), persistencia completa, ciclo de vida Stable→Sandbox→Production
+- **Waka XP Player** — Simulador conversacional IA soberano con 16+ bloques nativos, Render Guarantee, 14 herramientas CORE API, galería de flujos, wizard multi-fuente
+- **Render Guarantee** — Motor de plantillas `x-waka-xp-display` que garantiza UI rica automática desde respuestas de CORE
+- **WAKA CORE Integration** — 14 herramientas API reales operativas con resolución jerárquica de API key
+- **XP Spatial** — Capa de presentación 3D con superficies soberanas
 - Production Layer con ciclo de vida de candidatos
 - Multi-tenancy con RLS, roles, workspaces
-- Sistema de conexiones de canales con health check
-- Runs page con trazabilidad (UI lista, falta engine)
+- Run-flow engine con Node Walker y trazabilidad
 
 ### Lo que se debe construir siguiente (por impacto):
-1. **Flow Runtime Engine** — Edge function que ejecute flujos reales
-2. **Context Board** — Superficie visual de entidades compartidas
-3. **Auth hardening** — Eliminar DEMO_TENANT_ID fallback
+1. **Context Board** — Superficie visual de entidades compartidas
+2. **Auth hardening** — Eliminar DEMO_TENANT_ID fallback
+3. **`x-waka-xp-footer`** — Footer persistente
 4. **Simulator Shell nativo** — Componente independiente multi-canal
 5. **AI Flow Generator** — De briefing a flow completo
 
@@ -331,6 +375,7 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 - **No romper lo existente** — Toda nueva capa se construye encima
 - **Multi-tenant desde el diseño** — Todo con `tenant_id`
 - **IA transversal** — No como bloque aislado sino como capacidad del sistema
+- **Render Guarantee** — Usar `x-waka-xp-display` para todo endpoint con UI
 - **Versionado de todo** — Usar `asset_versions` para cualquier activo nuevo
 - **Semantic tokens** — Usar design tokens HSL, no colores hardcodeados
 
@@ -340,20 +385,20 @@ Plataforma AI-native para **diseñar, simular, validar y operacionalizar journey
 
 | Archivo | Propósito |
 |---|---|
-| `docs/waka-xp-strategic-foundation.md` | Documento base estratégico completo (1161 líneas) |
-| `README.md` | Documentación técnica actualizada (621 líneas) |
-| `src/components/flow/FlowEditor.tsx` | Componente central del Builder |
-| `src/pages/ExperienceStudioPage.tsx` | Experience Studio |
-| `src/pages/WakaFlowPreview.tsx` | Demo Builder |
-| `src/pages/ProductionPage.tsx` | Production Layer |
-| `src/pages/RunsPage.tsx` | Runs / Runtime visibility |
-| `src/contexts/WorkspaceContext.tsx` | Contexto global tenant/workspace |
-| `src/hooks/useFlowPersistence.ts` | Auto-save de flujos |
-| `src/hooks/useAssetVersions.ts` | Versionado transversal |
-| `src/lib/wakaflowMapper.ts` | Mapper WakaFlow → TextIt |
-| `src/lib/flowValidation.ts` | Motor de validación |
+| `docs/waka-xp-strategic-foundation.md` | Documento base estratégico completo (1251 líneas) |
+| `docs/WAKA_XP_PLAYER_COMPLETE.md` | Manual técnico del Player (664 líneas) |
+| `docs/WAKA_XP_RENDER_GUARANTEE.md` | Spec `x-waka-xp-display` v1 (nuevo) |
+| `docs/openapi-waka-africa-agent.yaml` | YAML de referencia WAKA CORE con `x-waka-xp-display` |
+| `README.md` | Documentación técnica general |
+| `src/components/player/WakaSovereignPlayer.tsx` | Shell del simulador |
+| `src/contexts/PlayerContextProvider.tsx` | Contexto enriquecido del Player |
+| `src/contexts/PlayerMemoryProvider.tsx` | Memoria de sesión del Player |
+| `src/hooks/useWakaPlayerAI.ts` | Hook IA frontend |
+| `supabase/functions/waka-player-ai/index.ts` | Motor IA + Render Guarantee (~1423 líneas) |
+| `supabase/functions/generate-player-flow/index.ts` | Generación de flujos + YAML parser |
+| `src/xp-spatial/` | Capa espacial completa |
 | `src/integrations/supabase/types.ts` | Schema de DB (auto-generado, no editar) |
 
 ---
 
-*Informe actualizado el 13 de marzo de 2026 — WAKA XP v0.3 (incluye Waka XP Player)*
+*Informe actualizado el 16 de marzo de 2026 — WAKA XP v0.4 (incluye Render Guarantee, CORE Integration, XP Spatial)*
