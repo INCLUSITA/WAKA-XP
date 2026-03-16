@@ -557,7 +557,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "get_product_rules",
-      description: "OBLIGATOIRE: Découvrir les produits actifs et leurs contraintes. Appeler SANS paramètres pour voir tous les produits. Avec credit_type pour les règles spécifiques.",
+      description: "OBLIGATOIRE: Découvrir les produits actifs et leurs contraintes. Appeler SANS paramètres pour voir tous les produits. ⚠️ L'assurance/seguro est un SERVICE avec variantes (Individual/Family), PAS un crédit. Utiliser acquire_service pour les assurances, PAS simulate_credit.",
       parameters: {
         type: "object",
         properties: {
