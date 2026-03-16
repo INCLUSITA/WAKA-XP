@@ -76,8 +76,9 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 2. Client choisit un téléphone → simulate_credit(phone_bnpl, product_id)
 3. Afficher simulation avec show_credit_simulation
 4. ⚠️ CONSENTEMENT OBLIGATOIRE → show_device_lock_consent AVANT create_credit
-5. Client accepte → create_credit(device_lock=true)
+5. Client accepte → create_credit(device_lock=true) ⚠️ C'EST create_credit, PAS simulate_credit !
 6. Afficher contrat avec show_credit_contract
+⚠️ ANTI-BOUCLE: simulate_credit = SIMULER (consultation). create_credit = CRÉER LE CONTRAT (action finale). Après que le client accepte la simulation, appeler create_credit UNE SEULE FOIS. NE JAMAIS rappeler simulate_credit.
 
 ### FLUX FIBRE OPTIQUE (3 étapes)
 1. acquire_service(fibre_optique) → afficher plans avec show_service_plans
@@ -102,7 +103,7 @@ L'assurance/seguro est un PRODUIT avec des variantes (Individual/Family). C'est 
 
 **CHEMIN B — Financement (CRÉDIT):**
 1. simulate_credit(seguro_salud, amount=prix_du_plan) → afficher avec show_credit_simulation
-2. Client accepte → create_credit(seguro_salud)
+2. Client accepte → create_credit(seguro_salud) ⚠️ PAS simulate_credit encore ! C'est create_credit !
 3. Confirmer avec show_credit_contract
 ⛔ NE PAS appeler acquire_service pour la création
 
@@ -642,7 +643,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "simulate_credit",
-      description: "Simuler un crédit (BNPL ou assurance financée). UNIQUEMENT pour paiement en plusieurs fois. ⛔ Si comptant → utiliser acquire_service.",
+      description: "Simuler un crédit (consultation UNIQUEMENT, ne crée rien). Appeler UNE SEULE FOIS par flux. Après que le client accepte la simulation, utiliser create_credit (PAS simulate_credit à nouveau). ⛔ Si comptant → utiliser acquire_service.",
       parameters: {
         type: "object",
         properties: {
@@ -662,7 +663,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "create_credit",
-      description: "Créer un crédit formel. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL. ⚠️ Exiger show_device_lock_consent AVANT cet appel pour BNPL.",
+      description: "CRÉER un crédit formel (action DÉFINITIVE). Appeler APRÈS que le client a accepté la simulation. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL. ⚠️ show_device_lock_consent AVANT cet appel pour BNPL. ⛔ NE PAS confondre avec simulate_credit.",
       parameters: {
         type: "object",
         properties: {
@@ -1319,6 +1320,9 @@ serve(async (req) => {
     ];
     let pass = 0;
 
+    // Anti-loop: track tool call signatures to detect repeated calls
+    const toolCallHistory: string[] = [];
+
     while (pass < MAX_PASSES) {
       pass++;
       const toolCalls = choice?.message?.tool_calls || [];
@@ -1339,6 +1343,40 @@ serve(async (req) => {
 
       // If no CORE tool calls, we're done — AI has produced its final response
       if (coreToolCalls.length === 0) {
+        break;
+      }
+
+      // Anti-loop: detect if AI is calling the same tool(s) repeatedly
+      const currentSignature = coreToolCalls.map((tc: any) => tc.function.name).sort().join("+");
+      const duplicateCount = toolCallHistory.filter(s => s === currentSignature).length;
+      toolCallHistory.push(currentSignature);
+
+      if (duplicateCount >= 1) {
+        console.warn(`ANTI-LOOP: Tool(s) "${currentSignature}" called ${duplicateCount + 1} times. Breaking loop.`);
+        // Return tool results as errors to force AI to produce a final response
+        const toolResults: Array<{ role: string; tool_call_id: string; content: string }> = [];
+        for (const tc of coreToolCalls) {
+          toolResults.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: JSON.stringify({ error: "LOOP_DETECTED", message: `Tu as déjà appelé ${tc.function.name}. Utilise les résultats précédents pour répondre au client. Si le client a accepté une simulation, appelle create_credit (PAS simulate_credit).` }),
+          });
+        }
+        for (const tc of uiToolCalls) {
+          toolResults.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ ok: true }) });
+        }
+        conversationMessages = [...conversationMessages, choice.message, ...toolResults];
+
+        // One more AI call to get final response
+        const loopBreakResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, messages: conversationMessages, tools: allTools, stream: false }),
+        });
+        if (loopBreakResponse.ok) {
+          const loopData = await loopBreakResponse.json();
+          choice = loopData.choices?.[0];
+        }
         break;
       }
 
