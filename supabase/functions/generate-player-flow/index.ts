@@ -419,12 +419,27 @@ Genera el flujo conversacional completo en formato JSON.`;
 
     // Fallback: create a basic flow from the raw AI text
     const now = new Date().toISOString();
-    return sanitizeGeneratedPayload({
+    const fallbackPayload = sanitizeGeneratedPayload({
       conversation: [
         { id: "sys-1", text: "⚡ WAKA NEXUS · Canal souverain — IA activada", direction: "outbound", timestamp: now, isSystemEvent: true },
         { id: "gen-1", text: content.substring(0, 1000) || "Flujo generado. Comenzar interacción.", direction: "outbound", timestamp: now, source: "WAKA NEXUS · IA", quickReplies: ["▶️ Comenzar", "🏠 Menu"] },
       ],
       config: { systemPrompt: content, intents: [], tags: [] },
     });
+
+    if (persistedSecretValues && Object.keys(persistedSecretValues).length > 0) {
+      fallbackPayload.config = {
+        ...fallbackPayload.config,
+        sourceData: {
+          ...((fallbackPayload.config.sourceData && typeof fallbackPayload.config.sourceData === "object") ? fallbackPayload.config.sourceData : {}),
+          secretValues: persistedSecretValues,
+          ...(sourceData.yaml ? { yaml: sourceData.yaml } : {}),
+          ...(sourceData.json ? { json: sourceData.json } : {}),
+          ...(sourceData.instructions ? { instructions: sourceData.instructions } : {}),
+        },
+      };
+    }
+
+    return fallbackPayload;
   }
 }
