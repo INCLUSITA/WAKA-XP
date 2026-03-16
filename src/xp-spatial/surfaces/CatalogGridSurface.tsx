@@ -15,6 +15,7 @@ interface CatalogProduct {
   description?: string;
   badge?: string;
   rating?: number;
+  image?: string;
   image_url?: string;
   category?: string;
 }
