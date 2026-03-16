@@ -77,8 +77,8 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
   const yamlInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
 
-  const requiredSecretRefs = useMemo(
-    () => Array.from(new Set([
+  const requiredSecretRefs = useMemo<RequiredSecretRef[]>(
+    () => Array.from(new Set<RequiredSecretRef>([
       ...detectSecretReferences(textInstructions),
       ...detectSecretReferences(jsonContent),
       ...detectSecretReferences(yamlContent),

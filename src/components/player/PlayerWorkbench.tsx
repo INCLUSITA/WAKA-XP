@@ -80,7 +80,7 @@ export function PlayerWorkbench({
 
   /** Detect API key references in uploaded assets + stored config */
   const detectedSecrets = useMemo(() => {
-    const allSecrets: { file: string; refs: string[] }[] = [...storedConfigSecrets];
+    const allSecrets: { file: string; refs: RequiredSecretRef[] }[] = [...storedConfigSecrets];
     for (const asset of assets) {
       if (asset.content) {
         const refs = detectSecretReferences(asset.content);
@@ -90,7 +90,7 @@ export function PlayerWorkbench({
     return allSecrets;
   }, [assets, storedConfigSecrets]);
 
-  const requiredSecretRefs = useMemo(
+  const requiredSecretRefs = useMemo<RequiredSecretRef[]>(
     () => Array.from(new Set(detectedSecrets.flatMap((s) => s.refs))),
     [detectedSecrets]
   );
