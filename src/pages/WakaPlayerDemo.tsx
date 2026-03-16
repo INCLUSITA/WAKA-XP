@@ -384,9 +384,31 @@ function WakaPlayerDemoInner({ dataMode, setDataMode, scenarioConfig: activeScen
                 </Badge>
               </div>
               <div className="h-4 w-px bg-border/50" />
-              <Badge className={cn("text-[8px] border-0 font-bold h-5", MODE_COLORS[dataMode])}>
-                {MODE_LABELS[dataMode]}
-              </Badge>
+              {/* DataMode Selector — clickable toggle */}
+              <div className="flex items-center gap-0.5 bg-muted/60 rounded-full p-0.5">
+                {(["libre", "subventionné", "zero-rated"] as DataMode[]).map((m) => {
+                  const icons: Record<DataMode, React.ReactNode> = {
+                    libre: <Zap className="h-2.5 w-2.5" />,
+                    "subventionné": <Wifi className="h-2.5 w-2.5" />,
+                    "zero-rated": <WifiOff className="h-2.5 w-2.5" />,
+                  };
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => setDataMode(m)}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-semibold transition-all",
+                        dataMode === m
+                          ? cn("bg-background shadow-sm", MODE_COLORS[m])
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {icons[m]}
+                      {MODE_LABELS[m]}
+                    </button>
+                  );
+                })}
+              </div>
               {activeFlowTitle && (
                 <Badge variant="outline" className="text-[9px] border-accent/20 text-accent h-5">
                   {activeFlowTitle.length > 24 ? `${activeFlowTitle.slice(0, 24)}…` : activeFlowTitle}
