@@ -869,6 +869,9 @@ async function executeWakaCoreCall(
   args: Record<string, unknown>,
   apiKey: string
 ): Promise<Record<string, unknown>> {
+  if (!apiKey) {
+    return { error: "No WAKA API key configured for this tenant/flow. Please add x-api-key in the scenario config." };
+  }
   const endpoint = TOOL_ENDPOINTS[toolName];
   if (!endpoint) {
     return { error: `Unknown tool: ${toolName}` };
