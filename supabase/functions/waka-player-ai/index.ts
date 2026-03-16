@@ -914,12 +914,17 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dataMode, flowContext, memoryContext } = await req.json();
+    const { messages, dataMode, flowContext, memoryContext, scenarioConfig } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const WAKA_API_KEY = (Deno.env.get("WAKA_CORE_API_KEY") || "").trim();
-    if (!WAKA_API_KEY) throw new Error("WAKA_CORE_API_KEY is not configured");
+    const resolvedApiKey = resolveWakaApiKey(
+      scenarioConfig,
+      typeof flowContext === "string" ? flowContext : undefined,
+      Deno.env.get("WAKA_CORE_API_KEY") || "",
+    );
+    const WAKA_API_KEY = resolvedApiKey.apiKey;
+    console.log(`Resolved WAKA API key from ${resolvedApiKey.source}, length=${WAKA_API_KEY.length}, first4=${WAKA_API_KEY.slice(0, 4)}`);
 
     const modeContext = dataMode === "zero-rated"
       ? "\n\nIMPORTANT: L'utilisateur est en mode ZERO-RATED. Sois ultra-concis. Pas d'emojis décoratifs. Réponses courtes."

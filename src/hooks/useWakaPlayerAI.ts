@@ -89,6 +89,7 @@ export function useWakaPlayerAI() {
           dataMode,
           flowContext: enrichedContext || undefined,
           memoryContext,
+          scenarioConfig: playerContext.scenarioConfig || undefined,
         },
       });
 
