@@ -4,7 +4,7 @@
  * Includes AI Engine selector (WAKA AI, Azure, BYOM).
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -16,11 +16,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FileJson, FileText, MessageSquare, Image, Upload, Cpu, Cloud, Server,
-  Lock, Check, Sparkles, X, Loader2, AlertTriangle,
+  Lock, Check, Sparkles, X, Loader2, AlertTriangle, Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { detectSecretReferences, getMissingSecretRefs } from "@/lib/flowSecretDetection";
 
 /* ── AI Engine types ── */
 export type EngineId = "waka-ai" | "azure-openai" | "byom";

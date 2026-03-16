@@ -24,30 +24,7 @@ import { cn } from "@/lib/utils";
 import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEngineSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-/** Patterns indicating API keys / secrets in YAML/JSON content */
-const SECRET_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
-  { label: "API_KEY", pattern: /api[_-]?key/i },
-  { label: "X_API_KEY", pattern: /x-api-key/i },
-  { label: "BEARER_TOKEN", pattern: /authorization:\s*bearer/i },
-  { label: "ACCESS_TOKEN", pattern: /access[_-]?token/i },
-  { label: "SECRET_KEY", pattern: /secret[_-]?key/i },
-  { label: "PRIVATE_KEY", pattern: /private[_-]?key/i },
-  { label: "PASSWORD", pattern: /password/i },
-  { label: "TOKEN", pattern: /\btoken\b\s*:\s*["']?[A-Za-z0-9._-]{6,}/i },
-  { label: "API_KEY_PLACEHOLDER", pattern: /\$\{[^}]*api[^}]*key[^}]*\}/i },
-];
-
-/** Detect secrets/API keys referenced in file content */
-function detectSecretReferences(content: string): string[] {
-  const found = new Set<string>();
-  for (const { label, pattern } of SECRET_PATTERNS) {
-    if (pattern.test(content)) {
-      found.add(label);
-    }
-  }
-  return Array.from(found);
-}
+import { detectSecretReferences, getMissingSecretRefs } from "@/lib/flowSecretDetection";
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
