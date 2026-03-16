@@ -585,25 +585,48 @@ function FlowEditorInner() {
   const clipboardRef = useRef<Node | null>(null);
 
   useEffect(() => {
+    const isTypingTarget = (element: EventTarget | null) => {
+      const target = element instanceof HTMLElement ? element : null;
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const node = target ?? active;
+
+      if (!node) return false;
+
+      const tag = node.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || node.isContentEditable) {
+        return true;
+      }
+
+      if (node.getAttribute("role") === "textbox") return true;
+
+      return Boolean(
+        node.closest(
+          "input, textarea, select, [contenteditable='true'], [role='textbox'], form, [role='dialog']"
+        )
+      );
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isModifier = e.metaKey || e.ctrlKey;
+
+      // Never intercept shortcuts while a form field or dialog is active
+      if (isTypingTarget(e.target)) return;
+
       // Ctrl+K / Cmd+K — node search
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (isModifier && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setShowNodeSearch((v) => !v);
         return;
       }
 
-      // Don't intercept when typing in inputs
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      if ((e.metaKey || e.ctrlKey) && e.key === "c" && selectedNode) {
+      if (isModifier && e.key.toLowerCase() === "c" && selectedNode) {
         e.preventDefault();
         clipboardRef.current = selectedNode;
         toast.info("Node copied");
+        return;
       }
 
-      if ((e.metaKey || e.ctrlKey) && e.key === "v" && clipboardRef.current) {
+      if (isModifier && e.key.toLowerCase() === "v" && clipboardRef.current) {
         e.preventDefault();
         const src = clipboardRef.current;
         const id = uuidv4();
@@ -618,6 +641,7 @@ function FlowEditorInner() {
         toast.success("Node pasted");
       }
     };
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedNode, setNodes]);
