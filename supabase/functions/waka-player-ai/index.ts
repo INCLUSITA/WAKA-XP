@@ -859,7 +859,9 @@ function resolveWakaApiKey(
     return { apiKey: envApiKey, source: "env.WAKA_CORE_API_KEY" };
   }
 
-  throw new Error("No valid WAKA API key found in scenario context or backend secret");
+  // Graceful: return empty key — will fail only when an actual CORE tool call is attempted
+  console.warn("No valid WAKA API key found in scenario context or backend secret — CORE tool calls will fail");
+  return { apiKey: "", source: "none" };
 }
 
 async function executeWakaCoreCall(
@@ -867,6 +869,9 @@ async function executeWakaCoreCall(
   args: Record<string, unknown>,
   apiKey: string
 ): Promise<Record<string, unknown>> {
+  if (!apiKey) {
+    return { error: "No WAKA API key configured for this tenant/flow. Please add x-api-key in the scenario config." };
+  }
   const endpoint = TOOL_ENDPOINTS[toolName];
   if (!endpoint) {
     return { error: `Unknown tool: ${toolName}` };
