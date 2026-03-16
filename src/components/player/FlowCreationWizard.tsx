@@ -170,6 +170,9 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     if (jsonContent) sourceData.json = jsonContent;
     if (yamlContent) sourceData.yaml = yamlContent;
     if (assets.length > 0) sourceData.assets = assets.map((a) => ({ name: a.name, type: a.type, dataUrl: a.dataUrl }));
+    if (Object.keys(secretValues).some((key) => secretValues[key]?.trim())) {
+      sourceData.secretValues = secretValues;
+    }
 
     if (!sourceData.instructions && !sourceData.json && !sourceData.yaml) {
       toast.error("Proporciona al menos una fuente: texto, JSON o YAML");
@@ -196,6 +199,17 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
       onCreated(data.flowId);
     } catch (err: any) {
       console.error("Generate flow error:", err);
+
+      try {
+        const errorPayload = err?.context ? await err.context.json() : null;
+        if (Array.isArray(errorPayload?.missingSecrets) && errorPayload.missingSecrets.length > 0) {
+          toast.error(`Faltan credenciales obligatorias: ${errorPayload.missingSecrets.join(", ")}`);
+          return;
+        }
+      } catch {
+        // Ignore parse errors and fallback to generic message
+      }
+
       toast.error(err.message || "Error al generar el flujo");
     } finally {
       setIsGenerating(false);
