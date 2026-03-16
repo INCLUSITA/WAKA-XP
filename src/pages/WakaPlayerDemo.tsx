@@ -7,7 +7,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Wifi, Signal, BatteryFull, Bot, Zap, RotateCcw, Globe, Share2 } from "lucide-react";
+import { ArrowLeft, Wifi, WifiOff, Signal, BatteryFull, Bot, Zap, RotateCcw, Globe, Share2, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
