@@ -355,6 +355,7 @@ function areHeaderMapsEqual(a: Record<string, string>, b: Record<string, string>
 
 export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, isPinnedStart, onPinAsStart, onUnpinStart, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
+  const isWebhookNode = node.type === "webhook";
 
   const update = useCallback(
     (key: string, value: unknown) => {
@@ -362,6 +363,48 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
     },
     [node.id, data, onUpdate]
   );
+
+  const [webhookUrlDraft, setWebhookUrlDraft] = useState(String(data.url || ""));
+  const [webhookBodyDraft, setWebhookBodyDraft] = useState(String(data.body || ""));
+  const [webhookResultNameDraft, setWebhookResultNameDraft] = useState(String(data.resultName || ""));
+  const [webhookHeaderDrafts, setWebhookHeaderDrafts] = useState<HeaderDraft[]>(() =>
+    mapHeadersToDrafts(data.headers as Record<string, unknown> | undefined)
+  );
+
+  useEffect(() => {
+    if (!isWebhookNode) return;
+
+    setWebhookUrlDraft(String(data.url || ""));
+    setWebhookBodyDraft(String(data.body || ""));
+    setWebhookResultNameDraft(String(data.resultName || ""));
+    setWebhookHeaderDrafts(mapHeadersToDrafts(data.headers as Record<string, unknown> | undefined));
+  }, [isWebhookNode, node.id, data.url, data.body, data.resultName, JSON.stringify(data.headers || {})]);
+
+  useEffect(() => {
+    if (!isWebhookNode) return;
+
+    const currentHeaders = normalizeHeaders(data.headers as Record<string, unknown> | undefined);
+    const nextHeaders = mapDraftsToHeaders(webhookHeaderDrafts);
+    const timeoutId = window.setTimeout(() => {
+      if (String(data.url || "") !== webhookUrlDraft) update("url", webhookUrlDraft);
+      if (String(data.body || "") !== webhookBodyDraft) update("body", webhookBodyDraft);
+      if (String(data.resultName || "") !== webhookResultNameDraft) update("resultName", webhookResultNameDraft);
+      if (!areHeaderMapsEqual(currentHeaders, nextHeaders)) update("headers", nextHeaders);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    isWebhookNode,
+    data.headers,
+    data.body,
+    data.resultName,
+    data.url,
+    update,
+    webhookBodyDraft,
+    webhookHeaderDrafts,
+    webhookResultNameDraft,
+    webhookUrlDraft,
+  ]);
 
   const addToList = (key: string) => {
     const list = [...(data[key] || []), ""];
