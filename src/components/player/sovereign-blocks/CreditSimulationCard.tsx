@@ -150,7 +150,7 @@ export function CreditSimulationCard({ data, onAction }: Props) {
           )}
         </div>
 
-        {data.actions && data.actions.length > 0 && (
+        {Array.isArray(data.actions) && data.actions.length > 0 && (
           <div className="waka-block-actions px-5 py-4 border-t border-[hsl(220,15%,92%)]">
             {data.actions.map((action, i) => (
               <button key={i} onClick={() => onAction?.(action)}>{action}</button>
