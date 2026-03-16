@@ -280,8 +280,8 @@
 .waka-block-compact > div {
   @apply space-y-1;
 }
-.waka-block-compact button,
-.waka-block-compact [role="button"] {
+.waka-block-compact button:not(.waka-cart-btn),
+.waka-block-compact [role="button"]:not(.waka-cart-btn) {
   min-height: 48px;
   min-width: 48px;
   border-radius: 8px;
@@ -341,8 +341,8 @@
 .waka-block-standard > div {
   @apply space-y-2;
 }
-.waka-block-standard button,
-.waka-block-standard [role="button"] {
+.waka-block-standard button:not(.waka-cart-btn),
+.waka-block-standard [role="button"]:not(.waka-cart-btn) {
   min-height: 36px;
   border-radius: 8px;
   @apply text-sm font-medium;
@@ -407,8 +407,8 @@
   border-radius: 10px;
   background: hsl(var(--muted) / 0.5);
 }
-.waka-block-expanded button,
-.waka-block-expanded [role="button"] {
+.waka-block-expanded button:not(.waka-cart-btn),
+.waka-block-expanded [role="button"]:not(.waka-cart-btn) {
   min-height: 44px;
   border-radius: 12px;
   @apply text-sm font-semibold px-6;

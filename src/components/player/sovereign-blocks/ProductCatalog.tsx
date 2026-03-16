@@ -318,7 +318,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                       e.stopPropagation();
                       handleAddToCart(product);
                     }}
-                    className="h-9 w-9 rounded-full bg-primary flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-90 transition-all"
+                    className="waka-cart-btn h-9 w-9 rounded-full bg-primary flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-90 transition-all"
                   >
                     <ShoppingCart className="h-4 w-4 text-white" />
                   </button>
@@ -420,7 +420,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                         e.stopPropagation();
                         handleAddToCart(product);
                       }}
-                      className="h-9 w-9 rounded-full bg-primary flex items-center justify-center shadow-md active:scale-90 transition-all hover:bg-primary/90 hover:shadow-lg"
+                      className="waka-cart-btn h-9 w-9 rounded-full bg-primary flex items-center justify-center shadow-md active:scale-90 transition-all hover:bg-primary/90 hover:shadow-lg"
                     >
                       <ShoppingCart className="h-4 w-4 text-white" />
                     </button>
