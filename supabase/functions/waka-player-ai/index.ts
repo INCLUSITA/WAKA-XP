@@ -713,17 +713,17 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "acquire_service",
-      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit. ⛔ Si financement → utiliser simulate_credit + create_credit. Flux multi-étapes: sans SKU→catalogue, avec SKU→détails, avec accept=true→créer deal.",
+      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit. ⛔ Si financement → utiliser simulate_credit + create_credit. Flux multi-étapes: sans SKU→catalogue de variantes, avec SKU→détails, avec accept=true→créer deal. ⚠️ client_id est OPTIONNEL pour consulter le catalogue (browsing). Il n'est requis QUE pour créer le deal (accept=true). Aliases: assurance_sante, assurance, seguro, insurance → microseguro_salud.",
       parameters: {
         type: "object",
         properties: {
-          client_id: { type: "string" },
-          product_catalog_key: { type: "string", description: "fibre_optique ou microseguro_salud" },
+          client_id: { type: "string", description: "Optionnel pour browsing. Requis pour accept=true (création deal)." },
+          product_catalog_key: { type: "string", description: "fibre_optique, microseguro_salud, assurance_sante, assurance, seguro_salud, insurance" },
           product_variant_sku: { type: "string" },
           accept: { type: "boolean" },
           channel: { type: "string", enum: ["whatsapp", "voice", "app", "web"], default: "app" },
         },
-        required: ["client_id", "product_catalog_key"],
+        required: ["product_catalog_key"],
       },
     },
   },
