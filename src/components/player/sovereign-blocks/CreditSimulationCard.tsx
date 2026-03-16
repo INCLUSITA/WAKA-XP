@@ -71,7 +71,7 @@ export function CreditSimulationCard({ data, onAction }: Props) {
             <p className="text-[13px] font-bold text-[hsl(160,60%,30%)]">{data.monthly_payment}</p>
           </div>
         </div>
-        {data.actions && data.actions.length > 0 && (
+        {Array.isArray(data.actions) && data.actions.length > 0 && (
           <div className="waka-block-actions px-3 py-2 border-t border-[hsl(220,15%,93%)]">
             {data.actions.map((action, i) => (
               <button key={i} onClick={() => onAction?.(action)}>{action}</button>
@@ -150,7 +150,7 @@ export function CreditSimulationCard({ data, onAction }: Props) {
           )}
         </div>
 
-        {data.actions && data.actions.length > 0 && (
+        {Array.isArray(data.actions) && data.actions.length > 0 && (
           <div className="waka-block-actions px-5 py-4 border-t border-[hsl(220,15%,92%)]">
             {data.actions.map((action, i) => (
               <button key={i} onClick={() => onAction?.(action)}>{action}</button>
@@ -227,7 +227,7 @@ export function CreditSimulationCard({ data, onAction }: Props) {
         )}
       </div>
 
-      {data.actions && data.actions.length > 0 && (
+      {Array.isArray(data.actions) && data.actions.length > 0 && (
         <div className="divide-y divide-[hsl(220,15%,93%)] border-t border-[hsl(220,15%,92%)]">
           {data.actions.map((action, i) => (
             <button
