@@ -215,7 +215,7 @@ export function FlowCreationWizard({ open, onClose, onCreated, tenantId }: FlowC
     } finally {
       setIsGenerating(false);
     }
-  }, [name, description, engineId, tenantId, textInstructions, jsonContent, yamlContent, assets, onCreated]);
+  }, [name, description, engineId, tenantId, textInstructions, jsonContent, yamlContent, assets, onCreated, secretValues]);
 
   /* ── Direct import (JSON/YAML without AI) ── */
   const handleDirectImport = useCallback(async () => {
