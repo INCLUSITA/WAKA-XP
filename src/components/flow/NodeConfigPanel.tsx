@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Node } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -311,8 +311,51 @@ function AttachmentsEditor({ attachments, onChange, channel }: { attachments: (s
     </div>
   );
 }
+
+interface HeaderDraft {
+  id: string;
+  key: string;
+  value: string;
+}
+
+const createHeaderDraftId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+function normalizeHeaders(headers?: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers || {})
+      .filter(([key]) => key.trim().length > 0)
+      .map(([key, value]) => [key, String(value ?? "")])
+  );
+}
+
+function mapHeadersToDrafts(headers?: Record<string, unknown>): HeaderDraft[] {
+  return Object.entries(normalizeHeaders(headers)).map(([key, value]) => ({
+    id: createHeaderDraftId(),
+    key,
+    value,
+  }));
+}
+
+function mapDraftsToHeaders(drafts: HeaderDraft[]): Record<string, string> {
+  return Object.fromEntries(
+    drafts
+      .map(({ key, value }) => [key.trim(), value] as const)
+      .filter(([key]) => key.length > 0)
+  );
+}
+
+function areHeaderMapsEqual(a: Record<string, string>, b: Record<string, string>) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every((key) => a[key] === b[key]);
+}
+
 export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, isPinnedStart, onPinAsStart, onUnpinStart, availableEntities = [] }: NodeConfigPanelProps) {
   const data = node.data as Record<string, any>;
+  const isWebhookNode = node.type === "webhook";
 
   const update = useCallback(
     (key: string, value: unknown) => {
@@ -320,6 +363,48 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
     },
     [node.id, data, onUpdate]
   );
+
+  const [webhookUrlDraft, setWebhookUrlDraft] = useState(String(data.url || ""));
+  const [webhookBodyDraft, setWebhookBodyDraft] = useState(String(data.body || ""));
+  const [webhookResultNameDraft, setWebhookResultNameDraft] = useState(String(data.resultName || ""));
+  const [webhookHeaderDrafts, setWebhookHeaderDrafts] = useState<HeaderDraft[]>(() =>
+    mapHeadersToDrafts(data.headers as Record<string, unknown> | undefined)
+  );
+
+  useEffect(() => {
+    if (!isWebhookNode) return;
+
+    setWebhookUrlDraft(String(data.url || ""));
+    setWebhookBodyDraft(String(data.body || ""));
+    setWebhookResultNameDraft(String(data.resultName || ""));
+    setWebhookHeaderDrafts(mapHeadersToDrafts(data.headers as Record<string, unknown> | undefined));
+  }, [isWebhookNode, node.id, data.url, data.body, data.resultName, JSON.stringify(data.headers || {})]);
+
+  useEffect(() => {
+    if (!isWebhookNode) return;
+
+    const currentHeaders = normalizeHeaders(data.headers as Record<string, unknown> | undefined);
+    const nextHeaders = mapDraftsToHeaders(webhookHeaderDrafts);
+    const timeoutId = window.setTimeout(() => {
+      if (String(data.url || "") !== webhookUrlDraft) update("url", webhookUrlDraft);
+      if (String(data.body || "") !== webhookBodyDraft) update("body", webhookBodyDraft);
+      if (String(data.resultName || "") !== webhookResultNameDraft) update("resultName", webhookResultNameDraft);
+      if (!areHeaderMapsEqual(currentHeaders, nextHeaders)) update("headers", nextHeaders);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    isWebhookNode,
+    data.headers,
+    data.body,
+    data.resultName,
+    data.url,
+    update,
+    webhookBodyDraft,
+    webhookHeaderDrafts,
+    webhookResultNameDraft,
+    webhookUrlDraft,
+  ]);
 
   const addToList = (key: string) => {
     const list = [...(data[key] || []), ""];
@@ -338,21 +423,17 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
   };
 
   const addHeader = () => {
-    const headers = { ...(data.headers || {}), "": "" };
-    update("headers", headers);
+    setWebhookHeaderDrafts((prev) => [...prev, { id: createHeaderDraftId(), key: "", value: "" }]);
   };
 
-  const updateHeader = (oldKey: string, newKey: string, value: string) => {
-    const headers = { ...(data.headers || {}) };
-    if (oldKey !== newKey) delete headers[oldKey];
-    headers[newKey] = value;
-    update("headers", headers);
+  const updateHeader = (id: string, field: "key" | "value", value: string) => {
+    setWebhookHeaderDrafts((prev) =>
+      prev.map((header) => (header.id === id ? { ...header, [field]: value } : header))
+    );
   };
 
-  const removeHeader = (key: string) => {
-    const headers = { ...(data.headers || {}) };
-    delete headers[key];
-    update("headers", headers);
+  const removeHeader = (id: string) => {
+    setWebhookHeaderDrafts((prev) => prev.filter((header) => header.id !== id));
   };
 
   const renderListEditor = (key: string, label: string, placeholder: string) => (
@@ -692,8 +773,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">URL</Label>
               <Input
-                value={data.url || ""}
-                onChange={(e) => update("url", e.target.value)}
+                value={webhookUrlDraft}
+                onChange={(e) => setWebhookUrlDraft(e.target.value)}
                 placeholder="https://api.example.com/endpoint"
                 className="font-mono text-sm"
               />
@@ -718,21 +799,21 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
                   <Plus className="mr-1 h-3 w-3" /> Add
                 </Button>
               </div>
-              {Object.entries(data.headers || {}).map(([key, value], i) => (
-                <div key={i} className="flex gap-1">
+              {webhookHeaderDrafts.map((header) => (
+                <div key={header.id} className="flex gap-1">
                   <Input
-                    value={key}
-                    onChange={(e) => updateHeader(key, e.target.value, value as string)}
+                    value={header.key}
+                    onChange={(e) => updateHeader(header.id, "key", e.target.value)}
                     placeholder="Header name"
                     className="w-1/2 text-xs"
                   />
                   <Input
-                    value={value as string}
-                    onChange={(e) => updateHeader(key, key, e.target.value)}
+                    value={header.value}
+                    onChange={(e) => updateHeader(header.id, "value", e.target.value)}
                     placeholder="Value"
                     className="w-1/2 text-xs"
                   />
-                  <Button variant="ghost" size="icon" onClick={() => removeHeader(key)} className="flex-shrink-0">
+                  <Button variant="ghost" size="icon" onClick={() => removeHeader(header.id)} className="flex-shrink-0">
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                 </div>
@@ -741,8 +822,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">Request Body (JSON)</Label>
               <ExpressionInput
-                value={data.body || ""}
-                onChange={(v) => update("body", v)}
+                value={webhookBodyDraft}
+                onChange={setWebhookBodyDraft}
                 placeholder='{"key": "@results.value"}'
                 className="min-h-[100px]"
                 multiline
@@ -751,8 +832,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, onDelete, channel, is
             <div className="space-y-2">
               <Label className="text-foreground">Save as Result</Label>
               <Input
-                value={data.resultName || ""}
-                onChange={(e) => update("resultName", e.target.value)}
+                value={webhookResultNameDraft}
+                onChange={(e) => setWebhookResultNameDraft(e.target.value)}
                 placeholder="webhook_result"
               />
             </div>
