@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
+import { normalizeSecretValue } from "@/lib/secretInput";
 
 /* ── AI Engine types ── */
 export type EngineId = "waka-ai" | "azure-openai" | "byom";

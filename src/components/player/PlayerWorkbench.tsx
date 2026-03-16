@@ -25,6 +25,7 @@ import AIEngineSelector, { type EngineSelection } from "@/components/demos/AIEng
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { detectSecretReferences, getMissingSecretRefs, type RequiredSecretRef } from "@/lib/flowSecretDetection";
+import { normalizeSecretValue } from "@/lib/secretInput";
 
 interface PlayerWorkbenchProps {
   /** Current flow ID being edited */
