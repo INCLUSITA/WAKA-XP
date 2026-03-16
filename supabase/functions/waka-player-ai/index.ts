@@ -663,7 +663,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "create_credit",
-      description: "Créer un crédit formel. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL. ⚠️ Exiger show_device_lock_consent AVANT cet appel pour BNPL.",
+      description: "CRÉER un crédit formel (action DÉFINITIVE). Appeler APRÈS que le client a accepté la simulation. UNE SEULE FOIS. device_lock=true OBLIGATOIRE pour BNPL. ⚠️ show_device_lock_consent AVANT cet appel pour BNPL. ⛔ NE PAS confondre avec simulate_credit.",
       parameters: {
         type: "object",
         properties: {
