@@ -1,8 +1,10 @@
 # WAKA XP Player — Documento Completo para Codex
 
-> **Fecha:** 13 de marzo de 2026  
+> **Fecha:** 16 de marzo de 2026 (actualizado desde 13 de marzo)  
 > **Propósito:** Documento de referencia exhaustivo para Codex y cualquier agente de IA que necesite comprender, mantener o evolucionar el Waka XP Player.  
-> **Relación con el proyecto:** El Player es una **capa troncal** de Waka XP, documentada en `docs/waka-xp-strategic-foundation.md` §19b y referenciada en `docs/WAKA_XP_STATUS_REPORT_2026-03-13.md` como Fase 1b.
+> **Relación con el proyecto:** El Player es una **capa troncal** de Waka XP, documentada en `docs/waka-xp-strategic-foundation.md` §19b y referenciada en `docs/WAKA_XP_STATUS_REPORT_2026-03-13.md` como Fase 1b.  
+> **Documentos relacionados:**
+> - [`docs/WAKA_XP_RENDER_GUARANTEE.md`](./WAKA_XP_RENDER_GUARANTEE.md) — Spec `x-waka-xp-display` v1 y Render Guarantee
 
 ---
 
