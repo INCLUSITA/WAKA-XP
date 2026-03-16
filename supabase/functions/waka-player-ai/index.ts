@@ -86,20 +86,25 @@ Tu disposes de blocs souverains pour afficher des interfaces interactives :
 4. acquire_service(fibre_optique, sku, accept=true) → créer deal
 5. Confirmer avec show_payment_confirmation
 
-### FLUX ASSURANCE — ⚠️ DEUX CHEMINS DISTINCTS
+### FLUX ASSURANCE — ⚠️ C'EST UN SERVICE AVEC VARIANTES, PAS UN CRÉDIT
+L'assurance/seguro est un PRODUIT avec des variantes (Individual/Family). C'est géré par acquire_service, PAS par simulate_credit/create_credit.
 **TOUJOURS DEMANDER**: "Comptant ou en plusieurs fois?" AVANT de choisir le chemin
 
+**ÉTAPE 1 — Découvrir les plans (TOUJOURS):**
+1. acquire_service(product_catalog_key="microseguro_salud") SANS client_id → afficher plans avec show_service_plans
+   Aliases acceptés: assurance_sante, assurance, seguro_salud, seguro, insurance, health_insurance → tous résolvent à microseguro_salud
+2. Le client choisit un plan (SKU)
+
 **CHEMIN A — Comptant (DEAL, pas de crédit):**
-1. acquire_service(microseguro_salud) → afficher plans avec show_service_plans
-2. Client choisit → acquire_service(microseguro_salud, sku, accept=true)
-3. Confirmer avec show_payment_confirmation
+1. acquire_service(microseguro_salud, sku, client_id, accept=true) → créer le deal
+2. Confirmer avec show_payment_confirmation
 ⛔ NE PAS appeler simulate_credit ni create_credit
 
 **CHEMIN B — Financement (CRÉDIT):**
-1. simulate_credit(seguro_salud) → afficher avec show_credit_simulation
+1. simulate_credit(seguro_salud, amount=prix_du_plan) → afficher avec show_credit_simulation
 2. Client accepte → create_credit(seguro_salud)
 3. Confirmer avec show_credit_contract
-⛔ NE PAS appeler acquire_service
+⛔ NE PAS appeler acquire_service pour la création
 
 ### FLUX MOMO
 1. Vérifier que le client existe (create_client si nécessaire)
@@ -552,7 +557,7 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "get_product_rules",
-      description: "OBLIGATOIRE: Découvrir les produits actifs et leurs contraintes. Appeler SANS paramètres pour voir tous les produits. Avec credit_type pour les règles spécifiques.",
+      description: "OBLIGATOIRE: Découvrir les produits actifs et leurs contraintes. Appeler SANS paramètres pour voir tous les produits. ⚠️ L'assurance/seguro est un SERVICE avec variantes (Individual/Family), PAS un crédit. Utiliser acquire_service pour les assurances, PAS simulate_credit.",
       parameters: {
         type: "object",
         properties: {
@@ -708,17 +713,17 @@ const WAKA_CORE_TOOLS = [
     type: "function",
     function: {
       name: "acquire_service",
-      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit. ⛔ Si financement → utiliser simulate_credit + create_credit. Flux multi-étapes: sans SKU→catalogue, avec SKU→détails, avec accept=true→créer deal.",
+      description: "Acquérir un service COMPTANT (fibre, assurance). Crée un DEAL, PAS un crédit. ⛔ Si financement → utiliser simulate_credit + create_credit. Flux multi-étapes: sans SKU→catalogue de variantes, avec SKU→détails, avec accept=true→créer deal. ⚠️ client_id est OPTIONNEL pour consulter le catalogue (browsing). Il n'est requis QUE pour créer le deal (accept=true). Aliases: assurance_sante, assurance, seguro, insurance → microseguro_salud.",
       parameters: {
         type: "object",
         properties: {
-          client_id: { type: "string" },
-          product_catalog_key: { type: "string", description: "fibre_optique ou microseguro_salud" },
+          client_id: { type: "string", description: "Optionnel pour browsing. Requis pour accept=true (création deal)." },
+          product_catalog_key: { type: "string", description: "fibre_optique, microseguro_salud, assurance_sante, assurance, seguro_salud, insurance" },
           product_variant_sku: { type: "string" },
           accept: { type: "boolean" },
           channel: { type: "string", enum: ["whatsapp", "voice", "app", "web"], default: "app" },
         },
-        required: ["client_id", "product_catalog_key"],
+        required: ["product_catalog_key"],
       },
     },
   },
@@ -1120,6 +1125,21 @@ function extractScenarioDisplayHints(scenarioConfig?: Record<string, unknown>): 
   return hints;
 }
 
+// Product key aliases — normalize before calling CORE
+const PRODUCT_KEY_ALIASES: Record<string, string> = {
+  fiber_optic: "fibre_optique",
+  fiber: "fibre_optique",
+  fibra_optica: "fibre_optique",
+  fibre: "fibre_optique",
+  assurance_sante: "microseguro_salud",
+  assurance: "microseguro_salud",
+  seguro_salud: "microseguro_salud",
+  seguro: "microseguro_salud",
+  insurance: "microseguro_salud",
+  health_insurance: "microseguro_salud",
+  micro_assurance: "microseguro_salud",
+};
+
 async function executeWakaCoreCall(
   toolName: string,
   args: Record<string, unknown>,
@@ -1131,6 +1151,15 @@ async function executeWakaCoreCall(
   const endpoint = TOOL_ENDPOINTS[toolName];
   if (!endpoint) {
     return { data: { error: `Unknown tool: ${toolName}` } };
+  }
+
+  // Normalize product_catalog_key aliases
+  if (args.product_catalog_key && typeof args.product_catalog_key === "string") {
+    const normalized = PRODUCT_KEY_ALIASES[args.product_catalog_key.toLowerCase()];
+    if (normalized) {
+      console.log(`Normalized product key: "${args.product_catalog_key}" → "${normalized}"`);
+      args.product_catalog_key = normalized;
+    }
   }
 
   try {
