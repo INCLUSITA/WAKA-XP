@@ -396,7 +396,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                     background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
                   }}
                 >
-                  <span className="text-4xl">{product.emoji || "📦"}</span>
+                  <ProductImage product={product} sizeClass="text-4xl" imgClass="w-full h-full object-cover" />
                   {product.badge && (
                     <span className="absolute top-1.5 right-1.5 bg-destructive text-destructive-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                       {product.badge}
