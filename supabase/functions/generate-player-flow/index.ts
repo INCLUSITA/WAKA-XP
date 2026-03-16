@@ -293,6 +293,12 @@ async function generateWithAI(
     }
   }
 
+  const persistedSecretValues = sourceData.secretValues && typeof sourceData.secretValues === "object"
+    ? Object.fromEntries(
+        Object.entries(sourceData.secretValues).filter(([, value]) => typeof value === "string" && value.trim().length > 0),
+      )
+    : undefined;
+
   const systemPrompt = `Eres un generador de flujos conversacionales para WAKA XP.
 
 Tu tarea es generar DOS cosas basándote EXCLUSIVAMENTE en las fuentes proporcionadas:
