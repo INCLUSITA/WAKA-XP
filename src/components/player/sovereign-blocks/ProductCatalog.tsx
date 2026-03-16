@@ -22,6 +22,7 @@ export interface CatalogProduct {
   name: string;
   price: string;
   image?: string;
+  image_url?: string;
   emoji?: string;
   rating?: number;
   badge?: string;
@@ -30,6 +31,14 @@ export interface CatalogProduct {
   features?: string[];
   stock?: string;
   category?: string;
+}
+
+function ProductImage({ product, sizeClass = "text-4xl", imgClass = "w-full h-full object-cover" }: { product: CatalogProduct; sizeClass?: string; imgClass?: string }) {
+  const src = product.image || product.image_url;
+  if (src) {
+    return <img src={src} alt={product.name} className={cn(imgClass, "rounded")} loading="lazy" />;
+  }
+  return <span className={sizeClass}>{product.emoji || "📦"}</span>;
 }
 
 /* ── Product Detail Overlay ── */
