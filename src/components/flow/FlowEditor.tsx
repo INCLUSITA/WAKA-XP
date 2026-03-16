@@ -623,6 +623,9 @@ function FlowEditorInner() {
       shortcutScopeRef.current = target.closest(".react-flow") ? "canvas" : null;
     };
 
+    const handlePointerDown = (e: Event) => updateShortcutScope(e.target);
+    const handleFocusIn = (e: Event) => updateShortcutScope(e.target);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const isModifier = e.metaKey || e.ctrlKey;
 
@@ -659,13 +662,13 @@ function FlowEditorInner() {
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", (e) => updateShortcutScope(e.target), true);
-    document.addEventListener("focusin", (e) => updateShortcutScope(e.target), true);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("focusin", handleFocusIn, true);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", (e) => updateShortcutScope(e.target), true);
-      document.removeEventListener("focusin", (e) => updateShortcutScope(e.target), true);
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("focusin", handleFocusIn, true);
     };
   }, [selectedNode, setNodes]);
 
