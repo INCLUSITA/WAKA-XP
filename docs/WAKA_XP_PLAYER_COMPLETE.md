@@ -651,6 +651,20 @@ Sandbox ←→ Stable ←→ Production
 | BYOM funcional (§19b.6) | ❌ | Routing de modelos propios del usuario |
 | Azure OpenAI (§19b.6) | ❌ | Configuración de claves Azure |
 | Previsualización pre-guardado | ❌ | Mostrar mensajes generados antes de persistir |
+| `x-waka-xp-footer` (footer persistente) | ⚠️ Spec definida | Implementar en template engine |
+
+### 10.3. Conceptos materializados recientemente (16 marzo 2026)
+
+| Concepto | Materialización |
+|---|---|
+| Render Guarantee (nuevo) | Motor de plantillas `x-waka-xp-display` que asegura bloques soberanos sin intervención IA |
+| WAKA CORE Integration (§7, Fase 7) | 14 herramientas API reales operativas en waka-player-ai |
+| displayMap declarativo (nuevo) | Mapeo tool→bloque en scenario_config, parseado desde YAML |
+| Template engine (nuevo) | Resolución de rutas + interpolación de campos para generar bloques |
+| XP Spatial (nuevo) | Capa de presentación 3D con superficies soberanas |
+| Block Variants (§16.1) | Variantes compact/standard/expanded/zero-rated por bloque |
+| PlayerContextProvider (§16.1) | Contexto enriquecido con persona, tools, knowledge, policies |
+| PlayerMemoryProvider (nuevo) | Memoria de sesión con journey tracking |
 
 ---
 
