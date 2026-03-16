@@ -851,7 +851,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const WAKA_API_KEY = Deno.env.get("WAKA_CORE_API_KEY");
+    const WAKA_API_KEY = (Deno.env.get("WAKA_CORE_API_KEY") || "").trim();
     if (!WAKA_API_KEY) throw new Error("WAKA_CORE_API_KEY is not configured");
 
     const modeContext = dataMode === "zero-rated"
