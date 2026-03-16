@@ -93,14 +93,31 @@ function extractOptionsFromText(text: string): string[] {
 
 export default function WakaPlayerDemo() {
   const { tenantId } = useWorkspace();
+  const [searchParams] = useSearchParams();
+  const routeFlowId = searchParams.get("flow") || "free";
   const [dataMode, setDataMode] = useState<DataMode>("libre");
   const [scenarioConfig, setScenarioConfig] = useState<Record<string, any>>({});
 
+  useEffect(() => {
+    setDataMode("libre");
+    setScenarioConfig({});
+  }, [routeFlowId]);
+
   return (
-    <ExperienceRuntimeProvider tenantId={tenantId} dataPolicy={dataMode}>
-      <PlayerContextProvider scenarioConfig={scenarioConfig} systemPrompt={scenarioConfig.systemPrompt || null}>
-        <PlayerMemoryProvider tenantId={tenantId || undefined}>
-          <WakaPlayerDemoInner dataMode={dataMode} setDataMode={setDataMode} scenarioConfig={scenarioConfig} setScenarioConfig={setScenarioConfig} />
+    <ExperienceRuntimeProvider key={`runtime-${routeFlowId}`} tenantId={tenantId} dataPolicy={dataMode}>
+      <PlayerContextProvider
+        key={`context-${routeFlowId}`}
+        scenarioConfig={scenarioConfig}
+        systemPrompt={scenarioConfig.systemPrompt || null}
+      >
+        <PlayerMemoryProvider key={`memory-${routeFlowId}`} tenantId={tenantId || undefined}>
+          <WakaPlayerDemoInner
+            key={`inner-${routeFlowId}`}
+            dataMode={dataMode}
+            setDataMode={setDataMode}
+            scenarioConfig={scenarioConfig}
+            setScenarioConfig={setScenarioConfig}
+          />
         </PlayerMemoryProvider>
       </PlayerContextProvider>
     </ExperienceRuntimeProvider>
