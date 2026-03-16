@@ -294,7 +294,7 @@ export function ProductCatalog({ products, title, onAddToCart, onProductClick }:
                   background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))",
                 }}
               >
-                <span className="text-5xl group-hover:scale-110 transition-transform">{product.emoji || "📦"}</span>
+                <span className="group-hover:scale-110 transition-transform"><ProductImage product={product} sizeClass="text-5xl" imgClass="w-full h-full object-cover" /></span>
                 {product.badge && (
                   <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                     {product.badge}
