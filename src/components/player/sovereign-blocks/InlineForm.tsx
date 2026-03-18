@@ -122,7 +122,7 @@ export function InlineForm({ title, fields, submitLabel = "Confirmer", icon, onS
                 placeholder={field.placeholder}
                 value={values[field.id] || ""}
                 onChange={(e) => handleChange(field.id, e.target.value)}
-                className="w-full h-8 px-2.5 text-[12px] border border-[hsl(220,15%,88%)] rounded-lg bg-white focus:ring-1 focus:ring-[hsl(160,60%,40%)]/30 focus:outline-none transition-shadow"
+                className="w-full h-8 px-2.5 text-[12px] text-[hsl(220,15%,15%)] border border-[hsl(220,15%,88%)] rounded-lg bg-white focus:ring-1 focus:ring-[hsl(160,60%,40%)]/30 focus:outline-none transition-shadow"
               />
             )}
           </div>
