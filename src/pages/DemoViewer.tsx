@@ -277,7 +277,14 @@ export default function DemoViewer() {
     if (!version) return;
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: version.jsx };
-      await saveDemo(updated);
+      const result = await saveDemo(updated);
+      if (result === "stable_guard") {
+        setStableGuardPending({ demo: updated, callback: () => {
+          setUploadedDemo(updated);
+          toast({ title: "Version restored", description: `Restored: "${version.label}"` });
+        }});
+        return;
+      }
       setUploadedDemo(updated);
     }
     toast({ title: "Version restored", description: `Restored: "${version.label}"` });
