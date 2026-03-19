@@ -147,6 +147,9 @@ export default function DemoViewer() {
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
   const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
+  
+  // Stable guard: pending save that requires confirmation
+  const [stableGuardPending, setStableGuardPending] = useState<{ demo: UploadedDemo; callback?: () => void } | null>(null);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
