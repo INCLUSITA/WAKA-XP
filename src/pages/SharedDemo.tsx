@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShieldX, Eye, Clock } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 
+function setMeta(property: string, content: string) {
+  const el = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`) as HTMLMetaElement | null;
+  if (el) el.content = content;
+}
+
 interface DemoShare {
   id: string;
   token: string;
