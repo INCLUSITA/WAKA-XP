@@ -1,4 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, memo, forwardRef, Fragment } from "react";
+
+/** Detect browser zoom and return inverse scale factor so content stays 1:1 */
+function useZoomCompensation() {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const update = () => {
+      const ratio = window.devicePixelRatio || 1;
+      // baseline is the DPR when page first loaded at 100%
+      const baseline = Math.round(ratio) || 1;
+      setScale(baseline / ratio);
+    };
+    update();
+    const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    // Re-check on any zoom change
+    const interval = setInterval(update, 500);
+    mq.addEventListener?.("change", update);
+    return () => {
+      clearInterval(interval);
+      mq.removeEventListener?.("change", update);
+    };
+  }, []);
+  return scale;
+}
 import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
@@ -34,6 +57,7 @@ function createUsePersistentState(demoId: string) {
 
 export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scenarioNotes, onSaveNotes, readOnly = false }: RuntimeJSXRendererProps) {
   const usePersistentState = useMemo(() => createUsePersistentState(demoId), [demoId]);
+  const zoomScale = useZoomCompensation();
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,10 +201,12 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
   return (
     <ErrorBoundary>
       <div className="runtime-jsx-root" style={{
-        width: "100%",
-        minHeight: "100vh",
+        width: `${100 / zoomScale}%`,
+        minHeight: `${100 / zoomScale}vh`,
         overflow: "auto",
         boxSizing: "border-box",
+        transform: `scale(${zoomScale})`,
+        transformOrigin: "top left",
       }}>
         <Component />
       </div>
