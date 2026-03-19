@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShieldX, Eye, Clock } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 
+function setMeta(property: string, content: string) {
+  const el = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`) as HTMLMetaElement | null;
+  if (el) el.content = content;
+}
+
 interface DemoShare {
   id: string;
   token: string;
@@ -60,6 +65,16 @@ export default function SharedDemo() {
         }
 
         setDemo(data as DemoShare);
+
+        // Set dynamic document title & OG meta
+        const fullTitle = `${data.title} — WAKA XP`;
+        document.title = fullTitle;
+        setMeta("og:title", fullTitle);
+        setMeta("twitter:title", fullTitle);
+        if (data.description) {
+          setMeta("og:description", data.description);
+          setMeta("twitter:description", data.description);
+        }
 
         // Increment view count
         await (supabase as any).rpc("increment_demo_share_view", { share_token: token });
