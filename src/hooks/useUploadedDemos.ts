@@ -47,7 +47,17 @@ export function useUploadedDemos() {
     fetchDemos();
   }, [fetchDemos]);
 
-  const saveDemo = useCallback(async (demo: UploadedDemo) => {
+  const saveDemo = useCallback(async (demo: UploadedDemo, opts?: { bypassStableGuard?: boolean }) => {
+    // Guard: block writes to stable demos unless explicitly confirmed
+    if (demo.status === "stable" && !opts?.bypassStableGuard) {
+      // Check current DB status in case it was promoted after load
+      const { data } = await demosTable().select("status").eq("id", demo.id).maybeSingle();
+      if (data?.status === "stable") {
+        console.warn("[useUploadedDemos] ⛔ Blocked save to stable demo:", demo.id, "— set bypassStableGuard to proceed");
+        return "stable_guard" as const;
+      }
+    }
+
     const { error } = await demosTable().upsert({
       id: demo.id,
       title: demo.title,
