@@ -4,7 +4,7 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Copy, Check, Eye } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Copy, Check, Eye, AlertTriangle } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
