@@ -1,4 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, memo, forwardRef, Fragment } from "react";
+
+/** Detect browser zoom and return inverse scale factor so content stays 1:1 */
+function useZoomCompensation() {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const update = () => {
+      const ratio = window.devicePixelRatio || 1;
+      // baseline is the DPR when page first loaded at 100%
+      const baseline = Math.round(ratio) || 1;
+      setScale(baseline / ratio);
+    };
+    update();
+    const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    // Re-check on any zoom change
+    const interval = setInterval(update, 500);
+    mq.addEventListener?.("change", update);
+    return () => {
+      clearInterval(interval);
+      mq.removeEventListener?.("change", update);
+    };
+  }, []);
+  return scale;
+}
 import { transform } from "sucrase";
 
 interface RuntimeJSXRendererProps {
