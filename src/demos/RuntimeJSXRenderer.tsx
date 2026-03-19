@@ -43,15 +43,15 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       // Strip import/export before transpiling to avoid module issues
       let preProcessed = jsxSource;
 
-      // Strip ES module syntax (single-line + multi-line imports)
-      // Strategy: iteratively remove import statements to handle multi-line cases
-      // 1. Multi-line imports: import ... { \n ... \n } from "..."
-      preProcessed = preProcessed.replace(/import\s+type\s[\s\S]*?from\s+['"][^'"]*['"]\s*;?/g, "");
-      preProcessed = preProcessed.replace(/import\s*\{[\s\S]*?\}\s*from\s+['"][^'"]*['"]\s*;?/g, "");
-      // 2. Single-line: import X from "...", import * as X from "..."
-      preProcessed = preProcessed.replace(/import\s+[\w*][\s\S]*?from\s+['"][^'"]*['"]\s*;?/g, "");
-      // 3. Side-effect imports: import "..."
-      preProcessed = preProcessed.replace(/import\s+['"][^'"]*['"]\s*;?/g, "");
+      // Strip ES module syntax (line-anchored to avoid matching CSS @import inside strings)
+      // 1. Type imports: import type ... from "..."
+      preProcessed = preProcessed.replace(/^import\s+type\s[\s\S]*?from\s+['"][^'"]*['"]\s*;?/gm, "");
+      // 2. Multi-line imports: import { \n ... \n } from "..."
+      preProcessed = preProcessed.replace(/^import\s*\{[\s\S]*?\}\s*from\s+['"][^'"]*['"]\s*;?/gm, "");
+      // 3. Single-line: import X from "...", import * as X from "..."
+      preProcessed = preProcessed.replace(/^import\s+[\w*][\s\S]*?from\s+['"][^'"]*['"]\s*;?/gm, "");
+      // 4. Side-effect imports: import "..."
+      preProcessed = preProcessed.replace(/^import\s+['"][^'"]*['"]\s*;?/gm, "");
 
       // Capture default export component name BEFORE stripping exports
       let componentName = "App";
