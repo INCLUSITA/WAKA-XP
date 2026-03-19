@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import wakaLogo from "@/assets/waka-logo.png";
 
+function setMeta(property: string, content: string) {
+  let el = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`) as HTMLMetaElement | null;
+  if (el) {
+    el.content = content;
+  }
+}
+
 const LoadingFallback = () => (
   <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
     <div className="flex items-center gap-3">
