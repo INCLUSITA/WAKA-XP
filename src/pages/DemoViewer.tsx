@@ -424,6 +424,44 @@ export default function DemoViewer() {
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Stable guard confirmation dialog */}
+      <Dialog open={!!stableGuardPending} onOpenChange={(open) => { if (!open) setStableGuardPending(null); }}>
+        <DialogContent className="max-w-md border-destructive/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Demo en production
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cette demo est marquée <strong className="text-foreground">stable</strong> et partagée avec des clients.
+            Modifier son contenu affectera immédiatement le lien public.
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            Voulez-vous vraiment appliquer ce changement ?
+          </p>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setStableGuardPending(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!stableGuardPending) return;
+                const result = await saveDemo(stableGuardPending.demo, { bypassStableGuard: true });
+                if (result === true) {
+                  stableGuardPending.callback?.();
+                  toast({ title: "✅ Demo stable modifiée", description: "Les changements sont appliqués en production." });
+                }
+                setStableGuardPending(null);
+              }}
+            >
+              Confirmer la modification
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
