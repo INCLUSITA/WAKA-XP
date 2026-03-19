@@ -201,10 +201,12 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
   return (
     <ErrorBoundary>
       <div className="runtime-jsx-root" style={{
-        width: "100%",
-        minHeight: "100vh",
+        width: `${100 / zoomScale}%`,
+        minHeight: `${100 / zoomScale}vh`,
         overflow: "auto",
         boxSizing: "border-box",
+        transform: `scale(${zoomScale})`,
+        transformOrigin: "top left",
       }}>
         <Component />
       </div>
