@@ -23,6 +23,18 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
   const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string> } | null>(null);
   const [loading, setLoading] = useState(!demo);
 
+  // Set dynamic document title & OG meta tags
+  useEffect(() => {
+    const title = demo?.title || uploadedData?.title;
+    if (title) {
+      const fullTitle = `${title} — WAKA XP`;
+      document.title = fullTitle;
+      setMeta("og:title", fullTitle);
+      setMeta("twitter:title", fullTitle);
+    }
+    return () => { document.title = "WAKA XP - Experience Platform"; };
+  }, [demo?.title, uploadedData?.title]);
+
   // Log view for tracking
   useEffect(() => {
     if (!id) return;
