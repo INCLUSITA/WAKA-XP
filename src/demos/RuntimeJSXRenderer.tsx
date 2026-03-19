@@ -65,14 +65,24 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       preProcessed = preProcessed.replace(/^\s*export\s+\{[^}]*\}\s*;?\s*$/gm, "");
       preProcessed = preProcessed.replace(/^\s*export\s+/gm, "");
 
-      const result = transform(preProcessed, {
-        transforms: ["jsx", "typescript"],
-        jsxRuntime: "classic",
-        jsxPragma: "React.createElement",
-        jsxFragmentPragma: "React.Fragment",
-      });
-
-      let code = result.code;
+      // Try transpile: first with TypeScript support, fallback to JSX-only
+      // (some plain JS patterns confuse Sucrase's TS parser, e.g. complex object literals)
+      let code: string;
+      try {
+        code = transform(preProcessed, {
+          transforms: ["jsx", "typescript"],
+          jsxRuntime: "classic",
+          jsxPragma: "React.createElement",
+          jsxFragmentPragma: "React.Fragment",
+        }).code;
+      } catch {
+        code = transform(preProcessed, {
+          transforms: ["jsx"],
+          jsxRuntime: "classic",
+          jsxPragma: "React.createElement",
+          jsxFragmentPragma: "React.Fragment",
+        }).code;
+      }
 
       // Build a module that returns the component
       const moduleCode = `
