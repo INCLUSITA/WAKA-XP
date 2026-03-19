@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
 import wakaLogo from "@/assets/waka-logo.png";
 
+function setMeta(property: string, content: string) {
+  let el = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`) as HTMLMetaElement | null;
+  if (el) {
+    el.content = content;
+  }
+}
+
 const LoadingFallback = () => (
   <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
     <div className="flex items-center gap-3">
@@ -22,6 +29,18 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
   // For uploaded demos (non-builtin), load from DB
   const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string> } | null>(null);
   const [loading, setLoading] = useState(!demo);
+
+  // Set dynamic document title & OG meta tags
+  useEffect(() => {
+    const title = demo?.title || uploadedData?.title;
+    if (title) {
+      const fullTitle = `${title} — WAKA XP`;
+      document.title = fullTitle;
+      setMeta("og:title", fullTitle);
+      setMeta("twitter:title", fullTitle);
+    }
+    return () => { document.title = "WAKA XP - Experience Platform"; };
+  }, [demo?.title, uploadedData?.title]);
 
   // Log view for tracking
   useEffect(() => {
