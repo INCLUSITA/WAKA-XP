@@ -166,7 +166,14 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
 
   return (
     <ErrorBoundary>
-      <Component />
+      <div className="runtime-jsx-root" style={{
+        width: "100%",
+        minHeight: "100vh",
+        overflow: "auto",
+        boxSizing: "border-box",
+      }}>
+        <Component />
+      </div>
     </ErrorBoundary>
   );
 }
