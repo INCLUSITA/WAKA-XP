@@ -66,6 +66,16 @@ export default function SharedDemo() {
 
         setDemo(data as DemoShare);
 
+        // Set dynamic document title & OG meta
+        const fullTitle = `${data.title} — WAKA XP`;
+        document.title = fullTitle;
+        setMeta("og:title", fullTitle);
+        setMeta("twitter:title", fullTitle);
+        if (data.description) {
+          setMeta("og:description", data.description);
+          setMeta("twitter:description", data.description);
+        }
+
         // Increment view count
         await (supabase as any).rpc("increment_demo_share_view", { share_token: token });
       } catch (err) {
