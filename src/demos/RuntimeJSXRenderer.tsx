@@ -65,6 +65,15 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       preProcessed = preProcessed.replace(/^\s*export\s+\{[^}]*\}\s*;?\s*$/gm, "");
       preProcessed = preProcessed.replace(/^\s*export\s+/gm, "");
 
+      // Debug: log preprocessed code around error line
+      const ppLines = preProcessed.split('\n');
+      if (ppLines.length > 650) {
+        console.log('[RuntimeJSX] Lines 650-660 after preprocessing:');
+        for (let i = 649; i < Math.min(660, ppLines.length); i++) {
+          console.log(`  L${i + 1}: ${ppLines[i]}`);
+        }
+      }
+
       const result = transform(preProcessed, {
         transforms: ["jsx", "typescript"],
         jsxRuntime: "classic",
