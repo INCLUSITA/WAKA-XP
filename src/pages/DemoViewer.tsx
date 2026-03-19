@@ -4,7 +4,7 @@ import { BUILTIN_DEMOS, DEMO_STATUS_CONFIG } from "@/demos/registry";
 import type { DemoStatus, UploadedDemo } from "@/demos/registry";
 import { useUploadedDemos } from "@/hooks/useUploadedDemos";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
-import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Copy, Check, Eye } from "lucide-react";
+import { Shield, FlaskConical, ChevronRight, Home, LayoutGrid, Sparkles, PanelRightOpen, PanelRightClose, Layers, MousePointer2, Share2, Copy, Check, Eye, AlertTriangle } from "lucide-react";
 import AIProposalsPanel from "@/components/demos/AIProposalsPanel";
 import StructuralEditor from "@/components/demos/StructuralEditor";
 import DemoContextMenu from "@/components/demos/DemoContextMenu";
@@ -147,6 +147,9 @@ export default function DemoViewer() {
   const [uploadedDemo, setUploadedDemo] = useState<UploadedDemo | null>(null);
   const [loadingDemo, setLoadingDemo] = useState(true);
   const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
+  
+  // Stable guard: pending save that requires confirmation
+  const [stableGuardPending, setStableGuardPending] = useState<{ demo: UploadedDemo; callback?: () => void } | null>(null);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -254,7 +257,11 @@ export default function DemoViewer() {
 
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
-      await saveDemo(updated);
+      const result = await saveDemo(updated);
+      if (result === "stable_guard") {
+        setStableGuardPending({ demo: updated, callback: () => setUploadedDemo(updated) });
+        return;
+      }
       setUploadedDemo(updated);
       console.log("[DemoViewer] JSX saved to DB");
     }
@@ -270,7 +277,14 @@ export default function DemoViewer() {
     if (!version) return;
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: version.jsx };
-      await saveDemo(updated);
+      const result = await saveDemo(updated);
+      if (result === "stable_guard") {
+        setStableGuardPending({ demo: updated, callback: () => {
+          setUploadedDemo(updated);
+          toast({ title: "Version restored", description: `Restored: "${version.label}"` });
+        }});
+        return;
+      }
       setUploadedDemo(updated);
     }
     toast({ title: "Version restored", description: `Restored: "${version.label}"` });
@@ -410,6 +424,44 @@ export default function DemoViewer() {
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Stable guard confirmation dialog */}
+      <Dialog open={!!stableGuardPending} onOpenChange={(open) => { if (!open) setStableGuardPending(null); }}>
+        <DialogContent className="max-w-md border-destructive/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Demo en production
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cette demo est marquée <strong className="text-foreground">stable</strong> et partagée avec des clients.
+            Modifier son contenu affectera immédiatement le lien public.
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            Voulez-vous vraiment appliquer ce changement ?
+          </p>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setStableGuardPending(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!stableGuardPending) return;
+                const result = await saveDemo(stableGuardPending.demo, { bypassStableGuard: true });
+                if (result === true) {
+                  stableGuardPending.callback?.();
+                  toast({ title: "✅ Demo stable modifiée", description: "Les changements sont appliqués en production." });
+                }
+                setStableGuardPending(null);
+              }}
+            >
+              Confirmer la modification
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
