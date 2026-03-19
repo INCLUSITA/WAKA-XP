@@ -257,7 +257,11 @@ export default function DemoViewer() {
 
     if (uploadedDemo) {
       const updated: UploadedDemo = { ...uploadedDemo, jsxSource: newJsx };
-      await saveDemo(updated);
+      const result = await saveDemo(updated);
+      if (result === "stable_guard") {
+        setStableGuardPending({ demo: updated, callback: () => setUploadedDemo(updated) });
+        return;
+      }
       setUploadedDemo(updated);
       console.log("[DemoViewer] JSX saved to DB");
     }
