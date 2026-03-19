@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, memo, forwardRef, Fragment } from "react";
 
-/** Detect browser zoom and return inverse scale factor so content stays 1:1 */
+/**
+ * Detect browser zoom and return inverse scale factor so content stays 1:1.
+ * Captures the initial devicePixelRatio at mount as the "native" baseline,
+ * then any change means the user zoomed.
+ */
 function useZoomCompensation() {
+  const baselineRef = useRef(window.devicePixelRatio || 1);
   const [scale, setScale] = useState(1);
   useEffect(() => {
+    const baseline = baselineRef.current;
     const update = () => {
-      const ratio = window.devicePixelRatio || 1;
-      // baseline is the DPR when page first loaded at 100%
-      const baseline = Math.round(ratio) || 1;
-      setScale(baseline / ratio);
+      const current = window.devicePixelRatio || 1;
+      const s = baseline / current;
+      setScale(prev => Math.abs(prev - s) > 0.001 ? s : prev);
     };
-    update();
-    const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
-    // Re-check on any zoom change
-    const interval = setInterval(update, 500);
-    mq.addEventListener?.("change", update);
+    // Poll for zoom changes (most reliable cross-browser)
+    const interval = setInterval(update, 300);
+    window.addEventListener("resize", update);
     return () => {
       clearInterval(interval);
-      mq.removeEventListener?.("change", update);
+      window.removeEventListener("resize", update);
     };
   }, []);
   return scale;
