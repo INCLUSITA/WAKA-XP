@@ -1349,6 +1349,7 @@ serve(async (req) => {
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
     const model = hasImages ? "gpt-5.2" : "gpt-5.2";
+    const requestStartTime = Date.now();
 
     const allTools = [...SOVEREIGN_TOOLS, ...WAKA_CORE_TOOLS];
     const systemMessage = { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection + actionGuardSection };
