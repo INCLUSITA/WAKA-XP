@@ -1402,9 +1402,9 @@ serve(async (req) => {
         }
         conversationMessages = [...conversationMessages, choice.message, ...toolResults];
 
-        const loopBreakResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const loopBreakResponse = await fetch(`${WAKA_LLM_GATEWAY}/v1/chat/completions`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ model, messages: conversationMessages, tools: allTools, stream: false }),
         });
         if (loopBreakResponse.ok) {
