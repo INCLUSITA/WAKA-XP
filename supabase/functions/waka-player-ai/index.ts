@@ -1298,7 +1298,9 @@ serve(async (req) => {
     const hasImages = messages.some((m: any) =>
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
-    const model = hasImages ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview";
+    // WAKA LLM Gateway — unified proxy for GPT-5.2 / Claude Opus 4.5 / o3-pro
+    const WAKA_LLM_GATEWAY = "https://llm-gateway-prod.orangedune-3518c1b9.westeurope.azurecontainerapps.io";
+    const model = hasImages ? "gpt-5.2" : "gpt-5.2";
 
     const allTools = [...SOVEREIGN_TOOLS, ...WAKA_CORE_TOOLS];
     const systemMessage = { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection + actionGuardSection };
