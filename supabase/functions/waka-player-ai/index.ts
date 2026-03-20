@@ -1246,8 +1246,8 @@ serve(async (req) => {
 
   try {
     const { messages, dataMode, flowContext, memoryContext, scenarioConfig } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    // WAKA LLM Gateway — no API key required (sovereign infrastructure)
+    const WAKA_LLM_GATEWAY = "https://llm-gateway-prod.orangedune-3518c1b9.westeurope.azurecontainerapps.io";
 
     const resolvedApiKey = resolveWakaApiKey(
       scenarioConfig,
@@ -1298,15 +1298,14 @@ serve(async (req) => {
     const hasImages = messages.some((m: any) =>
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
-    const model = hasImages ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview";
+    const model = hasImages ? "gpt-5.2" : "gpt-5.2";
 
     const allTools = [...SOVEREIGN_TOOLS, ...WAKA_CORE_TOOLS];
     const systemMessage = { role: "system", content: SYSTEM_PROMPT + modeContext + flowContextSection + ghostContextSection + actionGuardSection };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`${WAKA_LLM_GATEWAY}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -1401,9 +1400,9 @@ serve(async (req) => {
         }
         conversationMessages = [...conversationMessages, choice.message, ...toolResults];
 
-        const loopBreakResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const loopBreakResponse = await fetch(`${WAKA_LLM_GATEWAY}/v1/chat/completions`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ model, messages: conversationMessages, tools: allTools, stream: false }),
         });
         if (loopBreakResponse.ok) {
@@ -1467,10 +1466,9 @@ serve(async (req) => {
         ...toolResults,
       ];
 
-      const nextResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const nextResponse = await fetch(`${WAKA_LLM_GATEWAY}/v1/chat/completions`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

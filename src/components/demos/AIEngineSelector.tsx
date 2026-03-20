@@ -27,30 +27,31 @@ export interface EngineSelection {
 const ENGINES: AIEngine[] = [
   {
     id: "waka-ai",
-    name: "WAKA AI",
+    name: "WAKA LLM",
     subtitle: "Active",
-    description: "Motor IA nativo · Infraestructura WAKA",
+    description: "Motor IA soberano · GPT-5.2, Claude Opus 4.5, o3-pro",
     icon: Cpu,
     available: true,
+    models: [
+      { id: "gpt-5.2", label: "GPT-5.2" },
+      { id: "claude-opus-4.5", label: "Claude Opus 4.5" },
+      { id: "o3-pro", label: "o3-pro" },
+      { id: "gpt-5.1", label: "GPT-5.1" },
+    ],
   },
   {
     id: "azure-openai",
     name: "Azure OpenAI",
-    subtitle: "Coming Soon",
-    description: "GPT-4o via Waka's managed Azure deployment",
+    subtitle: "Managed",
+    description: "GPT-5.2 via WAKA Azure deployment",
     icon: Cloud,
     available: false,
-    models: [
-      { id: "gpt-4o", label: "GPT-4o" },
-      { id: "gpt-4o-mini", label: "GPT-4o Mini" },
-      { id: "gpt-4-turbo", label: "GPT-4 Turbo" },
-    ],
   },
   {
     id: "byom",
     name: "BYOM",
     subtitle: "Planned",
-    description: "Bring your own model · Routed via Waka Azure layer",
+    description: "Bring your own model · Routed via WAKA infra",
     icon: Server,
     available: false,
   },
@@ -165,7 +166,7 @@ export default function AIEngineSelector({ selection, onSelect }: AIEngineSelect
         {/* Footer hint */}
         <div className="px-3.5 py-2 border-t border-border/20">
           <p className="text-[9px] text-muted-foreground/40">
-            Azure OpenAI & BYOM coming soon · Routed via Waka managed infra
+            WAKA LLM Gateway · Infraestructura soberana Azure
           </p>
         </div>
       </PopoverContent>

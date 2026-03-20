@@ -111,7 +111,7 @@ export function useWakaPlayerAI() {
       // Map AI tool calls to PlayerMessage properties
       const msg: Partial<PlayerMessage> = {
         text: data.text || "",
-        source: "WAKA NEXUS · IA",
+        source: "WAKA LLM · GPT-5.2",
       };
 
       const blocks = data.blocks || {};
