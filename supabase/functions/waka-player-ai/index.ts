@@ -1564,11 +1564,42 @@ serve(async (req) => {
       }
     }
 
+    // Compute total tokens from all passes (approximate from final response)
+    const usage = data?.usage || {};
+    const totalLatency = Date.now() - requestStartTime;
+    const totalToolCallsCount = toolCallHistory.reduce((sum, sig) => sum + sig.split("+").length, 0);
+
+    // Fire-and-forget metrics log
+    logUsageMetrics({
+      model,
+      latency_ms: totalLatency,
+      prompt_tokens: usage.prompt_tokens || 0,
+      completion_tokens: usage.completion_tokens || 0,
+      total_tokens: usage.total_tokens || 0,
+      status: "success",
+      tool_calls_count: totalToolCallsCount,
+      iteration_count: pass,
+    });
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("waka-player-ai error:", e);
+
+    // Log error metric
+    logUsageMetrics({
+      model: "gpt-5.2",
+      latency_ms: 0,
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: 0,
+      status: "error",
+      error_message: e instanceof Error ? e.message : "Unknown error",
+      tool_calls_count: 0,
+      iteration_count: 0,
+    });
+
     return new Response(
       JSON.stringify({ error: "internal", message: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

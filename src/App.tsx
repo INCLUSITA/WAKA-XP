@@ -89,6 +89,7 @@ const App = () => {
               <Route path="/whatsapp" element={<WhatsAppTestPage />} />
               <Route path="/tenants" element={<TenantsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/monitoring" element={<MonitoringPage />} />
               {/* Advanced Tools */}
               <Route path="/flows" element={<FlowDashboard />} />
               <Route path="/archived" element={<ArchivedFlows />} />
