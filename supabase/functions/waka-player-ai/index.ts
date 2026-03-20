@@ -6,6 +6,56 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+// Cost per 1M tokens (USD) — approximate
+const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  "gpt-5.2": { input: 15, output: 60 },
+  "gpt-5.1": { input: 10, output: 40 },
+  "claude-opus-4.5": { input: 15, output: 75 },
+  "o3-pro": { input: 20, output: 80 },
+};
+
+async function logUsageMetrics(metrics: {
+  model: string;
+  latency_ms: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  status: string;
+  error_message?: string;
+  tool_calls_count: number;
+  iteration_count: number;
+  tenant_id?: string;
+  session_id?: string;
+}) {
+  try {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const costs = MODEL_COSTS[metrics.model] || { input: 10, output: 40 };
+    const estimated_cost_usd =
+      (metrics.prompt_tokens * costs.input + metrics.completion_tokens * costs.output) / 1_000_000;
+    await sb.from("llm_usage_logs").insert({
+      model: metrics.model,
+      latency_ms: metrics.latency_ms,
+      prompt_tokens: metrics.prompt_tokens,
+      completion_tokens: metrics.completion_tokens,
+      total_tokens: metrics.total_tokens,
+      estimated_cost_usd,
+      status: metrics.status,
+      error_message: metrics.error_message || null,
+      tool_calls_count: metrics.tool_calls_count,
+      iteration_count: metrics.iteration_count,
+      tenant_id: metrics.tenant_id || null,
+      session_id: metrics.session_id || null,
+    });
+  } catch (e) {
+    console.error("Failed to log usage metrics:", e);
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
