@@ -1246,8 +1246,8 @@ serve(async (req) => {
 
   try {
     const { messages, dataMode, flowContext, memoryContext, scenarioConfig } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    // WAKA LLM Gateway — no API key required (sovereign infrastructure)
+    const WAKA_LLM_GATEWAY = "https://llm-gateway-prod.orangedune-3518c1b9.westeurope.azurecontainerapps.io";
 
     const resolvedApiKey = resolveWakaApiKey(
       scenarioConfig,
