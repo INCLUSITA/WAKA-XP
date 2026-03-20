@@ -3,7 +3,7 @@ import {
   BookOpen, LayoutGrid, LayoutTemplate, Upload,
   Plug, Building2, Settings, MessageSquare, BrainCircuit,
   Archive, Globe as GlobIcon, Clock, Webhook,
-  Download, ShieldCheck, ServerCog, Play,
+  Download, ShieldCheck, ServerCog, Play, BarChart3,
 } from "lucide-react";
 import wakaLogo from "@/assets/waka-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -42,6 +42,7 @@ const assetsItems = [
 const infraItems = [
   { title: "Integrations", url: "/integrations", icon: Plug },
   { title: "WhatsApp Test", url: "/whatsapp", icon: MessageSquare },
+  { title: "LLM Monitoring", url: "/monitoring", icon: BarChart3 },
   { title: "Tenants", url: "/tenants", icon: Building2 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

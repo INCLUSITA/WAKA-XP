@@ -40,6 +40,7 @@ import WakaPlayerDemo from "./pages/WakaPlayerDemo";
 import PlayerFlowsPage from "./pages/PlayerFlowsPage";
 import SpatialPage from "./pages/SpatialPage";
 import PublicPlayerPage from "./pages/PublicPlayerPage";
+import MonitoringPage from "./pages/MonitoringPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -88,6 +89,7 @@ const App = () => {
               <Route path="/whatsapp" element={<WhatsAppTestPage />} />
               <Route path="/tenants" element={<TenantsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/monitoring" element={<MonitoringPage />} />
               {/* Advanced Tools */}
               <Route path="/flows" element={<FlowDashboard />} />
               <Route path="/archived" element={<ArchivedFlows />} />

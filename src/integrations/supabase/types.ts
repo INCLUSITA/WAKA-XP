@@ -620,6 +620,68 @@ export type Database = {
           },
         ]
       }
+      llm_usage_logs: {
+        Row: {
+          completion_tokens: number
+          created_at: string
+          error_message: string | null
+          estimated_cost_usd: number
+          flow_id: string | null
+          id: string
+          iteration_count: number
+          latency_ms: number
+          model: string
+          prompt_tokens: number
+          session_id: string | null
+          status: string
+          tenant_id: string | null
+          tool_calls_count: number
+          total_tokens: number
+        }
+        Insert: {
+          completion_tokens?: number
+          created_at?: string
+          error_message?: string | null
+          estimated_cost_usd?: number
+          flow_id?: string | null
+          id?: string
+          iteration_count?: number
+          latency_ms?: number
+          model?: string
+          prompt_tokens?: number
+          session_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          tool_calls_count?: number
+          total_tokens?: number
+        }
+        Update: {
+          completion_tokens?: number
+          created_at?: string
+          error_message?: string | null
+          estimated_cost_usd?: number
+          flow_id?: string | null
+          id?: string
+          iteration_count?: number
+          latency_ms?: number
+          model?: string
+          prompt_tokens?: number
+          session_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          tool_calls_count?: number
+          total_tokens?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_usage_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_conversations: {
         Row: {
           channel: string
