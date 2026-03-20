@@ -10,10 +10,10 @@ export interface LLMOption {
 }
 
 const LLM_OPTIONS: LLMOption[] = [
-  { id: "waka-ai-gemini", name: "Waka AI", provider: "Google Gemini Flash", description: "Default — fast analysis & apply", available: true },
-  { id: "azure-openai", name: "Azure OpenAI", provider: "GPT-4o via Azure", description: "Enterprise-grade, coming soon", available: false },
-  { id: "openai-gpt", name: "OpenAI GPT", provider: "GPT-4o / GPT-5", description: "Direct OpenAI, coming soon", available: false },
-  { id: "anthropic-claude", name: "Anthropic Claude", provider: "Claude 3.5 Sonnet", description: "Strong reasoning, coming soon", available: false },
+  { id: "waka-llm-gpt52", name: "WAKA LLM", provider: "GPT-5.2 · Azure", description: "Default — motor soberano WAKA", available: true },
+  { id: "waka-llm-claude", name: "WAKA LLM", provider: "Claude Opus 4.5", description: "Razonamiento avanzado · Anthropic", available: true },
+  { id: "waka-llm-o3", name: "WAKA LLM", provider: "o3-pro", description: "Razonamiento profundo · OpenAI", available: true },
+  { id: "waka-llm-gpt51", name: "WAKA LLM", provider: "GPT-5.1 · Azure", description: "Balance rendimiento/coste", available: true },
 ];
 
 interface LLMSelectorProps {

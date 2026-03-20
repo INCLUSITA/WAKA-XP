@@ -1468,10 +1468,9 @@ serve(async (req) => {
         ...toolResults,
       ];
 
-      const nextResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const nextResponse = await fetch(`${WAKA_LLM_GATEWAY}/v1/chat/completions`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
