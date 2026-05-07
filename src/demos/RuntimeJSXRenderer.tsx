@@ -71,6 +71,18 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       // Strip import/export before transpiling to avoid module issues
       let preProcessed = jsxSource;
 
+      // Capture lucide-react imports BEFORE stripping, so we only inject what
+      // the demo actually uses (avoids redeclaration collisions like 'Icon').
+      const lucideImported = new Set<string>();
+      const lucideImportRegex = /import\s*(?:type\s+)?\{([^}]+)\}\s*from\s+['"]lucide-react['"]/g;
+      let lim: RegExpExecArray | null;
+      while ((lim = lucideImportRegex.exec(preProcessed)) !== null) {
+        lim[1].split(",").forEach(raw => {
+          const name = raw.trim().split(/\s+as\s+/i).pop()?.trim();
+          if (name && /^[A-Z][A-Za-z0-9_]*$/.test(name)) lucideImported.add(name);
+        });
+      }
+
       // Strip ES module syntax (line-anchored to avoid matching CSS @import inside strings)
       // 1. Type imports: import type ... from "..."
       preProcessed = preProcessed.replace(/^import\s+type\s[\s\S]*?from\s+['"][^'"]*['"]\s*;?/gm, "");
@@ -115,21 +127,15 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       // Build a module that returns the component.
       // Only inject lucide icons that (a) match icon naming, (b) are NOT already
       // declared in the user code (avoids "Identifier 'Icon' has already been declared").
-      const declaredIdentifiers = new Set<string>();
-      const declRegex = /(?:^|\s)(?:const|let|var|function|class)\s+([A-Za-z_]\w*)/g;
-      let dm: RegExpExecArray | null;
-      while ((dm = declRegex.exec(code)) !== null) declaredIdentifiers.add(dm[1]);
-      const RESERVED = new Set([
-        "Icon", "LucideIcon", "createLucideIcon", "icons", "default",
-        "React", "Fragment", "useState", "useEffect", "useRef", "useCallback",
-        "useMemo", "useReducer", "useContext", "createContext", "memo", "forwardRef",
-        "usePersistentState",
-      ]);
-      const lucideNames = Object.keys(LucideIcons).filter(
-        k => /^[A-Z][A-Za-z0-9_]*$/.test(k) && !RESERVED.has(k) && !declaredIdentifiers.has(k)
-      );
+      // Inject only icons that the demo explicitly imported AND that exist in
+      // lucide-react. This avoids any chance of redeclaration with user code.
+      const availableLucide = new Set(Object.keys(LucideIcons));
+      const lucideNames = Array.from(lucideImported).filter(n => availableLucide.has(n));
+      const lucideDecl = lucideNames.length > 0
+        ? `const { ${lucideNames.join(", ")} } = __lucide;`
+        : "";
       const moduleCode = `
-        const { ${lucideNames.join(", ")} } = __lucide;
+        ${lucideDecl}
         ${code}
         return typeof ${componentName} === 'function' ? ${componentName} : null;
       `;
