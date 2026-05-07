@@ -114,6 +114,7 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
 
       // Build a module that returns the component
       const moduleCode = `
+        const { ${Object.keys(LucideIcons).filter(k => /^[A-Z][A-Za-z0-9_]*$/.test(k)).join(", ")} } = __lucide;
         ${code}
         return typeof ${componentName} === 'function' ? ${componentName} : null;
       `;
