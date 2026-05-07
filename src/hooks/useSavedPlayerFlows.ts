@@ -131,7 +131,7 @@ export function useSavedPlayerFlows() {
     };
     if (scenarioConfig) payload.scenario_config = scenarioConfig as any;
 
-    await supabase.from("player_saved_flows").update(payload).eq("id", flowId);
+    await supabase.from("player_saved_flows").update(payload as any).eq("id", flowId);
   }, []);
 
   const updateFlowStatus = useCallback(async (flowId: string, status: FlowStatus) => {
