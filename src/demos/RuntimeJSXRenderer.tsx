@@ -112,9 +112,24 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
         }).code;
       }
 
-      // Build a module that returns the component
+      // Build a module that returns the component.
+      // Only inject lucide icons that (a) match icon naming, (b) are NOT already
+      // declared in the user code (avoids "Identifier 'Icon' has already been declared").
+      const declaredIdentifiers = new Set<string>();
+      const declRegex = /(?:^|\s)(?:const|let|var|function|class)\s+([A-Za-z_]\w*)/g;
+      let dm: RegExpExecArray | null;
+      while ((dm = declRegex.exec(code)) !== null) declaredIdentifiers.add(dm[1]);
+      const RESERVED = new Set([
+        "Icon", "LucideIcon", "createLucideIcon", "icons", "default",
+        "React", "Fragment", "useState", "useEffect", "useRef", "useCallback",
+        "useMemo", "useReducer", "useContext", "createContext", "memo", "forwardRef",
+        "usePersistentState",
+      ]);
+      const lucideNames = Object.keys(LucideIcons).filter(
+        k => /^[A-Z][A-Za-z0-9_]*$/.test(k) && !RESERVED.has(k) && !declaredIdentifiers.has(k)
+      );
       const moduleCode = `
-        const { ${Object.keys(LucideIcons).filter(k => /^[A-Z][A-Za-z0-9_]*$/.test(k)).join(", ")} } = __lucide;
+        const { ${lucideNames.join(", ")} } = __lucide;
         ${code}
         return typeof ${componentName} === 'function' ? ${componentName} : null;
       `;
