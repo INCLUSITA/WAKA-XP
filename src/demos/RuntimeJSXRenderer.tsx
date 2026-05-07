@@ -26,6 +26,7 @@ function useZoomCompensation() {
   return scale;
 }
 import { transform } from "sucrase";
+import * as LucideIcons from "lucide-react";
 
 interface RuntimeJSXRendererProps {
   jsxSource: string;
@@ -122,13 +123,13 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
       const factory = new Function(
         "React", "useState", "useEffect", "useRef", "useCallback", "useMemo",
         "useReducer", "useContext", "createContext", "memo", "forwardRef", "Fragment",
-        "usePersistentState", "__scenarioNotes", "__saveNote",
+        "usePersistentState", "__scenarioNotes", "__saveNote", "__lucide",
         moduleCode
       );
       const Comp = factory(
         React, useState, useEffect, useRef, useCallback, useMemo,
         useReducer, useContext, createContext, memo, forwardRef, Fragment,
-        usePersistentState, scenarioNotes || {}, saveNoteCallback
+        usePersistentState, scenarioNotes || {}, saveNoteCallback, LucideIcons
       );
 
       if (Comp) {
