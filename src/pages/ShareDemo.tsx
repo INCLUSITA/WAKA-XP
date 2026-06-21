@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { BUILTIN_DEMOS } from "@/demos/registry";
 import { supabase } from "@/integrations/supabase/client";
 import RuntimeJSXRenderer from "@/demos/RuntimeJSXRenderer";
+import FitToWidth from "@/demos/FitToWidth";
 import wakaLogo from "@/assets/waka-logo.png";
 
 function setMeta(property: string, content: string) {
@@ -94,9 +95,11 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
           <span className="text-sm text-white/50 truncate">{demo.title}</span>
         </div>
         <div className="flex-1 overflow-auto">
-          <Suspense fallback={<LoadingFallback />}>
-            <DemoComponent />
-          </Suspense>
+          <FitToWidth>
+            <Suspense fallback={<LoadingFallback />}>
+              <DemoComponent />
+            </Suspense>
+          </FitToWidth>
         </div>
         <div className="flex items-center justify-center gap-2 py-2 border-t border-white/10 bg-slate-900/80">
           <span className="text-[11px] text-white/30">Powered by</span>
@@ -126,9 +129,11 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
         </div>
         <div className="flex-1 overflow-auto">
           {shouldRenderSourceBuiltin && SourceDemoComponent ? (
-            <Suspense fallback={<LoadingFallback />}>
-              <SourceDemoComponent />
-            </Suspense>
+            <FitToWidth>
+              <Suspense fallback={<LoadingFallback />}>
+                <SourceDemoComponent />
+              </Suspense>
+            </FitToWidth>
           ) : (
             <RuntimeJSXRenderer
               jsxSource={uploadedData.jsx}
