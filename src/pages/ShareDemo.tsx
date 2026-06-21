@@ -21,13 +21,18 @@ const LoadingFallback = () => (
   </div>
 );
 
+function isPlaceholderJsx(source?: string | null) {
+  const trimmed = source?.trim() || "";
+  return !trimmed || (trimmed.startsWith("/*") && trimmed.length < 200);
+}
+
 export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
   const id = overrideDemoId || paramId;
   const demo = BUILTIN_DEMOS.find((d) => d.id === id);
 
   // For uploaded demos (non-builtin), load from DB
-  const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string> } | null>(null);
+  const [uploadedData, setUploadedData] = useState<{ jsx: string; title: string; notes: Record<string, string>; sourceId?: string | null } | null>(null);
   const [loading, setLoading] = useState(!demo);
 
   // Set dynamic document title & OG meta tags
@@ -59,7 +64,7 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
     if (demo || !id) return;
     (supabase as any)
       .from("uploaded_demos")
-      .select("title, jsx_source, scenario_notes")
+      .select("title, jsx_source, scenario_notes, source_id")
       .eq("id", id)
       .maybeSingle()
       .then(({ data }: any) => {
@@ -68,6 +73,7 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
             jsx: data.jsx_source,
             title: data.title,
             notes: data.scenario_notes || {},
+            sourceId: data.source_id || null,
           });
         }
         setLoading(false);
@@ -101,8 +107,15 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
     );
   }
 
+  const sourceBuiltinDemo = uploadedData?.sourceId
+    ? BUILTIN_DEMOS.find((d) => d.id === uploadedData.sourceId)
+    : null;
+
   // Uploaded demo with notes from DB (read-only)
   if (uploadedData?.jsx) {
+    const shouldRenderSourceBuiltin = isPlaceholderJsx(uploadedData.jsx) && sourceBuiltinDemo;
+    const SourceDemoComponent = sourceBuiltinDemo?.component;
+
     return (
       <div className="flex flex-col min-h-screen bg-slate-900">
         <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10 bg-slate-900/80 backdrop-blur">
@@ -112,12 +125,18 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
           <span className="text-sm text-white/50 truncate">{uploadedData.title}</span>
         </div>
         <div className="flex-1 overflow-auto">
-          <RuntimeJSXRenderer
-            jsxSource={uploadedData.jsx}
-            demoId={id}
-            scenarioNotes={uploadedData.notes}
-            readOnly
-          />
+          {shouldRenderSourceBuiltin && SourceDemoComponent ? (
+            <Suspense fallback={<LoadingFallback />}>
+              <SourceDemoComponent />
+            </Suspense>
+          ) : (
+            <RuntimeJSXRenderer
+              jsxSource={uploadedData.jsx}
+              demoId={id}
+              scenarioNotes={uploadedData.notes}
+              readOnly
+            />
+          )}
         </div>
         <div className="flex items-center justify-center gap-2 py-2 border-t border-white/10 bg-slate-900/80">
           <span className="text-[11px] text-white/30">Powered by</span>
