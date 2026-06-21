@@ -135,6 +135,7 @@ export default function ShareDemo({ overrideDemoId }: { overrideDemoId?: string 
               demoId={id}
               scenarioNotes={uploadedData.notes}
               readOnly
+              fitToWidth
             />
           )}
         </div>
