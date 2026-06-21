@@ -34,6 +34,7 @@ interface RuntimeJSXRendererProps {
   scenarioNotes?: Record<string, string>;
   onSaveNotes?: (notes: Record<string, string>) => void;
   readOnly?: boolean;
+  fitToWidth?: boolean;
 }
 
 // A localStorage-backed useState that persists data across sessions
@@ -59,9 +60,27 @@ function createUsePersistentState(demoId: string) {
   };
 }
 
-export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scenarioNotes, onSaveNotes, readOnly = false }: RuntimeJSXRendererProps) {
+export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scenarioNotes, onSaveNotes, readOnly = false, fitToWidth = false }: RuntimeJSXRendererProps) {
   const usePersistentState = useMemo(() => createUsePersistentState(demoId), [demoId]);
   const zoomScale = useZoomCompensation();
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [fitScale, setFitScale] = useState(1);
+  useEffect(() => {
+    if (!fitToWidth) { setFitScale(1); return; }
+    const el = wrapRef.current;
+    if (!el) return;
+    const BASE = 1280;
+    const compute = () => {
+      const w = el.clientWidth || window.innerWidth;
+      const s = Math.min(1, w / BASE);
+      setFitScale(prev => Math.abs(prev - s) > 0.005 ? s : prev);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    window.addEventListener("resize", compute);
+    return () => { ro.disconnect(); window.removeEventListener("resize", compute); };
+  }, [fitToWidth]);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -221,6 +240,28 @@ export default function RuntimeJSXRenderer({ jsxSource, demoId = "default", scen
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
+    );
+  }
+
+  if (fitToWidth) {
+    return (
+      <ErrorBoundary>
+        <div ref={wrapRef} style={{ width: "100%", overflow: "hidden" }}>
+          <div
+            className="runtime-jsx-root"
+            style={{
+              width: 1280,
+              minHeight: `${100 / fitScale}vh`,
+              transform: `scale(${fitScale})`,
+              transformOrigin: "top left",
+              // Reserve the scaled height so the page doesn't have a huge empty area
+              marginBottom: fitScale < 1 ? `calc(${fitScale - 1} * 100vh)` : 0,
+            }}
+          >
+            <Component />
+          </div>
+        </div>
+      </ErrorBoundary>
     );
   }
 
